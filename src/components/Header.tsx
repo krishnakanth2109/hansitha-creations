@@ -12,44 +12,45 @@ const Header = () => {
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const navigationItems = [
+
+    { title: 'Home', href: '/home' },
     {
-      title: 'Shop',
-      href: '/shop',
-      dropdown: [
-        { title: 'All Products', href: '/shop' },
-        { title: 'Electronics', href: '/shop/electronics' },
-        { title: 'Clothing', href: '/shop/clothing' },
-        { title: 'Home & Garden', href: '/shop/home-garden' },
-      ]
-    },
-    {
-      title: 'Categories',
-      href: '/categories',
+      title: 'Fabrics',
+      href: '/fabrics',
       dropdown: [
         {
           title: 'Men',
-          href: '/categories/men',
+          href: '/fabrics/men',
           subdropdown: [
-            { title: 'Shirts', href: '/categories/men/shirts' },
-            { title: 'Pants', href: '/categories/men/pants' },
-            { title: 'Shoes', href: '/categories/men/shoes' },
+            { title: 'Shirts', href: '/fabrics/men/shirts' },
+            { title: 'Pants', href: '/fabrics/men/pants' },
+            { title: 'Shoes', href: '/fabrics/men/shoes' },
           ]
         },
         {
           title: 'Women',
-          href: '/categories/women',
+          href: '/fabrics/women',
           subdropdown: [
-            { title: 'Dresses', href: '/categories/women/dresses' },
-            { title: 'Tops', href: '/categories/women/tops' },
-            { title: 'Accessories', href: '/categories/women/accessories' },
+            { title: 'Dresses', href: '/fabrics/women/dresses' },
+            { title: 'Tops', href: '/fabrics/women/tops' },
+            { title: 'Accessories', href: '/fabrics/women/accessories' },
           ]
         },
-        { title: 'Kids', href: '/categories/kids' },
-        { title: 'Sale', href: '/categories/sale' },
+        { title: 'Kids', href: '/fabrics/kids' },
+        { title: 'Sale', href: '/fabrics/sale' },
       ]
     },
-    { title: 'About', href: '/about' },
-    { title: 'Contact', href: '/contact' },
+    {
+      title: 'New Arrivals',
+      href: '/new-arrivals',
+      dropdown: [
+        { title: 'All Products', href: '/new-arrivals' },
+        { title: 'Electronics', href: '/new-arrivals/electronics' },
+        { title: 'Clothing', href: '/new-arrivals/clothing' },
+        { title: 'Home & Garden', href: '/new-arrivals/home-garden' },
+        { title: 'Fabrics', href: '/new-arrivals/fabrics' },
+      ]
+    },
   ];
 
   const handleDropdownToggle = (title: string) => {
@@ -60,10 +61,6 @@ const Header = () => {
     <header className="bg-white shadow-lg sticky top-0 z-50">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
-          {/* Logo */}
-          <Link to="/" className="text-2xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
-            Hansitha
-          </Link>
 
           {/* Desktop Navigation */}
           <nav className="hidden md:flex items-center space-x-8">
@@ -120,6 +117,11 @@ const Header = () => {
               </div>
             ))}
           </nav>
+
+          {/* Logo */}
+          <Link to="/">
+                        <img src="/src/assets/logo.png" className="h-48 w-30 mr-32" alt="Hansitha Logo" />
+                      </Link>
 
           {/* Right Side Icons */}
           <div className="flex items-center space-x-4">

@@ -31,9 +31,10 @@ const Login = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center">
-            <Link to="/" className="text-3xl font-bold text-blue-600 hover:text-blue-700 transition-colors">
-              Hansitha
-            </Link>
+            {/* Logo */}
+          <Link to="/">
+                        <img src="/src/assets/logo.png" className="h-48 w-30 ml-20" alt="Hansitha Logo" />
+                      </Link>
             <h2 className="mt-6 text-3xl font-bold text-gray-900">
               Welcome back
             </h2>
