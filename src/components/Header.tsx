@@ -51,6 +51,7 @@ const Header = () => {
         { title: 'Fabrics', href: '/new-arrivals/fabrics' },
       ]
     },
+    { title: 'Ceo Collections', href: '/ceocollections' },
   ];
 
   const handleDropdownToggle = (title: string) => {
@@ -120,7 +121,7 @@ const Header = () => {
 
           {/* Logo */}
           <Link to="/">
-                        <img src="/src/assets/logo.png" className="h-48 w-30 mr-32" alt="Hansitha Logo" />
+                        <img src="/src/assets/logo.png" className="flex h-48 w-30 mr-64" alt="Hansitha Logo" />
                       </Link>
 
           {/* Right Side Icons */}
