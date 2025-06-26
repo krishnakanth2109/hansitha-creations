@@ -151,7 +151,7 @@ const Home = () => {
               to="/shop"
               className="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-blue-600 transition-colors"
             >
-              Browse Products
+              Show Products
             </Link>
           </div>
         </div>
