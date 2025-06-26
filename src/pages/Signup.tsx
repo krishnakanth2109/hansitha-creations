@@ -40,10 +40,10 @@ const Signup = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center">
-            {/* Logo */}
-            <Link to="/">
-              <img src="https://res.cloudinary.com/djyredhur/image/upload/v1750694800/logo_ja6bq6.png" className="h-48 w-30 ml-20" alt="Hansitha Logo" />
-            </Link>
+            {/* Centered Logo with margin */}
+              <Link to="/" className="flex justify-center">
+                <img src="https://res.cloudinary.com/djyredhur/image/upload/v1750694800/logo_ja6bq6.png" className="h-48 w-auto mb-6" alt="Hansitha Logo" />
+              </Link>
             <h2 className="mt-6 text-3xl font-bold text-gray-900">
               Create your account
             </h2>
