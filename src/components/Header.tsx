@@ -12,7 +12,6 @@ const Header = () => {
   const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
 
   const navigationItems = [
-
     { title: 'Home', href: '/home' },
     {
       title: 'Fabrics',

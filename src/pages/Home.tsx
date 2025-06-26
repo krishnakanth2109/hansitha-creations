@@ -51,26 +51,94 @@ const Home = () => {
     });
   };
 
+const carouselSlides = [
+  {
+    image: 'https://www.faburra.com/cdn/shop/files/carousel14.jpg?v=1733577995&width=3840',
+    heading: 'Unleash the Sound',
+    subtext: 'Experience premium audio like never before.'
+  },
+  {
+    image: 'https://thefareastartstudio.com/cdn/shop/files/carousel-web-jamdani2.jpg?v=1716714800&width=3200',
+    heading: 'Smart, Sleek, Stylish',
+    subtext: 'Discover wearables that redefine lifestyle.'
+  },
+  {
+    image: 'https://i.pinimg.com/736x/cf/66/4e/cf664efba42a47a1762434a30f6bc263.jpg',
+    heading: 'Built for the Journey',
+    subtext: 'Gear up with bags that go the distance.'
+  }
+];
+
+const [currentSlide, setCurrentSlide] = React.useState(0);
+
+React.useEffect(() => {
+  const interval = setInterval(() => {
+    setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+  }, 2500); // 2.5 seconds
+  return () => clearInterval(interval);
+}, []);
+
+const handlePrev = () => {
+  setCurrentSlide((prev) => (prev - 1 + carouselSlides.length) % carouselSlides.length);
+};
+
+const handleNext = () => {
+  setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
+};
+
+
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Hero Section */}
-      <section className="bg-gradient-to-r from-blue-600 to-purple-600 text-white py-20">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Welcome to Hansitha
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 opacity-90">
-            Discover amazing products at unbeatable prices
-          </p>
-          <Link
-            to="/shop"
-            className="inline-flex items-center bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors"
-          >
-            Shop Now
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Link>
-        </div>
-      </section>
+<section className="relative w-full h-screen overflow-hidden">
+  {carouselSlides.map((slide, index) => (
+    <img
+      key={index}
+      src={slide.image}
+      alt={`slide-${index}`}
+      className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${
+        index === currentSlide
+          ? 'opacity-100 z-10'
+          : 'opacity-0 z-0'
+      }`}
+    />
+  ))}
+
+  {/* Overlay Text */}
+  <div className="absolute inset-0 bg-black bg-opacity-40 z-20 flex flex-col justify-center items-center text-center text-white px-4">
+    <h1 className="text-4xl md:text-6xl font-bold mb-4">
+      {carouselSlides[currentSlide].heading}
+    </h1>
+    <p className="text-lg md:text-2xl opacity-90 max-w-2xl">
+      {carouselSlides[currentSlide].subtext}
+    </p>
+    <Link
+      to="/shop"
+      className="mt-8 inline-flex items-center bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors z-30"
+    >
+      Shop Now
+      <ArrowRight className="ml-2 w-5 h-5" />
+    </Link>
+  </div>
+
+  {/* Navigation Arrows */}
+  <button
+    onClick={handlePrev}
+    className="absolute top-1/2 left-4 transform -translate-y-1/2 z-30 bg-black bg-opacity-40 text-white p-3 rounded-full hover:bg-opacity-60 transition"
+  >
+    ‹
+  </button>
+  <button
+    onClick={handleNext}
+    className="absolute top-1/2 right-4 transform -translate-y-1/2 z-30 bg-black bg-opacity-40 text-white p-3 rounded-full hover:bg-opacity-60 transition"
+  >
+    ›
+  </button>
+</section>
+
+
+
 
       {/* Featured Products */}
       <section className="py-16">
