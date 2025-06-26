@@ -51,7 +51,7 @@ const Header = () => {
         { title: 'Fabrics', href: '/new-arrivals/fabrics' },
       ]
     },
-    { title: 'Ceo Collections', href: '/ceocollections' },
+    { title: 'Collections', href: '/ceocollections' },
   ];
 
   const handleDropdownToggle = (title: string) => {
