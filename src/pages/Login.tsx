@@ -31,17 +31,18 @@ const Login = () => {
         <div className="bg-white rounded-2xl shadow-xl p-8">
           {/* Header */}
           <div className="text-center">
-            {/* Logo */}
-          <Link to="/">
-                        <img src="/src/assets/logo.png" className="h-48 w-30 ml-20" alt="Hansitha Logo" />
-                      </Link>
-            <h2 className="mt-6 text-3xl font-bold text-gray-900">
-              Welcome back
-            </h2>
-            <p className="mt-2 text-sm text-gray-600">
-              Sign in to your account to continue
-            </p>
-          </div>
+  {/* Centered Logo with margin */}
+  <Link to="/" className="flex justify-center">
+    <img src="/src/assets/logo.png" className="h-48 w-auto mb-6" alt="Hansitha Logo" />
+  </Link>
+  <h2 className="text-3xl font-bold text-gray-900">
+    Welcome back
+  </h2>
+  <p className="mt-2 text-sm text-gray-600">
+    Sign in to your account to continue
+  </p>
+</div>
+
 
           {/* Form */}
           <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
