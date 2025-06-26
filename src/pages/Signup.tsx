@@ -42,7 +42,7 @@ const Signup = () => {
           <div className="text-center">
             {/* Logo */}
             <Link to="/">
-              <img src="/src/assets/logo.png" className="h-48 w-30 ml-20" alt="Hansitha Logo" />
+              <img src="https://res.cloudinary.com/djyredhur/image/upload/v1750694800/logo_ja6bq6.png" className="h-48 w-30 ml-20" alt="Hansitha Logo" />
             </Link>
             <h2 className="mt-6 text-3xl font-bold text-gray-900">
               Create your account

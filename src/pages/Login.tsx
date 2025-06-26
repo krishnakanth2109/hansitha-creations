@@ -33,7 +33,7 @@ const Login = () => {
           <div className="text-center">
   {/* Centered Logo with margin */}
   <Link to="/" className="flex justify-center">
-    <img src="/src/assets/logo.png" className="h-48 w-auto mb-6" alt="Hansitha Logo" />
+    <img src="https://res.cloudinary.com/djyredhur/image/upload/v1750694800/logo_ja6bq6.png" className="h-48 w-auto mb-6" alt="Hansitha Logo" />
   </Link>
   <h2 className="text-3xl font-bold text-gray-900">
     Welcome back
