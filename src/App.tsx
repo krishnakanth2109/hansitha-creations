@@ -18,6 +18,7 @@ import UserProfile from "./pages/UserProfile";
 import { SignIn } from '@clerk/clerk-react';
 import SSORedirectHandler from './pages/SSORedirectHandler';
 import SearchResults from './pages/SearchResults';
+import AdminPage from "./admin/AdminPage";
 
 
 
@@ -46,6 +47,7 @@ const App = () => (
                 <Route path="/login" element={<SignIn />} />
                 <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
                 <Route path="/signup" element={<Signup />} />
+                <Route path="/admin" element={<AdminPage />} />
                 <Route path="/account" element={<UserProfile />} />
                 <Route path="/search" element={<SearchResults />} />
                 <Route path="/about" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">About Page</h1></div>} />
