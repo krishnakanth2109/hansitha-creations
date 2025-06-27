@@ -116,17 +116,20 @@ const handleNext = () => {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {featuredProducts.map((product) => (
               <div
-                key={product.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow duration-300"
-              >
+  key={product.id}
+  className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 w-fit"
+>
+
                 <div className="relative overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="w-full h-48 object-cover hover:scale-105 transition-transform duration-300"
-                  />
-                </div>
-                <div className="p-6">
+  <img
+    src={product.image}
+    alt={product.name}
+    className="object-contain hover:scale-105 transition-transform duration-300"
+    style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
+  />
+</div>
+
+                <div className="p-4 w-full">
                   <h3 className="text-lg font-semibold mb-2 text-gray-800">
                     {product.name}
                   </h3>
