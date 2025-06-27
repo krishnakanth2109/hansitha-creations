@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, ChevronDown, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { useUser, UserButton, SignOutButton } from '@clerk/clerk-react';
+
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -75,6 +77,10 @@ const Header = () => {
       setShowMobileSearch(false);
     }
   };
+
+  const { isSignedIn } = useUser();
+
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
   return (
     <header className="bg-white shadow-lg sticky top-0 z-50">
@@ -173,28 +179,74 @@ const Header = () => {
 
           <div className="flex items-center space-x-4 md:ml-4">
             {!showMobileSearch && (
-              <>
-                <Link
-                  to="/login"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
-                >
-                  <User className="w-5 h-5" />
-                  <span className="hidden sm:inline">Login</span>
-                </Link>
-                <Link
-                  to="/cart"
-                  className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors relative"
-                >
-                  <ShoppingCart className="w-5 h-5" />
-                  {totalItems > 0 && (
-                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-                      {totalItems}
-                    </span>
-                  )}
-                  <span className="hidden sm:inline">Cart</span>
-                </Link>
-              </>
-            )}
+  <>
+    {isSignedIn ? (
+      <div className="relative">
+  <button
+    onClick={() => setShowAccountDropdown((prev) => !prev)}
+    className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
+  >
+    <User className="w-5 h-5" />
+    <span className="hidden sm:inline">Account</span>
+    <ChevronDown className="w-4 h-4" />
+  </button>
+
+  <div
+    className={`absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-md rounded-lg transform transition-all duration-200 origin-top-right z-50 ${
+      showAccountDropdown
+        ? 'scale-100 opacity-100 visible'
+        : 'scale-95 opacity-0 invisible'
+    }`}
+  >
+    <Link
+      to="/account"
+      className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      onClick={() => setShowAccountDropdown(false)}
+    >
+      Profile
+    </Link>
+    <Link
+      to="/orders"
+      className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+      onClick={() => setShowAccountDropdown(false)}
+    >
+      Orders
+    </Link>
+    <SignOutButton>
+      <button
+        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+        onClick={() => setShowAccountDropdown(false)}
+      >
+        Signout
+      </button>
+    </SignOutButton>
+  </div>
+</div>
+
+    ) : (
+      <Link
+        to="/login"
+        className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
+      >
+        <User className="w-5 h-5" />
+        <span className="hidden sm:inline">Login</span>
+      </Link>
+    )}
+    <Link
+      to="/cart"
+      className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors relative"
+    >
+      <ShoppingCart className="w-5 h-5" />
+      {totalItems > 0 && (
+        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+          {totalItems}
+        </span>
+      )}
+      <span className="hidden sm:inline">Cart</span>
+    </Link>
+  </>
+)}
+
             <button onClick={toggleMobileSearch} className="md:hidden text-gray-700 hover:text-blue-600 transition-colors">
               <Search className="w-5 h-5" />
             </button>
