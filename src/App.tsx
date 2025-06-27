@@ -11,10 +11,14 @@ import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
-import Login from "./pages/Login";
+import Login from "./pages/SignIn";
 import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
 import UserProfile from "./pages/UserProfile"; 
+import { RedirectToSignIn } from '@clerk/clerk-react';
+import { SignIn } from '@clerk/clerk-react';
+
+
 
 const queryClient = new QueryClient();
 
@@ -37,6 +41,8 @@ const App = () => (
                 <Route path="/checkout" element={<Checkout />} />
                 <Route path="/order-confirmation" element={<OrderConfirmation />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/login" element={<SignIn />} />
+                <Route path="/login/sso-callback" element={<RedirectToSignIn />} />
                 <Route path="/signup" element={<Signup />} />
                 <Route path="/account" element={<UserProfile />} />
                 <Route path="/about" element={<div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">About Page</h1></div>} />
