@@ -33,10 +33,7 @@ const UserProfile = () => {
     <div className="max-w-5xl mx-auto px-4 py-8">
 
       {/* Editable Clerk Profile */}
-      <div className="mt-10 bg-white dark:bg-gray-900 shadow-md rounded-xl p-6">
-        <h2 className="text-xl font-semibold mb-4 text-gray-800 dark:text-white">Edit Profile</h2>
         <ClerkUserProfile />
-      </div>
 
       {/* Supabase Orders */}
       <div className="mt-10 bg-white dark:bg-gray-900 shadow-md rounded-xl p-6">
