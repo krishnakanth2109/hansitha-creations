@@ -206,7 +206,7 @@ const Header = () => {
       Profile
     </Link>
     <Link
-      to="/orders"
+      to="/UserOrders"
       className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
       onClick={() => setShowAccountDropdown(false)}
     >
