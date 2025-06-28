@@ -3,11 +3,34 @@ import AddProduct from './AddProduct';
 import CarouselManager from './CarouselManager';
 import OrdersDashboard from './OrdersDashboard';
 import AdminProfile from './AdminProfile';
-import { Menu } from 'lucide-react'; // Optional: Lucide icon for hamburger
+import { Menu } from 'lucide-react';
+import { useUser } from "@clerk/clerk-react";
+import { Navigate } from "react-router-dom";
 
 const AdminPage = () => {
+  const { user, isLoaded } = useUser();
   const [activeTab, setActiveTab] = useState('add');
-  const [isSidebarOpen, setIsSidebarOpen] = useState(true); // Toggle state
+  const [isSidebarOpen, setIsSidebarOpen] = useState(true);
+
+  // Wait for Clerk to load user
+  if (!isLoaded) {
+    return (
+  <div className="flex items-center justify-center h-screen text-xl font-semibold">Loading...</div>
+);
+  }
+if (!user) {
+  return (
+    <div className="flex items-center justify-center h-screen text-xl font-semibold">
+      You Don't Have Access for This Page.
+    </div>
+  );
+}
+
+
+const role = user?.publicMetadata?.role;
+if (!role) return <div>No role set</div>;
+if (role !== 'admin') return <Navigate to="/" replace />;
+
 
   const renderContent = () => {
     switch (activeTab) {
@@ -27,11 +50,7 @@ const AdminPage = () => {
   return (
     <div className="flex min-h-screen">
       {/* Sidebar */}
-      <div
-        className={`transition-all duration-300 ${
-          isSidebarOpen ? 'w-64' : 'w-0'
-        } bg-blue-800 text-white overflow-hidden`}
-      >
+      <div className={`transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0'} bg-blue-800 text-white overflow-hidden`}>
         <div className="p-6 space-y-4">
           <h2 className="text-2xl font-bold mb-6">Admin Panel</h2>
           <button onClick={() => setActiveTab('add')} className="block w-full text-left hover:bg-blue-700 p-2 rounded">
@@ -50,21 +69,20 @@ const AdminPage = () => {
       </div>
 
       {/* Main Content */}
-<div className="flex-1 bg-gray-50 relative">
-  {/* Toggle Button */}
-  <div className="p-4">
-    <button
-      className="bg-blue-800 text-white p-2 rounded hover:bg-blue-700"
-      onClick={() => setIsSidebarOpen(!isSidebarOpen)}
-    >
-      <Menu />
-    </button>
-  </div>
+      <div className="flex-1 bg-gray-50 relative">
+        {/* Toggle Button */}
+        <div className="p-4">
+          <button
+            className="bg-blue-800 text-white p-2 rounded hover:bg-blue-700"
+            onClick={() => setIsSidebarOpen(!isSidebarOpen)}
+          >
+            <Menu />
+          </button>
+        </div>
 
-  {/* Actual Content */}
-  <div className="p-8 pt-0">{renderContent()}</div>
-</div>
-
+        {/* Actual Content */}
+        <div className="p-8 pt-0">{renderContent()}</div>
+      </div>
     </div>
   );
 };
