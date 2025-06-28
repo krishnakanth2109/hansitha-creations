@@ -6,6 +6,7 @@ import AdminProfile from './AdminProfile';
 import { Menu } from 'lucide-react';
 import { useUser } from "@clerk/clerk-react";
 import { Navigate } from "react-router-dom";
+import { Link } from 'react-router-dom'; 
 
 const AdminPage = () => {
   const { user, isLoaded } = useUser();
@@ -52,7 +53,9 @@ if (role !== 'admin') return <Navigate to="/" replace />;
       {/* Sidebar */}
       <div className={`transition-all duration-300 ${isSidebarOpen ? 'w-64' : 'w-0'} bg-blue-800 text-white overflow-hidden`}>
         <div className="p-6 space-y-4">
-          <h2 className="text-2xl font-bold mb-6">Admin Panel</h2>
+          <Link to="/admin" className="text-2xl font-bold mb-6 hover:text-pink-400 transition-colors">
+  Admin Panel
+</Link>
           <button onClick={() => setActiveTab('add')} className="block w-full text-left hover:bg-blue-700 p-2 rounded">
             Add Products
           </button>
