@@ -157,7 +157,7 @@ const Header = () => {
           </nav>
 
           <Link to="/" className="flex justify-center flex-1">
-            <img src="https://res.cloudinary.com/djyredhur/image/upload/v1750694800/logo_ja6bq6.png" alt="Hansitha Logo" className="h-48 w-auto mx-auto" />
+            <img src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png" alt="Hansitha Logo" className="h-16 w-auto mx-auto" />
           </Link>
 
           <div className="relative hidden md:block">
