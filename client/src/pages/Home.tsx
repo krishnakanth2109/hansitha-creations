@@ -27,7 +27,7 @@ const [carouselSlides, setCarouselSlides] = React.useState([
 React.useEffect(() => {
   const fetchCarouselImages = async () => {
   try {
-    const res = await axios.get("http://localhost:5000/api/carousel-images");
+    const res = await axios.get("https://hansitha-web-storefront.onrender.com/api/carousel-images");
     const mapping = {
       carousel1: { image: "", heading: "", subtext: "" },
       carousel2: { image: "", heading: "", subtext: "" },

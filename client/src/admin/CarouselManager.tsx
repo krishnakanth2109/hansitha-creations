@@ -9,7 +9,7 @@ const CarouselManager = () => {
 
   // Fetch existing carousels
   const fetchCarousels = async () => {
-    const res = await fetch('http://localhost:5000/api/carousel-images');
+    const res = await fetch('https://hansitha-web-storefront.onrender.com/api/carousel-images');
     const data = await res.json();
     setCarouselData(data);
   };
@@ -27,7 +27,7 @@ const CarouselManager = () => {
     if (heading) formData.append('heading', heading);
     if (subtext) formData.append('subtext', subtext);
 
-    const res = await fetch('http://localhost:5000/api/upload-carousel', {
+    const res = await fetch('https://hansitha-web-storefront.onrender.com/api/upload-carousel', {
       method: 'POST',
       body: formData,
     });
@@ -46,7 +46,7 @@ const CarouselManager = () => {
   // Delete a carousel
   const handleDelete = async (carouselId) => {
     if (!window.confirm(`Delete ${carouselId}?`)) return;
-    const res = await fetch(`http://localhost:5000/api/delete-carousel/${carouselId}`, {
+    const res = await fetch(`https://hansitha-web-storefront.onrender.com/api/delete-carousel/${carouselId}`, {
       method: 'DELETE',
     });
     const data = await res.json();
