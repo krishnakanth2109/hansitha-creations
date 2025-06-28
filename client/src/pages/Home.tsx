@@ -1,4 +1,4 @@
-
+import axios from 'axios';
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Star, ShoppingCart, ArrowRight } from 'lucide-react';
@@ -18,23 +18,46 @@ const Home = () => {
     });
   };
 
-const carouselSlides = [
-  {
-    image: 'https://www.faburra.com/cdn/shop/files/carousel14.jpg?v=1733577995&width=3840',
-    heading: 'Unleash the Sound',
-    subtext: 'Experience premium audio like never before.'
-  },
-  {
-    image: 'https://thefareastartstudio.com/cdn/shop/files/carousel-web-jamdani2.jpg?v=1716714800&width=3200',
-    heading: 'Smart, Sleek, Stylish',
-    subtext: 'Discover wearables that redefine lifestyle.'
-  },
-  {
-    image: 'https://i.pinimg.com/736x/cf/66/4e/cf664efba42a47a1762434a30f6bc263.jpg',
-    heading: 'Built for the Journey',
-    subtext: 'Gear up with bags that go the distance.'
+const [carouselSlides, setCarouselSlides] = React.useState([
+  { image: "", heading: "", subtext: "" }, // placeholder for carousel1
+  { image: "", heading: "", subtext: "" }, // placeholder for carousel2
+  { image: "", heading: "", subtext: "" }  // placeholder for carousel3
+]);
+
+React.useEffect(() => {
+  const fetchCarouselImages = async () => {
+  try {
+    const res = await axios.get("http://localhost:5000/api/carousel-images");
+    const mapping = {
+      carousel1: { image: "", heading: "", subtext: "" },
+      carousel2: { image: "", heading: "", subtext: "" },
+      carousel3: { image: "", heading: "", subtext: "" },
+    };
+
+    res.data.forEach((item) => {
+      if (mapping[item.carouselId]) {
+        mapping[item.carouselId] = {
+          image: item.imageUrl,
+          heading: item.heading,
+          subtext: item.subtext,
+        };
+      }
+    });
+
+    setCarouselSlides([
+      mapping.carousel1,
+      mapping.carousel2,
+      mapping.carousel3,
+    ]);
+  } catch (err) {
+    console.error("Failed to load carousel images", err);
   }
-];
+};
+
+
+  fetchCarouselImages();
+}, []);
+
 
 const [currentSlide, setCurrentSlide] = React.useState(0);
 
