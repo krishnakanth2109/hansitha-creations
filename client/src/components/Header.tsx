@@ -156,7 +156,7 @@ const Header = () => {
             ))}
           </nav>
 
-          <Link to="/" className="flex justify-center flex-1">
+          <Link to="/" className="flex justify-center">
             <img src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png" alt="Hansitha Logo" className="h-16 w-auto mx-auto" />
           </Link>
 
