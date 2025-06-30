@@ -46,7 +46,7 @@ export const HeroSection = () => {
     if (slides.length === 0) {
         return (
             <div className="min-h-[500px] flex items-center justify-center">
-                <p className="text-black-500 text-lg">Banners Loading...</p>
+                <p className="text-black-500 text-lg">Your Internet is Slow Banners are Loading...</p>
             </div>
         );
     }
