@@ -4,6 +4,8 @@ import { Link } from 'react-router-dom';
 import { Star, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { Footer } from '../pages/footer'; // adjust the path as needed
+import { PromoSection } from '@/components/PromoSection';
+import { HeroSection } from '@/components/HeroSection';
 
 
 const Home = () => {
@@ -92,48 +94,8 @@ const Home = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Hero Section */}
-      <section className="relative w-full h-screen overflow-hidden">
-        {carouselSlides.map((slide, index) => (
-          <img
-            key={index}
-            src={slide.image}
-            alt={`slide-${index}`}
-            className={`absolute inset-0 w-full h-full object-cover transition-all duration-1000 ease-in-out ${
-              index === currentSlide ? 'opacity-100 z-10' : 'opacity-0 z-0'
-            }`}
-          />
-        ))}
-
-        <div className="absolute inset-0 bg-black bg-opacity-40 z-20 flex flex-col justify-center items-center text-center text-white px-4">
-          <h1 className="text-4xl md:text-6xl font-bold mb-4">
-            {carouselSlides[currentSlide].heading}
-          </h1>
-          <p className="text-lg md:text-2xl opacity-90 max-w-2xl">
-            {carouselSlides[currentSlide].subtext}
-          </p>
-          <Link
-            to="/shop"
-            className="mt-8 inline-flex items-center bg-white text-blue-600 px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors z-30"
-          >
-            Shop Now
-            <ArrowRight className="ml-2 w-5 h-5" />
-          </Link>
-        </div>
-
-        <button
-          onClick={handlePrev}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 z-30 bg-black bg-opacity-40 text-white p-3 rounded-full hover:bg-opacity-60 transition"
-        >
-          ‹
-        </button>
-        <button
-          onClick={handleNext}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 z-30 bg-black bg-opacity-40 text-white p-3 rounded-full hover:bg-opacity-60 transition"
-        >
-          ›
-        </button>
-      </section>
+      <HeroSection />
+      <PromoSection />
       <Footer />
     </div>
   );
