@@ -134,51 +134,6 @@ const Home = () => {
           ›
         </button>
       </section>
-
-      {/* Featured Products */}
-      <section className="py-16">
-        <div className="container mx-auto px-4">
-          <h2 className="text-3xl font-bold text-center mb-12 text-gray-800">
-            Featured Products
-          </h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-            {featuredProducts.map((product) => (
-              <div
-                key={product._id}
-                className="bg-white rounded-lg shadow-md hover:shadow-xl transition-shadow duration-300 w-fit"
-              >
-                <div className="relative overflow-hidden">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="object-contain hover:scale-105 transition-transform duration-300"
-                    style={{ width: '100%', maxWidth: '100%', height: 'auto' }}
-                  />
-                </div>
-
-                <div className="p-4 w-full">
-                  <h3 className="text-lg font-semibold mb-2 text-gray-800">
-                    {product.name}
-                  </h3>
-                  <div className="flex items-center justify-between">
-                    <span className="text-2xl font-bold text-blue-600">
-                      ₹{product.price}
-                    </span>
-                    <button
-                      onClick={() => handleAddToCart(product)}
-                      className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors flex items-center space-x-2"
-                    >
-                      <ShoppingCart className="w-4 h-4" />
-                      <span>Add</span>
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
       <Footer />
     </div>
   );

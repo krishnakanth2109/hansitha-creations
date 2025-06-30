@@ -118,9 +118,8 @@ const Header = () => {
                 </Link>
                 {item.dropdown && (
                   <div
-                    className={`absolute top-full left-0 bg-white shadow-lg rounded-lg py-2 w-48 transition-all duration-200 ${
-                      activeDropdown === item.title ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
-                    }`}
+                    className={`absolute top-full left-0 bg-white shadow-lg rounded-lg py-2 w-48 transition-all duration-200 ${activeDropdown === item.title ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
+                      }`}
                     onMouseEnter={() => setActiveDropdown(item.title)}
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
@@ -156,7 +155,7 @@ const Header = () => {
             ))}
           </nav>
 
-          <Link to="/" className="flex justify-center ml-20">
+          <Link to="/" className="flex justify-center mx-auto">
             <img src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png" alt="Hansitha Logo" className="h-16 w-auto mx-auto" />
           </Link>
 
@@ -179,73 +178,72 @@ const Header = () => {
 
           <div className="flex items-center space-x-4 md:ml-4">
             {!showMobileSearch && (
-  <>
-    {isSignedIn ? (
-      <div className="relative">
-  <button
-    onClick={() => setShowAccountDropdown((prev) => !prev)}
-    className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
-  >
-    <User className="w-5 h-5" />
-    <span className="hidden sm:inline">Account</span>
-    <ChevronDown className="w-4 h-4" />
-  </button>
+              <>
+                {isSignedIn ? (
+                  <div className="relative">
+                    <button
+                      onClick={() => setShowAccountDropdown((prev) => !prev)}
+                      className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
+                    >
+                      <User className="w-5 h-5" />
+                      <span className="hidden sm:inline">Account</span>
+                      <ChevronDown className="w-4 h-4" />
+                    </button>
 
-  <div
-    className={`absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-md rounded-lg transform transition-all duration-200 origin-top-right z-50 ${
-      showAccountDropdown
-        ? 'scale-100 opacity-100 visible'
-        : 'scale-95 opacity-0 invisible'
-    }`}
-  >
-    <Link
-      to="/account"
-      className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-      onClick={() => setShowAccountDropdown(false)}
-    >
-      Profile
-    </Link>
-    <Link
-      to="/UserOrders"
-      className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
-      onClick={() => setShowAccountDropdown(false)}
-    >
-      Orders
-    </Link>
-    <SignOutButton>
-      <button
-        className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
-        onClick={() => setShowAccountDropdown(false)}
-      >
-        Signout
-      </button>
-    </SignOutButton>
-  </div>
-</div>
+                    <div
+                      className={`absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-md rounded-lg transform transition-all duration-200 origin-top-right z-50 ${showAccountDropdown
+                          ? 'scale-100 opacity-100 visible'
+                          : 'scale-95 opacity-0 invisible'
+                        }`}
+                    >
+                      <Link
+                        to="/account"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                        onClick={() => setShowAccountDropdown(false)}
+                      >
+                        Profile
+                      </Link>
+                      <Link
+                        to="/UserOrders"
+                        className="block px-4 py-2 text-sm text-gray-700 hover:bg-blue-50 hover:text-blue-600"
+                        onClick={() => setShowAccountDropdown(false)}
+                      >
+                        Orders
+                      </Link>
+                      <SignOutButton>
+                        <button
+                          className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          onClick={() => setShowAccountDropdown(false)}
+                        >
+                          Signout
+                        </button>
+                      </SignOutButton>
+                    </div>
+                  </div>
 
-    ) : (
-      <Link
-        to="/login"
-        className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
-      >
-        <User className="w-5 h-5" />
-        <span className="hidden sm:inline">Login</span>
-      </Link>
-    )}
-    <Link
-      to="/cart"
-      className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors relative"
-    >
-      <ShoppingCart className="w-5 h-5" />
-      {totalItems > 0 && (
-        <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
-          {totalItems}
-        </span>
-      )}
-      <span className="hidden sm:inline">Cart</span>
-    </Link>
-  </>
-)}
+                ) : (
+                  <Link
+                    to="/login"
+                    className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
+                  >
+                    <User className="w-5 h-5" />
+                    <span className="hidden sm:inline">Login</span>
+                  </Link>
+                )}
+                <Link
+                  to="/cart"
+                  className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors relative"
+                >
+                  <ShoppingCart className="w-5 h-5" />
+                  {totalItems > 0 && (
+                    <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center">
+                      {totalItems}
+                    </span>
+                  )}
+                  <span className="hidden sm:inline">Cart</span>
+                </Link>
+              </>
+            )}
 
             <button onClick={toggleMobileSearch} className="md:hidden text-gray-700 hover:text-blue-600 transition-colors">
               <Search className="w-5 h-5" />
@@ -256,40 +254,44 @@ const Header = () => {
           </div>
         </div>
         {isMobileMenuOpen && (
-  <div className="md:hidden bg-white border-t border-gray-200 py-4">
-    {navigationItems.map((item) => (
-      <div key={item.title} className="mb-2">
-        <button
-          onClick={() => handleDropdownToggle(item.title)}
-          className="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-        >
-          <span>{item.title}</span>
-          {item.dropdown && <ChevronDown className="w-4 h-4" />}
-        </button>
-
-        {/* Dropdown in Mobile */}
-        {item.dropdown && activeDropdown === item.title && (
-          <div className="bg-gray-50 py-2">
-            {item.dropdown.map((dropdownItem) => (
-              <div key={dropdownItem.title}>
-                <Link
-                  to={dropdownItem.href}
-                  className="block px-8 py-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                  onClick={() => setIsMobileMenuOpen(false)}
+          <div className="md:hidden bg-white border-t border-gray-200 py-4">
+            {navigationItems.map((item) => (
+              <div key={item.title} className="mb-2">
+                <button
+                  onClick={() => handleDropdownToggle(item.title)}
+                  className="flex items-center justify-between w-full px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
                 >
-                  {dropdownItem.title}
-                </Link>
-                {'subdropdown' in dropdownItem && (
-                  <div className="bg-gray-100">
-                    {dropdownItem.subdropdown.map((subItem) => (
-                      <Link
-                        key={subItem.title}
-                        to={subItem.href}
-                        className="block px-12 py-1 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                        onClick={() => setIsMobileMenuOpen(false)}
-                      >
-                        {subItem.title}
-                      </Link>
+                  <span>{item.title}</span>
+                  {item.dropdown && <ChevronDown className="w-4 h-4" />}
+                </button>
+
+                {/* Dropdown in Mobile */}
+                {item.dropdown && activeDropdown === item.title && (
+                  <div className="bg-gray-50 py-2">
+                    {item.dropdown.map((dropdownItem) => (
+                      <div key={dropdownItem.title}>
+                        <Link
+                          to={dropdownItem.href}
+                          className="block px-8 py-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                          onClick={() => setIsMobileMenuOpen(false)}
+                        >
+                          {dropdownItem.title}
+                        </Link>
+                        {'subdropdown' in dropdownItem && (
+                          <div className="bg-gray-100">
+                            {dropdownItem.subdropdown.map((subItem) => (
+                              <Link
+                                key={subItem.title}
+                                to={subItem.href}
+                                className="block px-12 py-1 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                              >
+                                {subItem.title}
+                              </Link>
+                            ))}
+                          </div>
+                        )}
+                      </div>
                     ))}
                   </div>
                 )}
@@ -297,10 +299,6 @@ const Header = () => {
             ))}
           </div>
         )}
-      </div>
-    ))}
-  </div>
-)}
 
       </div>
     </header>
