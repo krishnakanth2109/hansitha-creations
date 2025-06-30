@@ -110,10 +110,6 @@ if (input) input.value = '';
     />
   )}
 </div>
-
-
-
-
         <div>
           <label>Heading</label>
           <input
