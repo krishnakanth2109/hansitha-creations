@@ -60,20 +60,20 @@ const CarouselManager = () => {
 
   return (
     <div className="max-w-4xl mx-auto p-6 bg-white rounded shadow space-y-8">
-      <h2 className="text-2xl font-bold">Carousel Manager</h2>
+      <h2 className="text-2xl font-bold">Banner Manager</h2>
 
       {/* Upload Form */}
       <form onSubmit={handleUpload} className="space-y-4 border-b pb-6">
         <div>
-          <label>Select Carousel</label>
+          <label>Select Banner</label>
           <select
             value={selectedCarousel}
             onChange={(e) => setSelectedCarousel(e.target.value)}
             className="w-full p-2 border rounded"
           >
-            <option value="carousel1">Carousel 1</option>
-            <option value="carousel2">Carousel 2</option>
-            <option value="carousel3">Carousel 3</option>
+            <option value="carousel1">Banner 1</option>
+            <option value="carousel2">Banner 2</option>
+            <option value="carousel3">Banner 3</option>
           </select>
         </div>
 
@@ -111,7 +111,7 @@ if (input) input.value = '';
   )}
 </div>
         <div>
-          <label>Heading</label>
+          <label>Banner Title</label>
           <input
             type="text"
             value={heading}
@@ -121,7 +121,7 @@ if (input) input.value = '';
         </div>
 
         <div>
-          <label>Subtext</label>
+          <label>Banner Paragraph</label>
           <input
             type="text"
             value={subtext}
@@ -135,7 +135,7 @@ if (input) input.value = '';
 
       {/* Preview Section */}
       <div className="space-y-4">
-        <h3 className="text-xl font-semibold">Existing Carousels</h3>
+        <h3 className="text-xl font-semibold">Existing Banners</h3>
         <div className="grid md:grid-cols-3 gap-6">
           {carouselData.map((item) => (
             <div key={item.carouselId} className="border rounded p-4 shadow">

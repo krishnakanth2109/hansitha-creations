@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 interface Slide {
     heading: string;
     subtext: string;
-    price: string;
     buttonText: string;
     imageUrl: string;
     buttonLink: string;
@@ -46,8 +45,8 @@ export const HeroSection = () => {
 
     if (slides.length === 0) {
         return (
-            <div className="min-h-[500px] flex items-center justify-center bg-gray-100">
-                <p className="text-gray-500 text-lg">Loading hero content...</p>
+            <div className="min-h-[500px] flex items-center justify-center">
+                <p className="text-black-500 text-lg">Banners Loading...</p>
             </div>
         );
     }

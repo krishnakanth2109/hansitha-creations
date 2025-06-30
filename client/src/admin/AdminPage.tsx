@@ -60,7 +60,7 @@ if (role !== 'admin') return <Navigate to="/" replace />;
             Add Products
           </button>
           <button onClick={() => setActiveTab('carousel')} className="block w-full text-left hover:bg-blue-700 p-2 rounded">
-            Carousel Images
+            Banner Images
           </button>
           <button onClick={() => setActiveTab('orders')} className="block w-full text-left hover:bg-blue-700 p-2 rounded">
             Orders Dashboard
