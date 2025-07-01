@@ -83,4 +83,31 @@ app.get("/api/carousel-images", async (req, res) => {
 });
 
 const PORT = process.env.PORT || 5000;
+// Newsletter Schema & Model
+const NewsletterSchema = new mongoose.Schema({
+  email: { type: String, required: true, unique: true },
+  subscribedAt: { type: Date, default: Date.now },
+});
+const Newsletter = mongoose.model("Newsletter", NewsletterSchema, "Newsletters");
+
+// Subscribe Route
+app.post("/api/newsletter", async (req, res) => {
+  const { email } = req.body;
+  if (!email) return res.status(400).json({ message: "Email is required" });
+
+  try {
+    const exists = await Newsletter.findOne({ email });
+    if (exists) {
+      return res.status(409).json({ message: "Email already subscribed" });
+    }
+
+    const newEntry = new Newsletter({ email });
+    await newEntry.save();
+    res.status(201).json({ message: "Subscribed successfully" });
+  } catch (err) {
+    console.error("Newsletter error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

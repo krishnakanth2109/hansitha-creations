@@ -1,13 +1,31 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
     Facebook,
     Instagram,
     Twitter,
     MessageCircleMore,
-    Youtube, // WhatsApp
+    Youtube
 } from 'lucide-react';
+import axios from 'axios';
 
 export const Footer = () => {
+    const [email, setEmail] = useState('');
+    const [message, setMessage] = useState('');
+
+    const handleSubscribe = async () => {
+        if (!email) {
+            setMessage('Please enter a valid email.');
+            return;
+        }
+        try {
+            const res = await axios.post('https://hansitha-web-storefront.onrender.com/api/newsletter', { email });
+            setMessage(res.data.message);
+            setEmail('');
+        } catch (err) {
+            setMessage(err.response?.data?.message || 'Subscription failed. Try again.');
+        }
+    };
+
     return (
         <footer className="bg-gray-900 text-white pt-16 pb-8">
             <div className="container mx-auto px-4">
@@ -21,7 +39,6 @@ export const Footer = () => {
                                 className="h-16 w-auto ml-10"
                             />
                         </div>
-
                         <p className="text-gray-400 mb-4">
                             Your premier destination for women's fashion. Discover the latest trends in dresses, sarees, and accessories.
                         </p>
@@ -42,7 +59,6 @@ export const Footer = () => {
                             >
                                 <Instagram className="w-4 h-4" />
                             </a>
-
                             <a
                                 href="https://www.youtube.com/@kiranmaisarees3089"
                                 target="_blank"
@@ -93,20 +109,28 @@ export const Footer = () => {
                         <div className="flex">
                             <input
                                 type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
                                 placeholder="Enter your email"
                                 className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
                             />
-                            <button className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-r-lg hover:from-pink-600 hover:to-purple-700 transition-colors">
+                            <button
+                                onClick={handleSubscribe}
+                                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-r-lg hover:from-pink-600 hover:to-purple-700 transition-colors"
+                            >
                                 Subscribe
                             </button>
                         </div>
+                        {message && (
+                            <p className="text-sm mt-2 text-pink-400">{message}</p>
+                        )}
                     </div>
                 </div>
 
                 {/* Bottom bar */}
                 <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
                     <p className="text-gray-400 text-sm">
-                        © 2024 FashionHub. All rights reserved.
+                        © 2025 Hansitha Creations. All rights reserved.
                     </p>
                     <div className="flex space-x-6 mt-4 md:mt-0">
                         <a href="#" className="text-gray-400 hover:text-pink-400 text-sm transition-colors">Privacy Policy</a>
