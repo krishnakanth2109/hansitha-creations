@@ -1,51 +1,42 @@
-import React, { createContext, useEffect, useState, ReactNode } from 'react';
-import axios from 'axios';
+import React, { createContext, useState, useEffect, useContext } from 'react';
 
-// ✅ Define the Product type
-export type Product = {
+interface Product {
   _id: string;
   name: string;
   price: number;
   image: string;
-  description?: string;
+  rating?: number;
+  reviews?: number;
   featured?: boolean;
-  rating: number;
-  reviews: number;
-};
+}
 
-// ✅ Context type
-type ProductContextType = {
+interface ProductContextType {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   loading: boolean;
-  featured: Product[];
-};
+}
 
-// ✅ Create context
 export const ProductContext = createContext<ProductContextType>({
   products: [],
   setProducts: () => {},
-  loading: true,
-  featured: [],
+  loading: false,
 });
 
-// ✅ Provider
-export const ProductProvider = ({ children }: { children: ReactNode }) => {
+export const useProductContext = () => useContext(ProductContext);
+
+export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const fetchProducts = async () => {
+      setLoading(true);
       try {
-        const res = await axios.get('/api/products');
-        if (Array.isArray(res.data)) {
-          setProducts(res.data);
-        } else {
-          setProducts([]); // fallback if server sends unexpected type
-        }
+        const res = await fetch('/api/products');
+        const data = await res.json();
+        setProducts(data);
       } catch (err) {
-        console.error('Error fetching products:', err);
-        setProducts([]); // ensure fallback array on error
+        console.error('Failed to fetch products:', err);
       } finally {
         setLoading(false);
       }
@@ -54,12 +45,8 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     fetchProducts();
   }, []);
 
-  const featured = Array.isArray(products)
-    ? products.filter((p) => p.featured)
-    : [];
-
   return (
-    <ProductContext.Provider value={{ products, setProducts, loading, featured }}>
+    <ProductContext.Provider value={{ products, setProducts, loading }}>
       {children}
     </ProductContext.Provider>
   );
