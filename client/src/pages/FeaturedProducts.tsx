@@ -12,7 +12,7 @@ const FeaturedProducts: React.FC = () => {
   return (
     <div className="p-6">
       <h2 className="text-3xl font-bold mb-6">Featured Products</h2>
-      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-6">
         {featured.map((product) => (
           <div
             key={product._id}
@@ -21,7 +21,7 @@ const FeaturedProducts: React.FC = () => {
             <img
               src={product.image}
               alt={product.name}
-              className="w-full h-52 object-cover"
+              className="w-full h-auto object-cover"
             />
             <div className="p-4">
               <h3 className="text-lg font-semibold">{product.name}</h3>

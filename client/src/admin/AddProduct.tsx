@@ -69,12 +69,21 @@ const AddProduct = () => {
       return;
     }
 
+    const parsedPrice = parseFloat(price);
+    const parsedRating = parseFloat(rating);
+    const parsedReviews = parseInt(reviews);
+
+    if (isNaN(parsedPrice) || isNaN(parsedRating) || isNaN(parsedReviews)) {
+      alert('Price, Rating, and Reviews must be valid numbers.');
+      return;
+    }
+
     const payload = {
       name,
-      price: parseFloat(price),
+      price: parsedPrice,
       image,
-      rating: parseFloat(rating),
-      reviews: parseInt(reviews),
+      rating: parsedRating,
+      reviews: parsedReviews,
       featured,
     };
 
@@ -87,7 +96,7 @@ const AddProduct = () => {
       });
 
       if (!res.ok) throw new Error('Add failed');
-      const created = await res.json(); // ✅ includes _id
+      const created = await res.json();
 
       setProducts((prev) => [...prev, created]);
       setNewProductData({ name: '', price: '', image: '', rating: '', reviews: '', featured: false });
@@ -100,16 +109,17 @@ const AddProduct = () => {
   };
 
   const handleEdit = (product: any) => {
-    setEditingId(product._id);
-    setEditData({
-      name: product.name,
-      price: product.price.toString(),
-      image: product.image,
-      rating: product.rating?.toString() ?? '',
-      reviews: product.reviews?.toString() ?? '',
-      featured: product.featured ?? false,
-    });
-  };
+  setEditingId(product._id);
+  setEditData({
+    name: product.name,
+    price: product.price.toString(),
+    image: product.image,
+    rating: (product.rating ?? '').toString(),
+    reviews: (product.reviews ?? '').toString(),
+    featured: product.featured ?? false,
+  });
+};
+
 
   const handleUpdate = async (id: string) => {
     const updated = {
@@ -170,12 +180,15 @@ const AddProduct = () => {
             className="border p-2 rounded"
             value={newProductData.name}
             onChange={(e) => setNewProductData({ ...newProductData, name: e.target.value })}
+            required
           />
           <input
             placeholder="Price"
             className="border p-2 rounded"
+            type="number"
             value={newProductData.price}
             onChange={(e) => setNewProductData({ ...newProductData, price: e.target.value })}
+            required
           />
           <input
             type="file"
@@ -185,15 +198,20 @@ const AddProduct = () => {
           />
           <input
             placeholder="Rating"
+            type="number"
+            step="0.1"
             className="border p-2 rounded"
             value={newProductData.rating}
             onChange={(e) => setNewProductData({ ...newProductData, rating: e.target.value })}
+            required
           />
           <input
             placeholder="Reviews"
+            type="number"
             className="border p-2 rounded"
             value={newProductData.reviews}
             onChange={(e) => setNewProductData({ ...newProductData, reviews: e.target.value })}
+            required
           />
           <label className="flex items-center gap-2 col-span-2">
             <input
@@ -236,6 +254,7 @@ const AddProduct = () => {
                     value={editData.price}
                     onChange={(e) => setEditData({ ...editData, price: e.target.value })}
                     placeholder="Price"
+                    type="number"
                     className="border p-2 rounded"
                   />
                   <input
@@ -247,12 +266,14 @@ const AddProduct = () => {
                     value={editData.rating}
                     onChange={(e) => setEditData({ ...editData, rating: e.target.value })}
                     placeholder="Rating"
+                    type="number"
                     className="border p-2 rounded"
                   />
                   <input
                     value={editData.reviews}
                     onChange={(e) => setEditData({ ...editData, reviews: e.target.value })}
                     placeholder="Reviews"
+                    type="number"
                     className="border p-2 rounded"
                   />
                   <label className="flex items-center gap-2 col-span-2">

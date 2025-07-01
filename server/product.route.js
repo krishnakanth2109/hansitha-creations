@@ -1,36 +1,60 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('./product.model');
+const Product = require('../server/product.model');
 
-// GET all products
-router.get('/', async (req, res) => {
-  try {
-    const products = await Product.find();
-    res.json(products);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch products' });
-  }
-});
-
-// GET featured products
-router.get('/featured', async (req, res) => {
-  try {
-    const featured = await Product.find({ featured: true });
-    res.json(featured);
-  } catch (err) {
-    res.status(500).json({ error: 'Failed to fetch featured products' });
-  }
-});
-
-// ✅ POST new product
+// Create Product
 router.post('/', async (req, res) => {
   try {
-    const newProduct = new Product(req.body);
-    const saved = await newProduct.save();
+    const { name, price, image, rating, reviews, featured } = req.body;
+
+    const product = new Product({
+      name,
+      price,
+      image,
+      rating,
+      reviews,
+      featured,
+    });
+
+    const saved = await product.save();
     res.status(201).json(saved);
   } catch (err) {
-    console.error('Failed to save product:', err);
-    res.status(500).json({ error: 'Failed to add product' });
+    console.error('Create error:', err);
+    res.status(500).json({ message: 'Failed to create product' });
+  }
+});
+
+// Get All Products
+router.get('/', async (req, res) => {
+  const products = await Product.find();
+  res.json(products);
+});
+
+// Update Product
+router.put('/:id', async (req, res) => {
+  try {
+    const updated = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        $set: req.body,
+      },
+      { new: true }
+    );
+    res.json(updated);
+  } catch (err) {
+    console.error('Update error:', err);
+    res.status(500).json({ message: 'Failed to update product' });
+  }
+});
+
+// Delete Product
+router.delete('/:id', async (req, res) => {
+  try {
+    await Product.findByIdAndDelete(req.params.id);
+    res.json({ message: 'Product deleted' });
+  } catch (err) {
+    console.error('Delete error:', err);
+    res.status(500).json({ message: 'Failed to delete product' });
   }
 });
 
