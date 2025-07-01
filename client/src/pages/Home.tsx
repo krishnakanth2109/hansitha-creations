@@ -3,9 +3,10 @@ import axios from 'axios';
 import { Link } from 'react-router-dom';
 import { Star, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { Footer } from '../pages/footer'; // adjust the path as needed
+import { Footer } from '@/components/Footer';// adjust the path as needed
 import { PromoSection } from '@/components/PromoSection';
 import { HeroSection } from '@/components/HeroSection';
+import FeaturedProducts from '@/pages/FeaturedProducts'; // adjust the path as needed
 
 
 const Home = () => {
@@ -95,6 +96,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <HeroSection />
+      <FeaturedProducts />
       <PromoSection />
       <Footer />
     </div>

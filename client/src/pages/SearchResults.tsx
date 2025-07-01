@@ -57,7 +57,7 @@ const SearchResults = () => {
                   <span className="text-sm text-gray-600 ml-2">({product.reviews})</span>
                 </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-2xl font-bold text-blue-600">${product.price}</span>
+                  <span className="text-2xl font-bold text-blue-600">₹{product.price}</span>
                   <button
                     onClick={() =>
                       addToCart({

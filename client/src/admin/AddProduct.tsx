@@ -1,138 +1,279 @@
 import React, { useState } from 'react';
-import axios from 'axios';
+import { useProductContext } from '../context/ProductContext';
 
-const CATEGORIES = ['Fabrics', 'Accessories', 'Blouses', 'Sarees', 'Jewellery', 'Home Decor'];
+const CLOUD_NAME = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME!;
+const UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET!;
 
-const AddProduct: React.FC = () => {
-  const [product, setProduct] = useState({
+const AddProduct = () => {
+  const { products, setProducts, loading } = useProductContext();
+
+  const [editing, setEditing] = useState<number | null>(null);
+
+  const [newProductData, setNewProductData] = useState({
     name: '',
-    description: '',
     price: '',
-    stock: '',
-    category: 'Fabrics',
     image: '',
+    rating: '',
+    reviews: '',
+    featured: false
   });
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [loading, setLoading] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setProduct(prev => ({ ...prev, [name]: value }));
-  };
+  const [editData, setEditData] = useState({
+    name: '',
+    price: '',
+    image: '',
+    rating: '',
+    reviews: '',
+    featured: false
+  });
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files.length > 0) {
-      setImageFile(e.target.files[0]);
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    mode: 'add' | 'edit'
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('upload_preset', UPLOAD_PRESET);
+
+    try {
+      const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`, {
+        method: 'POST',
+        body: formData
+      });
+      const data = await res.json();
+
+      if (mode === 'add') {
+        setNewProductData((prev) => ({ ...prev, image: data.secure_url }));
+      } else {
+        setEditData((prev) => ({ ...prev, image: data.secure_url }));
+      }
+    } catch (err) {
+      console.error('Image upload failed:', err);
     }
   };
 
-  const uploadImage = async () => {
-    if (!imageFile) return '';
-    const formData = new FormData();
-    formData.append('file', imageFile);
-    formData.append('upload_preset', 'carousel_images'); // Make sure this preset exists in Cloudinary
+  const handleAdd = () => {
+    const { name, price, image, rating, reviews, featured } = newProductData;
 
-    const res = await axios.post('https://api.cloudinary.com/v1_1/djyredhur/image/upload', formData);
-    return res.data.secure_url;
-  };
+    if (!name || !price || !image || !rating || !reviews) {
+      alert('Please fill all fields before adding a product.');
+      return;
+    }
 
-const handleSubmit = async (e: React.FormEvent) => {
-  e.preventDefault();
-  setLoading(true);
-
-  try {
-    const imageUrl = await uploadImage();
     const newProduct = {
-      ...product,
-      image: imageUrl,
-      id: Date.now(), // unique ID
-      price: parseFloat(product.price),
-      stock: parseInt(product.stock),
-      rating: 4.5,
-      reviews: 0
+      id: Date.now(),
+      name,
+      price: parseFloat(price),
+      image,
+      rating: parseFloat(rating),
+      reviews: parseInt(reviews),
+      featured
     };
 
-    // Save to localStorage
-    const existing = JSON.parse(localStorage.getItem('products') || '[]');
-    localStorage.setItem('products', JSON.stringify([...existing, newProduct]));
+    setProducts((prev) => [...prev, newProduct]);
+    setNewProductData({ name: '', price: '', image: '', rating: '', reviews: '', featured: false });
+  };
 
-    alert('Product added successfully!');
-    setProduct({
-      name: '',
-      description: '',
-      price: '',
-      stock: '',
-      category: 'Fabrics',
-      image: '',
+  const handleEdit = (product: any) => {
+    setEditing(product.id);
+    setEditData({
+      name: product.name,
+      price: product.price.toString(),
+      image: product.image,
+      rating: product.rating.toString(),
+      reviews: product.reviews.toString(),
+      featured: product.featured ?? false
     });
-    setImageFile(null);
-  } catch (error) {
-    alert('Error adding product');
-    console.error(error);
-  } finally {
-    setLoading(false);
-  }
-};
+  };
 
+  const handleUpdate = (id: number) => {
+    setProducts((prev) =>
+      prev.map((p) =>
+        p.id === id
+          ? {
+              ...p,
+              name: editData.name,
+              price: parseFloat(editData.price),
+              image: editData.image,
+              rating: parseFloat(editData.rating),
+              reviews: parseInt(editData.reviews),
+              featured: editData.featured
+            }
+          : p
+      )
+    );
+    setEditing(null);
+  };
+
+  const handleDelete = (id: number) => {
+    setProducts((prev) => prev.filter((p) => p.id !== id));
+  };
+
+  if (loading) return <div className="p-6 text-center">Loading products...</div>;
 
   return (
-    <div className="max-w-xl mx-auto p-6 bg-white shadow-md rounded-xl">
-      <h2 className="text-2xl font-bold mb-4">Add New Product</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input
-          type="text"
-          name="name"
-          placeholder="Product Name"
-          className="w-full p-2 border rounded"
-          value={product.name}
-          onChange={handleInputChange}
-          required
-        />
-        <textarea
-          name="description"
-          placeholder="Description"
-          className="w-full p-2 border rounded"
-          value={product.description}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="number"
-          name="price"
-          placeholder="Price"
-          className="w-full p-2 border rounded"
-          value={product.price}
-          onChange={handleInputChange}
-          required
-        />
-        <input
-          type="number"
-          name="stock"
-          placeholder="Stock"
-          className="w-full p-2 border rounded"
-          value={product.stock}
-          onChange={handleInputChange}
-          required
-        />
-        <select
-          name="category"
-          className="w-full p-2 border rounded"
-          value={product.category}
-          onChange={handleInputChange}
-        >
-          {CATEGORIES.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-        <input type="file" accept="image/*" onChange={handleImageChange} required />
+    <div className="p-6 max-w-5xl mx-auto">
+      <h1 className="text-3xl font-bold mb-4">Admin - Manage Products</h1>
+
+      {/* ➕ Add Product Form */}
+      <div className="bg-white shadow-md rounded-lg p-4 mb-6">
+        <h2 className="text-xl font-semibold mb-2">Add New Product</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <input
+            placeholder="Name"
+            className="border p-2 rounded w-full"
+            value={newProductData.name}
+            onChange={(e) => setNewProductData({ ...newProductData, name: e.target.value })}
+          />
+          <input
+            placeholder="Price"
+            className="border p-2 rounded w-full"
+            value={newProductData.price}
+            onChange={(e) => setNewProductData({ ...newProductData, price: e.target.value })}
+          />
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleImageUpload(e, 'add')}
+            className="w-full"
+          />
+          <input
+            placeholder="Rating"
+            className="border p-2 rounded w-full"
+            value={newProductData.rating}
+            onChange={(e) => setNewProductData({ ...newProductData, rating: e.target.value })}
+          />
+          <input
+            placeholder="Reviews"
+            className="border p-2 rounded w-full"
+            value={newProductData.reviews}
+            onChange={(e) => setNewProductData({ ...newProductData, reviews: e.target.value })}
+          />
+          <label className="flex items-center gap-2 col-span-2">
+            <input
+              type="checkbox"
+              checked={newProductData.featured}
+              onChange={(e) =>
+                setNewProductData({ ...newProductData, featured: e.target.checked })
+              }
+            />
+            Featured
+          </label>
+        </div>
+        {newProductData.image && (
+          <img
+            src={newProductData.image}
+            alt="Preview"
+            className="w-32 h-32 object-cover mt-4 border rounded"
+          />
+        )}
         <button
-          type="submit"
-          className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
-          disabled={loading}
+          onClick={handleAdd}
+          className="mt-4 bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700"
         >
-          {loading ? 'Submitting...' : 'Add Product'}
+          Add Product
         </button>
-      </form>
+      </div>
+
+      {/* 🛠️ Product List */}
+      <div className="grid gap-4">
+        {products.map((product) => (
+          <div
+            key={product.id}
+            className="bg-gray-100 rounded-lg p-4 flex justify-between items-start"
+          >
+            {editing === product.id ? (
+              <div className="flex-1 grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <input
+                  value={editData.name}
+                  onChange={(e) => setEditData({ ...editData, name: e.target.value })}
+                  placeholder="Name"
+                  className="border p-2 rounded"
+                />
+                <input
+                  value={editData.price}
+                  onChange={(e) => setEditData({ ...editData, price: e.target.value })}
+                  placeholder="Price"
+                  className="border p-2 rounded"
+                />
+                <input
+                  type="file"
+                  accept="image/*"
+                  onChange={(e) => handleImageUpload(e, 'edit')}
+                />
+                <input
+                  value={editData.rating}
+                  onChange={(e) => setEditData({ ...editData, rating: e.target.value })}
+                  placeholder="Rating"
+                  className="border p-2 rounded"
+                />
+                <input
+                  value={editData.reviews}
+                  onChange={(e) => setEditData({ ...editData, reviews: e.target.value })}
+                  placeholder="Reviews"
+                  className="border p-2 rounded"
+                />
+                <label className="flex items-center gap-2 col-span-2">
+                  <input
+                    type="checkbox"
+                    checked={editData.featured}
+                    onChange={(e) =>
+                      setEditData({ ...editData, featured: e.target.checked })
+                    }
+                  />
+                  Featured
+                </label>
+                {editData.image && (
+                  <img
+                    src={editData.image}
+                    alt="Preview"
+                    className="w-32 h-32 object-cover mt-2 border rounded"
+                  />
+                )}
+              </div>
+            ) : (
+              <div className="flex-1">
+                <h3 className="text-lg font-bold">{product.name}</h3>
+                <p>₹{Number(product.price).toFixed(2)}</p>
+                <p>
+                  Rating: {product.rating} ⭐️ ({product.reviews} reviews)
+                </p>
+                {product.featured && (
+                  <p className="text-green-600 font-semibold">🌟 Featured Product</p>
+                )}
+                <img src={product.image} alt={product.name} className="w-32 mt-2" />
+              </div>
+            )}
+
+            <div className="ml-4 flex flex-col gap-2">
+              {editing === product.id ? (
+                <button
+                  onClick={() => handleUpdate(product.id)}
+                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700"
+                >
+                  Save
+                </button>
+              ) : (
+                <button
+                  onClick={() => handleEdit(product)}
+                  className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600"
+                >
+                  Edit
+                </button>
+              )}
+              <button
+                onClick={() => handleDelete(product.id)}
+                className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 };

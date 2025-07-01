@@ -70,7 +70,7 @@ const Cart = () => {
                           {item.name}
                         </h3>
                         <p className="text-blue-600 font-semibold">
-                          ${item.price.toFixed(2)}
+                          ₹{item.price.toFixed(2)}
                         </p>
                       </div>
                       
@@ -94,7 +94,7 @@ const Cart = () => {
                       
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-800">
-                          ${(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toFixed(2)}
                         </p>
                         <button
                           onClick={() => removeFromCart(item.id)}
@@ -120,7 +120,7 @@ const Cart = () => {
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">${getTotalPrice().toFixed(2)}</span>
+                  <span className="font-medium">₹{getTotalPrice().toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
@@ -128,13 +128,13 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tax</span>
-                  <span className="font-medium">${(getTotalPrice() * 0.1).toFixed(2)}</span>
+                  <span className="font-medium">₹{(getTotalPrice() * 0.1).toFixed(2)}</span>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
                     <span className="text-blue-600">
-                      ${(getTotalPrice() * 1.1).toFixed(2)}
+                      ₹{(getTotalPrice() * 1.1).toFixed(2)}
                     </span>
                   </div>
                 </div>
