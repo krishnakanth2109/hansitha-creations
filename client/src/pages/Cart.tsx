@@ -12,12 +12,8 @@ const Cart = () => {
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto text-center">
             <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
-              Your cart is empty
-            </h2>
-            <p className="text-gray-600 mb-8">
-              Looks like you haven't added anything to your cart yet.
-            </p>
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Your cart is empty</h2>
+            <p className="text-gray-600 mb-8">Looks like you haven't added anything yet.</p>
             <Link
               to="/shop"
               className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
@@ -69,7 +65,7 @@ const Cart = () => {
                           {item.name}
                         </h3>
                         <p className="text-blue-600 font-semibold">
-                          ₹{item.price.toFixed(2)}
+                          ₹{item.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
                         </p>
                       </div>
 
@@ -80,9 +76,7 @@ const Cart = () => {
                         >
                           <Minus className="w-4 h-4 text-gray-600" />
                         </button>
-                        <span className="w-12 text-center font-medium">
-                          {item.quantity}
-                        </span>
+                        <span className="w-12 text-center font-medium">{item.quantity}</span>
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity + 1)}
                           className="p-1 rounded-full hover:bg-gray-100 transition-colors"
@@ -93,7 +87,9 @@ const Cart = () => {
 
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-800">
-                          ₹{(item.price * item.quantity).toFixed(2)}
+                          ₹{(item.price * item.quantity).toLocaleString('en-IN', {
+                            minimumFractionDigits: 2,
+                          })}
                         </p>
                         <button
                           onClick={() => removeFromCart(item.id)}
@@ -112,14 +108,14 @@ const Cart = () => {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">
-                Order Summary
-              </h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">Order Summary</h2>
 
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
-                  <span className="font-medium">₹{getTotalPrice().toFixed(2)}</span>
+                  <span className="font-medium">
+                    ₹{getTotalPrice().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Shipping</span>
@@ -127,13 +123,17 @@ const Cart = () => {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tax</span>
-                  <span className="font-medium">₹{(getTotalPrice() * 0.1).toFixed(2)}</span>
+                  <span className="font-medium">
+                    ₹{(getTotalPrice() * 0.1).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                  </span>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
                     <span className="text-blue-600">
-                      ₹{(getTotalPrice() * 1.1).toFixed(2)}
+                      ₹{(getTotalPrice() * 1.1).toLocaleString('en-IN', {
+                        minimumFractionDigits: 2,
+                      })}
                     </span>
                   </div>
                 </div>

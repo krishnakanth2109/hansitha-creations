@@ -1,7 +1,7 @@
 import React, { createContext, useEffect, useState, ReactNode } from 'react';
 import axios from 'axios';
 
-// ✅ Define the Product type including rating and reviews
+// ✅ Define the Product type
 export type Product = {
   _id: string;
   name: string;
@@ -13,7 +13,7 @@ export type Product = {
   reviews: number;
 };
 
-// ✅ Define context type
+// ✅ Context type
 type ProductContextType = {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
@@ -29,7 +29,7 @@ export const ProductContext = createContext<ProductContextType>({
   featured: [],
 });
 
-// ✅ Provider component
+// ✅ Provider
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -38,9 +38,14 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     const fetchProducts = async () => {
       try {
         const res = await axios.get('/api/products');
-        setProducts(res.data);
+        if (Array.isArray(res.data)) {
+          setProducts(res.data);
+        } else {
+          setProducts([]); // fallback if server sends unexpected type
+        }
       } catch (err) {
         console.error('Error fetching products:', err);
+        setProducts([]); // ensure fallback array on error
       } finally {
         setLoading(false);
       }
@@ -49,7 +54,9 @@ export const ProductProvider = ({ children }: { children: ReactNode }) => {
     fetchProducts();
   }, []);
 
-  const featured = products.filter((p) => p.featured);
+  const featured = Array.isArray(products)
+    ? products.filter((p) => p.featured)
+    : [];
 
   return (
     <ProductContext.Provider value={{ products, setProducts, loading, featured }}>
