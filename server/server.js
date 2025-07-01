@@ -7,14 +7,35 @@ const dotenv = require("dotenv");
 dotenv.config();
 
 const app = express();
+
+// 🛠 Make sure product.routes.js and product.model.js are correctly named
+const productRoutes = require('./product.route');
+
+// Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/products', productRoutes); // ✅ mount products route
 
-const MONGO_URI = process.env.MONGO_URI;
-mongoose.connect(MONGO_URI, { useNewUrlParser: true, useUnifiedTopology: true })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+// MongoDB
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true
+})
+.then(() => console.log("MongoDB connected"))
+.catch((err) => console.error("MongoDB connection error:", err));
 
+// Cloudinary config
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
+
+// Multer
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Carousel Image Schema
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
   imageUrl: { type: String, default: "" },
@@ -23,17 +44,9 @@ const ImageSchema = new mongoose.Schema({
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
 
-// Cloudinary Config
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_KEY,
-  api_secret: process.env.CLOUD_SECRET,
-});
 
-// Multer Config
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
 
+// Carousel Upload
 app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   try {
     const { carouselId, heading, subtext } = req.body;
@@ -59,6 +72,7 @@ app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   }
 });
 
+// Carousel Delete
 app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
     const { carouselId } = req.params;
@@ -72,6 +86,7 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   }
 });
 
+// Get carousel images
 app.get("/api/carousel-images", async (req, res) => {
   try {
     const images = await ImageModel.find({});
@@ -82,15 +97,13 @@ app.get("/api/carousel-images", async (req, res) => {
   }
 });
 
-const PORT = process.env.PORT || 5000;
-// Newsletter Schema & Model
+// Newsletter schema
 const NewsletterSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   subscribedAt: { type: Date, default: Date.now },
 });
 const Newsletter = mongoose.model("Newsletter", NewsletterSchema, "Newsletters");
 
-// Subscribe Route
 app.post("/api/newsletter", async (req, res) => {
   const { email } = req.body;
   if (!email) return res.status(400).json({ message: "Email is required" });
@@ -110,4 +123,6 @@ app.post("/api/newsletter", async (req, res) => {
   }
 });
 
+// Start server
+const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

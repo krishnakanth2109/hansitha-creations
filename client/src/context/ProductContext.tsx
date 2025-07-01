@@ -1,79 +1,59 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode
-} from 'react';
+import React, { createContext, useEffect, useState, ReactNode } from 'react';
+import axios from 'axios';
 
-export interface Product {
-  id: number;
+// ✅ Define the Product type including rating and reviews
+export type Product = {
+  _id: string;
   name: string;
   price: number;
   image: string;
+  description?: string;
+  featured?: boolean;
   rating: number;
   reviews: number;
-  featured: boolean;
-}
+};
 
-interface ProductContextType {
+// ✅ Define context type
+type ProductContextType = {
   products: Product[];
   setProducts: React.Dispatch<React.SetStateAction<Product[]>>;
   loading: boolean;
-}
+  featured: Product[];
+};
 
-const ProductContext = createContext<ProductContextType | undefined>(undefined);
+// ✅ Create context
+export const ProductContext = createContext<ProductContextType>({
+  products: [],
+  setProducts: () => {},
+  loading: true,
+  featured: [],
+});
 
+// ✅ Provider component
 export const ProductProvider = ({ children }: { children: ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const stored = localStorage.getItem('products');
-    if (stored) {
-      setProducts(JSON.parse(stored));
-    } else {
-      setProducts([
-        {
-          id: 1,
-          name: 'Wireless Headphones',
-          price: 99.99,
-          image:
-            'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop',
-          rating: 4.5,
-          reviews: 128,
-          featured: true
-        },
-        {
-          id: 2,
-          name: 'Smart Watch',
-          price: 249.99,
-          image:
-            'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=300&h=300&fit=crop',
-          rating: 4.8,
-          reviews: 89,
-          featured: false
-        }
-      ]);
-    }
-    setLoading(false);
+    const fetchProducts = async () => {
+      try {
+        const res = await axios.get('/api/products');
+        setProducts(res.data);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
   }, []);
 
-  useEffect(() => {
-    if (!loading) {
-      localStorage.setItem('products', JSON.stringify(products));
-    }
-  }, [products, loading]);
+  const featured = products.filter((p) => p.featured);
 
   return (
-    <ProductContext.Provider value={{ products, setProducts, loading }}>
+    <ProductContext.Provider value={{ products, setProducts, loading, featured }}>
       {children}
     </ProductContext.Provider>
   );
-};
-
-export const useProductContext = () => {
-  const context = useContext(ProductContext);
-  if (!context) throw new Error('useProductContext must be used within a ProductProvider');
-  return context;
 };

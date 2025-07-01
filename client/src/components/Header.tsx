@@ -2,18 +2,22 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, ChevronDown, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { useUser, UserButton, SignOutButton } from '@clerk/clerk-react';
-
+import { useUser, SignOutButton } from '@clerk/clerk-react';
 
 const Header = () => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { cartItems } = useCart();
+  const { cart } = useCart(); // ✅ renamed from cartItems
   const navigate = useNavigate();
 
-  const totalItems = cartItems.reduce((sum, item) => sum + item.quantity, 0);
+  const totalItems = Array.isArray(cart)
+    ? cart.reduce((sum, item) => sum + item.quantity, 0)
+    : 0;
+
+  const { isSignedIn } = useUser();
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
   const navigationItems = [
     { title: 'Home', href: '/' },
@@ -78,13 +82,8 @@ const Header = () => {
     }
   };
 
-  const { isSignedIn } = useUser();
-
-  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
-
   return (
     <header className="bg-white/70 backdrop-blur-sm border-b border-pink-100 sticky top-0 z-50">
-      {/* Top banner */}
       <div className="bg-gradient-to-r from-pink-500 to-purple-600 text-white text-center py-2 text-sm">
         Get up to 50% off new season styles - Limited time only!
       </div>
@@ -224,7 +223,6 @@ const Header = () => {
                       </SignOutButton>
                     </div>
                   </div>
-
                 ) : (
                   <Link
                     to="/login"
@@ -248,7 +246,6 @@ const Header = () => {
                 </Link>
               </>
             )}
-
             <button onClick={toggleMobileSearch} className="md:hidden text-gray-700 hover:text-blue-600 transition-colors">
               <Search className="w-5 h-5" />
             </button>
@@ -257,6 +254,8 @@ const Header = () => {
             </button>
           </div>
         </div>
+
+        {/* Mobile Nav */}
         {isMobileMenuOpen && (
           <div className="md:hidden bg-white border-t border-gray-200 py-4">
             {navigationItems.map((item) => (
@@ -269,7 +268,6 @@ const Header = () => {
                   {item.dropdown && <ChevronDown className="w-4 h-4" />}
                 </button>
 
-                {/* Dropdown in Mobile */}
                 {item.dropdown && activeDropdown === item.title && (
                   <div className="bg-gray-50 py-2">
                     {item.dropdown.map((dropdownItem) => (
@@ -303,7 +301,6 @@ const Header = () => {
             ))}
           </div>
         )}
-
       </div>
     </header>
   );

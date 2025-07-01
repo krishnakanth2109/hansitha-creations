@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { Link } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
@@ -35,7 +34,7 @@ const Cart = () => {
     <div className="min-h-screen bg-gray-50 py-8">
       <div className="container mx-auto px-4">
         <h1 className="text-3xl font-bold text-gray-800 mb-8">Shopping Cart</h1>
-        
+
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Cart Items */}
           <div className="lg:col-span-2">
@@ -52,7 +51,7 @@ const Cart = () => {
                     Clear All
                   </button>
                 </div>
-                
+
                 <div className="space-y-4">
                   {cartItems.map((item) => (
                     <div
@@ -64,7 +63,7 @@ const Cart = () => {
                         alt={item.name}
                         className="w-16 h-16 object-cover rounded-lg"
                       />
-                      
+
                       <div className="flex-1 min-w-0">
                         <h3 className="text-lg font-medium text-gray-800 truncate">
                           {item.name}
@@ -73,7 +72,7 @@ const Cart = () => {
                           ₹{item.price.toFixed(2)}
                         </p>
                       </div>
-                      
+
                       <div className="flex items-center space-x-2">
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
@@ -91,7 +90,7 @@ const Cart = () => {
                           <Plus className="w-4 h-4 text-gray-600" />
                         </button>
                       </div>
-                      
+
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-800">
                           ₹{(item.price * item.quantity).toFixed(2)}
@@ -109,14 +108,14 @@ const Cart = () => {
               </div>
             </div>
           </div>
-          
+
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
               <h2 className="text-xl font-semibold text-gray-800 mb-6">
                 Order Summary
               </h2>
-              
+
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
@@ -139,14 +138,14 @@ const Cart = () => {
                   </div>
                 </div>
               </div>
-              
+
               <Link
                 to="/checkout"
                 className="block w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors mb-4 text-center"
               >
                 Proceed to Checkout
               </Link>
-              
+
               <Link
                 to="/shop"
                 className="block text-center text-blue-600 hover:text-blue-700 transition-colors font-medium"
