@@ -1,13 +1,12 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import { Link } from 'react-router-dom';
-import { Star, ShoppingCart, ArrowRight } from 'lucide-react';
 import { useCart } from '../context/CartContext';
-import { Footer } from '@/components/Footer';// adjust the path as needed
+import { Footer } from '@/components/Footer';
 import { PromoSection } from '@/components/PromoSection';
 import { HeroSection } from '@/components/HeroSection';
-import FeaturedProducts from '@/pages/FeaturedProducts'; // adjust the path as needed
+import FeaturedProducts from '@/pages/FeaturedProducts';
 
+const API_URL = import.meta.env.VITE_API_URL;
 
 const Home = () => {
   const { addToCart } = useCart();
@@ -24,8 +23,8 @@ const Home = () => {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        const res = await axios.get("https://hansitha-web-storefront.onrender.com/api/products");
-        setFeaturedProducts(res.data.slice(0, 8)); // top 8 featured
+        const res = await axios.get(`${API_URL}/api/products`);
+        setFeaturedProducts(res.data.slice(0, 8));
       } catch (err) {
         console.error("Failed to fetch products", err);
       }
@@ -37,14 +36,14 @@ const Home = () => {
   useEffect(() => {
     const fetchCarouselImages = async () => {
       try {
-        const res = await axios.get("https://hansitha-web-storefront.onrender.com/api/carousel-images");
+        const res = await axios.get(`${API_URL}/api/carousel-images`);
         const mapping = {
           carousel1: { image: "", heading: "", subtext: "" },
           carousel2: { image: "", heading: "", subtext: "" },
           carousel3: { image: "", heading: "", subtext: "" },
         };
 
-        res.data.forEach((item) => {
+        res.data.forEach((item: any) => {
           if (mapping[item.carouselId]) {
             mapping[item.carouselId] = {
               image: item.imageUrl,

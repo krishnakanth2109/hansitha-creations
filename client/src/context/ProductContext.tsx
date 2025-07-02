@@ -24,6 +24,8 @@ export const ProductContext = createContext<ProductContextType>({
 
 export const useProductContext = () => useContext(ProductContext);
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
@@ -32,11 +34,20 @@ export const ProductProvider: React.FC<{ children: React.ReactNode }> = ({ child
     const fetchProducts = async () => {
       setLoading(true);
       try {
-        const res = await fetch('/api/products');
+        const res = await fetch(`${API_URL}/api/products`);
+
+        if (!res.ok) throw new Error('Network response was not ok');
+
+        const contentType = res.headers.get('Content-Type');
+        if (!contentType || !contentType.includes('application/json')) {
+          throw new Error('Expected JSON, received non-JSON response');
+        }
+
         const data = await res.json();
         setProducts(data);
       } catch (err) {
         console.error('Failed to fetch products:', err);
+        // Optional: toast.error('Failed to load products');
       } finally {
         setLoading(false);
       }
