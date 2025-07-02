@@ -2,6 +2,7 @@ import React, { useContext } from 'react';
 import { ProductContext } from '../context/ProductContext';
 import { Star, ShoppingCart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
+import { toast } from 'react-hot-toast';
 
 const FeaturedProducts: React.FC = () => {
   const { products, loading } = useContext(ProductContext);
@@ -33,11 +34,10 @@ const FeaturedProducts: React.FC = () => {
                 {[...Array(5)].map((_, i) => (
                   <Star
                     key={i}
-                    className={`w-4 h-4 ${
-                      i < Math.floor(product.rating ?? 0)
+                    className={`w-4 h-4 ${i < Math.floor(product.rating ?? 0)
                         ? 'text-yellow-400 fill-current'
                         : 'text-gray-300'
-                    }`}
+                      }`}
                   />
                 ))}
                 <span className="text-sm text-gray-500 ml-2">
@@ -49,18 +49,18 @@ const FeaturedProducts: React.FC = () => {
                   ₹{Number(product.price).toLocaleString('en-IN')}
                 </p>
                 <button
-                  onClick={() =>
+                  onClick={() => {
                     addToCart({
                       id: product._id,
                       name: product.name,
                       price: product.price,
                       image: product.image,
-                    })
-                  }
-                  className="bg-blue-600 text-white px-3 py-1 rounded hover:bg-blue-700 flex items-center gap-1"
+                    });
+                    toast.success(`${product.name} added to cart!`);
+                  }}
+                  className="bg-blue-600 text-white w-full px-4 py-2 rounded-full font-semibold hover:bg-blue-700 active:scale-95 transition duration-200 ease-in-out"
                 >
-                  <ShoppingCart className="w-4 h-4" />
-                  Add
+                  Add to Cart
                 </button>
               </div>
             </div>
