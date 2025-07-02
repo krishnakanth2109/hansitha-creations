@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { ShoppingCart, User, Menu, X, ChevronDown, Search } from 'lucide-react';
 import { useCart } from '../context/CartContext';
@@ -9,15 +9,17 @@ const Header = () => {
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [showMobileSearch, setShowMobileSearch] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
-  const { cart } = useCart(); // ✅ renamed from cartItems
+  const { cart } = useCart();
   const navigate = useNavigate();
+  const { isSignedIn } = useUser();
+  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
+
+  const accountRef = useRef<HTMLDivElement>(null);
+  const sidebarRef = useRef<HTMLDivElement>(null);
 
   const totalItems = Array.isArray(cart)
     ? cart.reduce((sum, item) => sum + item.quantity, 0)
     : 0;
-
-  const { isSignedIn } = useUser();
-  const [showAccountDropdown, setShowAccountDropdown] = useState(false);
 
   const navigationItems = [
     { title: 'Home', href: '/' },
@@ -32,7 +34,7 @@ const Header = () => {
             { title: 'Shirts', href: '/fabrics/men/shirts' },
             { title: 'Pants', href: '/fabrics/men/pants' },
             { title: 'Shoes', href: '/fabrics/men/shoes' },
-          ]
+          ],
         },
         {
           title: 'Women',
@@ -41,11 +43,11 @@ const Header = () => {
             { title: 'Dresses', href: '/fabrics/women/dresses' },
             { title: 'Tops', href: '/fabrics/women/tops' },
             { title: 'Accessories', href: '/fabrics/women/accessories' },
-          ]
+          ],
         },
         { title: 'Kids', href: '/fabrics/kids' },
         { title: 'Sale', href: '/fabrics/sale' },
-      ]
+      ],
     },
     {
       title: 'New Arrivals',
@@ -56,7 +58,7 @@ const Header = () => {
         { title: 'Clothing', href: '/new-arrivals/clothing' },
         { title: 'Home & Garden', href: '/new-arrivals/home-garden' },
         { title: 'Fabrics', href: '/new-arrivals/fabrics' },
-      ]
+      ],
     },
     { title: 'CEO Collections', href: '/collections' },
   ];
@@ -68,10 +70,18 @@ const Header = () => {
   const toggleMobileSearch = () => {
     setShowMobileSearch(!showMobileSearch);
     setIsMobileMenuOpen(false);
+    setShowAccountDropdown(false);
   };
 
   const toggleMobileMenu = () => {
-    setIsMobileMenuOpen(!isMobileMenuOpen);
+    setIsMobileMenuOpen((prev) => !prev);
+    setShowAccountDropdown(false);
+    setShowMobileSearch(false);
+  };
+
+  const toggleAccountDropdown = () => {
+    setShowAccountDropdown((prev) => !prev);
+    setIsMobileMenuOpen(false);
     setShowMobileSearch(false);
   };
 
@@ -81,6 +91,21 @@ const Header = () => {
       setShowMobileSearch(false);
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      const target = e.target as Node;
+      if (accountRef.current && !accountRef.current.contains(target)) {
+        setShowAccountDropdown(false);
+      }
+      if (sidebarRef.current && !sidebarRef.current.contains(target)) {
+        setIsMobileMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
 
   return (
     <header className="bg-white/70 backdrop-blur-sm border-b border-pink-100 sticky top-0 z-50">
@@ -183,20 +208,19 @@ const Header = () => {
             {!showMobileSearch && (
               <>
                 {isSignedIn ? (
-                  <div className="relative">
+                  <div className="relative" ref={accountRef}>
                     <button
-                      onClick={() => setShowAccountDropdown((prev) => !prev)}
+                      onClick={toggleAccountDropdown}
                       className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors"
                     >
                       <User className="w-5 h-5" />
                       <span className="hidden sm:inline">Account</span>
                       <ChevronDown className="w-4 h-4" />
                     </button>
-
                     <div
                       className={`absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-md rounded-lg transform transition-all duration-200 origin-top-right z-50 ${showAccountDropdown
-                          ? 'scale-100 opacity-100 visible'
-                          : 'scale-95 opacity-0 invisible'
+                        ? 'scale-100 opacity-100 visible'
+                        : 'scale-95 opacity-0 invisible'
                         }`}
                     >
                       <Link
@@ -232,6 +256,7 @@ const Header = () => {
                     <span className="hidden sm:inline">Login</span>
                   </Link>
                 )}
+
                 <Link
                   to="/cart"
                   className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors relative"
@@ -257,7 +282,7 @@ const Header = () => {
 
         {/* Mobile Nav */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-white border-t border-gray-200 py-4">
+          <div ref={sidebarRef} className="md:hidden bg-white border-t border-gray-200 py-4">
             {navigationItems.map((item) => (
               <div key={item.title} className="mb-2">
                 <button
