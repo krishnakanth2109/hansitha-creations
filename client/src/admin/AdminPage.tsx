@@ -6,6 +6,7 @@ import AdminProfile from './AdminProfile';
 import { Menu, X } from 'lucide-react';
 import { useUser } from "@clerk/clerk-react";
 import { Navigate, Link } from "react-router-dom";
+import AdminPromoEditor from '../components/AdminPromoEditor';
 
 const AdminPage = () => {
   const { user, isLoaded } = useUser();
@@ -39,6 +40,8 @@ const AdminPage = () => {
         return <AddProduct />;
       case 'carousel':
         return <CarouselManager />;
+        case 'promo':
+      return <AdminPromoEditor />;
       case 'orders':
         return <OrdersDashboard />;
       case 'profile':
@@ -78,6 +81,12 @@ const AdminPage = () => {
         className="block w-full text-left hover:bg-blue-700 p-2 rounded"
       >
         Carousel Images
+      </button>
+      <button
+        onClick={() => { setActiveTab('promo'); setIsMobileSidebarOpen(false); }}
+        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
+      >
+        Promo Editor
       </button>
       <button
         onClick={() => { setActiveTab('orders'); setIsMobileSidebarOpen(false); }}

@@ -22,43 +22,105 @@ const Header = () => {
     : 0;
 
   const navigationItems = [
+    
     { title: 'Home', href: '/' },
     {
       title: 'Fabrics',
       href: '/fabrics',
       dropdown: [
         {
-          title: 'Men',
-          href: '/fabrics/men',
+          title: 'Cotton',
+          href: '/fabrics/Cotton',
           subdropdown: [
-            { title: 'Shirts', href: '/fabrics/men/shirts' },
-            { title: 'Pants', href: '/fabrics/men/pants' },
-            { title: 'Shoes', href: '/fabrics/men/shoes' },
-          ],
+            { title: 'Mul Cotton', href: '/fabrics/cotton/mul-cotton' },
+          { title: '1 Inch Cotton', href: '/fabrics/cotton/1-inch' },
+          { title: '2 Inch Cotton', href: '/fabrics/cotton/2-inch' },
+          { title: 'Kadhi Cotton', href: '/fabrics/cotton/kadhi' },
+          { title: 'Chanderi Cotton', href: '/fabrics/cotton/chanderi' }
+          ]
         },
         {
-          title: 'Women',
-          href: '/fabrics/women',
-          subdropdown: [
-            { title: 'Dresses', href: '/fabrics/women/dresses' },
-            { title: 'Tops', href: '/fabrics/women/tops' },
-            { title: 'Accessories', href: '/fabrics/women/accessories' },
-          ],
+          title: 'Silk',
+        href: '/fabrics/silk',
+        subdropdown: [
+          { title: 'Chanderi Silk', href: '/fabrics/silk/chanderi' },
+          { title: 'Chenoru Silk', href: '/fabrics/silk/chenoru' },
+          { title: 'Soft Silk', href: '/fabrics/silk/soft' },
+          { title: 'Tabu Silk', href: '/fabrics/silk/tabu' }
+          ]
         },
-        { title: 'Kids', href: '/fabrics/kids' },
-        { title: 'Sale', href: '/fabrics/sale' },
-      ],
+        {
+        title: 'Crape',
+        href: '/fabrics/crape',
+        subdropdown: [
+          { title: 'Jute Crape', href: '/fabrics/crape/jute' },
+          { title: 'Soft Jute Crape', href: '/fabrics/crape/soft-jute' },
+          { title: 'Lenin Crape', href: '/fabrics/crape/lenin' },
+          { title: 'Net Crape', href: '/fabrics/crape/net' },
+          { title: 'Crape Checks', href: '/fabrics/crape/checks' },
+          { title: 'Jute Checks', href: '/fabrics/crape/jute-checks' },
+          { title: 'Banaras Crape', href: '/fabrics/crape/banaras' },
+          { title: 'Banaras Booties', href: '/fabrics/crape/booties' },
+          { title: 'Banaras 1 inch Border Crape', href: '/fabrics/crape/1-inch-border' },
+          { title: 'Jute Crape Double Shade', href: '/fabrics/crape/double-shade' },
+          { title: 'Munga Banaras', href: '/fabrics/crape/munga-banaras' },
+          { title: 'Satin Crape', href: '/fabrics/crape/satin' },
+          { title: 'Shimmer Crape', href: '/fabrics/crape/shimmer' },
+          { title: 'Chanderi Crape', href: '/fabrics/crape/chanderi' }
+        ]
+      },
+        {
+        title: 'Kota',
+        href: '/fabrics/kota',
+        subdropdown: [
+          { title: 'Tissue Kota', href: '/fabrics/kota/tissue' },
+          { title: 'Silk Mix Kota', href: '/fabrics/kota/silk-mix' },
+          { title: 'Cotton Mix Kota', href: '/fabrics/kota/cotton-mix' },
+          { title: 'Cotton Zari Kota', href: '/fabrics/kota/cotton-zari' },
+          { title: 'Cotton Pencil Kota', href: '/fabrics/kota/pencil' },
+          { title: 'Cotton 1 1/2 inch Kota', href: '/fabrics/kota/1-half-inch' },
+          { title: 'Kota Checks', href: '/fabrics/kota/checks' },
+          { title: 'Moonga Kota', href: '/fabrics/kota/moonga' },
+          { title: 'Supernet Kota', href: '/fabrics/kota/supernet' },
+          { title: 'Pure Silk Kota', href: '/fabrics/kota/pure-silk' }
+        ]
+      },
+
+       {
+        title: 'Georgette',
+        href: '/fabrics/georgette',
+        subdropdown: [
+          { title: 'Banaras Georgette', href: '/fabrics/georgette/banaras' },
+          { title: 'Georgette with Digital', href: '/fabrics/georgette/digital' },
+          { title: 'Cotton with Digital', href: '/fabrics/georgette/cotton-digital' },
+          { title: 'Mul.Mul with Digital', href: '/fabrics/georgette/mulmul-digital' },
+          { title: 'Shimmer Crape with Digital', href: '/fabrics/georgette/shimmer-digital' }
+        ]
+      },
+      {
+        title: 'Tusser',
+        href: '/fabrics/tusser',
+        subdropdown: [
+          { title: 'Semi Tusser', href: '/fabrics/tusser/semi' },
+          { title: 'Jute Tusser', href: '/fabrics/tusser/jute' },
+          { title: 'Falling Tusser', href: '/fabrics/tusser/falling' }
+        ]
+      },
+      {
+        title: 'Handlooms',
+        href: '/fabrics/handlooms',
+        subdropdown: [
+          { title: 'Kalamkari with Handlooms', href: '/fabrics/handlooms/kalamkari' },
+          { title: 'Pondur Khadi', href: '/fabrics/handlooms/pondur-khadi' },
+          { title: 'Mangalgiri Handlooms', href: '/fabrics/handlooms/mangalgiri' }
+        ]
+      },
+      
+      ]
     },
     {
       title: 'New Arrivals',
       href: '/new-arrivals',
-      dropdown: [
-        { title: 'All Products', href: '/new-arrivals' },
-        { title: 'Electronics', href: '/new-arrivals/electronics' },
-        { title: 'Clothing', href: '/new-arrivals/clothing' },
-        { title: 'Home & Garden', href: '/new-arrivals/home-garden' },
-        { title: 'Fabrics', href: '/new-arrivals/fabrics' },
-      ],
     },
     { title: 'CEO Collections', href: '/collections' },
   ];
@@ -163,7 +225,7 @@ const Header = () => {
                           </div>
                         </Link>
                         {'subdropdown' in dropdownItem && (
-                          <div className="absolute left-full top-0 bg-white shadow-lg rounded-lg py-2 w-40 opacity-0 invisible group-hover/sub:opacity-100 group-hover/sub:visible transition-all duration-200">
+                          <div className="absolute left-full top-0 bg-white shadow-lg rounded-lg py-2 min-w-[300px] grid grid-cols-2 gap-1 opacity-0 invisible group-hover/sub:opacity-100 group-hover/sub:visible transition-all duration-200">
                             {dropdownItem.subdropdown.map((subItem) => (
                               <Link
                                 key={subItem.title}

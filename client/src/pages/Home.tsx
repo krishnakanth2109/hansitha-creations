@@ -5,6 +5,7 @@ import { Footer } from '@/components/Footer';
 import { PromoSection } from '@/components/PromoSection';
 import { HeroSection } from '@/components/HeroSection';
 import FeaturedProducts from '@/pages/FeaturedProducts';
+import { HeroPromo } from '@/components/HeroPromo';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -95,6 +96,7 @@ const Home = () => {
   return (
     <div className="min-h-screen bg-gray-50">
       <HeroSection />
+      <HeroPromo />
       <FeaturedProducts />
       <PromoSection />
       <Footer />

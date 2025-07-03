@@ -1,3 +1,4 @@
+const heroPromoRoutes = require('./heroPromo.route'); 
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -15,6 +16,7 @@ const productRoutes = require('./product.route');
 app.use(cors());
 app.use(express.json());
 app.use('/api/products', productRoutes); // ✅ mount products route
+app.use('/api/hero-promos', heroPromoRoutes); 
 
 // MongoDB
 mongoose.connect(process.env.MONGO_URI, {
