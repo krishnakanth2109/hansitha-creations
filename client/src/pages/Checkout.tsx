@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Lock, MapPin, User } from 'lucide-react';
+import axios from 'axios';
 
 interface CheckoutFormData {
   email: string;
@@ -80,7 +81,8 @@ const Checkout = () => {
   };
 
   const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatCardNumber(e.target.value);
+    const value = e.target.value.replace(/\D/g, '');
+    const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
     setFormData(prev => ({ ...prev, cardNumber: formatted }));
   };
 
@@ -131,7 +133,17 @@ const Checkout = () => {
     setIsProcessing(true);
 
     try {
-      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate payment delay
+      const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+
+      await axios.post('/api/orders/place-order', {
+        products: cartItems.map(item => ({
+          name: item.name,
+          quantity: item.quantity,
+          price: item.price,
+        })),
+      });
+
+      localStorage.setItem('lastOrderNumber', orderNumber);
       clearCart();
       toast({ title: 'Order Placed Successfully!', description: 'Thank you for your purchase!' });
       navigate('/order-confirmation');
@@ -165,10 +177,9 @@ const Checkout = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-6xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left - Form */}
             <div className="space-y-6">
-              {/* Contact Info */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -185,7 +196,6 @@ const Checkout = () => {
                 </CardContent>
               </Card>
 
-              {/* Shipping */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -202,7 +212,6 @@ const Checkout = () => {
                 </CardContent>
               </Card>
 
-              {/* Payment */}
               <Card>
                 <CardHeader>
                   <CardTitle className="flex items-center gap-2">
@@ -252,7 +261,7 @@ const Checkout = () => {
                       </div>
                     </div>
 
-                    <Button onClick={handleSubmit} className="w-full" disabled={isProcessing}>
+                    <Button type="submit" className="w-full" disabled={isProcessing}>
                       {isProcessing ? (
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -273,7 +282,7 @@ const Checkout = () => {
                 </CardContent>
               </Card>
             </div>
-          </div>
+          </form>
         </div>
       </div>
     </div>
@@ -282,7 +291,6 @@ const Checkout = () => {
 
 export default Checkout;
 
-// Utility components
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>

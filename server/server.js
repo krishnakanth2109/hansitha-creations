@@ -1,4 +1,3 @@
-const heroPromoRoutes = require('./heroPromo.route'); 
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -9,22 +8,28 @@ dotenv.config();
 
 const app = express();
 
-// 🛠 Make sure product.routes.js and product.model.js are correctly named
-const productRoutes = require('./product.route');
+// Import routes and controllers
+const heroPromoRoutes = require("./heroPromo.route");
+const productRoutes = require("./product.route");
+const orderRoutes = require("./routes/orderRoutes");
 
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/api/products', productRoutes); // ✅ mount products route
-app.use('/api/hero-promos', heroPromoRoutes); 
+
+// API Routes
+app.use("/api/products", productRoutes);
+app.use("/api/hero-promos", heroPromoRoutes);
+app.use("/api/orders", orderRoutes); // <-- Order email handling
 
 // MongoDB
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true
-})
-.then(() => console.log("MongoDB connected"))
-.catch((err) => console.error("MongoDB connection error:", err));
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+  })
+  .then(() => console.log("MongoDB connected"))
+  .catch((err) => console.error("MongoDB connection error:", err));
 
 // Cloudinary config
 cloudinary.config({
@@ -37,7 +42,7 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Carousel Image Schema
+// Carousel Schema
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
   imageUrl: { type: String, default: "" },
@@ -46,20 +51,21 @@ const ImageSchema = new mongoose.Schema({
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
 
-
-
 // Carousel Upload
 app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   try {
     const { carouselId, heading, subtext } = req.body;
-    if (!carouselId) return res.status(400).json({ message: "Missing carouselId" });
+    if (!carouselId)
+      return res.status(400).json({ message: "Missing carouselId" });
 
     let existing = await ImageModel.findOne({ carouselId });
     if (!existing) existing = new ImageModel({ carouselId });
 
     if (req.file) {
       const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
-      const result = await cloudinary.uploader.upload(base64, { folder: "carousel_images" });
+      const result = await cloudinary.uploader.upload(base64, {
+        folder: "carousel_images",
+      });
       existing.imageUrl = result.secure_url;
     }
 
@@ -79,7 +85,8 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
     const { carouselId } = req.params;
     const deleted = await ImageModel.findOneAndDelete({ carouselId });
-    if (!deleted) return res.status(404).json({ success: false, message: "Carousel not found" });
+    if (!deleted)
+      return res.status(404).json({ success: false, message: "Carousel not found" });
 
     res.json({ success: true, message: "Carousel deleted successfully." });
   } catch (error) {
@@ -99,7 +106,7 @@ app.get("/api/carousel-images", async (req, res) => {
   }
 });
 
-// Newsletter schema
+// Newsletter Schema
 const NewsletterSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   subscribedAt: { type: Date, default: Date.now },
@@ -125,6 +132,6 @@ app.post("/api/newsletter", async (req, res) => {
   }
 });
 
-// Start server
+// Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));

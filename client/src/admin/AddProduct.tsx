@@ -5,6 +5,18 @@ import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const categoryOptions = [
+  'Cotton',
+  'Silk',
+  'Crape',
+  'Kota',
+  'Georgette',
+  'Tusser',
+  'Handlooms',
+  'New Arrivals',
+  'CEO Collections',
+];
+
 const AddProduct: React.FC = () => {
   const { products, setProducts } = useContext(ProductContext);
 
@@ -12,6 +24,8 @@ const AddProduct: React.FC = () => {
   const [price, setPrice] = useState('');
   const [rating, setRating] = useState('');
   const [reviews, setReviews] = useState('');
+  const [stock, setStock] = useState('');
+  const [category, setCategory] = useState('');
   const [featured, setFeatured] = useState(false);
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
@@ -44,6 +58,11 @@ const AddProduct: React.FC = () => {
         return;
       }
 
+      if (!category) {
+        toast.error('Please select a category');
+        return;
+      }
+
       if (imageFile) {
         imageUrl = await uploadImageToCloudinary(imageFile);
       }
@@ -53,7 +72,9 @@ const AddProduct: React.FC = () => {
         price: Number(price),
         rating: Number(rating),
         reviews: Number(reviews),
+        stock: Number(stock),
         featured,
+        category,
         ...(imageUrl && { image: imageUrl }),
       };
 
@@ -86,12 +107,7 @@ const AddProduct: React.FC = () => {
         toast.success('Product added!');
       }
 
-      setName('');
-      setPrice('');
-      setRating('');
-      setReviews('');
-      setFeatured(false);
-      setImageFile(null);
+      resetForm();
     } catch (err) {
       console.error(err);
       toast.error('Something went wrong. Please try again.');
@@ -100,13 +116,27 @@ const AddProduct: React.FC = () => {
     }
   };
 
+  const resetForm = () => {
+    setName('');
+    setPrice('');
+    setRating('');
+    setReviews('');
+    setStock('');
+    setFeatured(false);
+    setCategory('');
+    setImageFile(null);
+    setEditingId(null);
+  };
+
   const handleEdit = (product: any) => {
     setEditingId(product._id);
     setName(product.name);
     setPrice(product.price.toString());
     setRating(product.rating.toString());
     setReviews(product.reviews.toString());
+    setStock(product.stock?.toString() || '');
     setFeatured(product.featured);
+    setCategory(product.category || '');
     setImageFile(null);
   };
 
@@ -130,7 +160,7 @@ const AddProduct: React.FC = () => {
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">Add Product</h2>
+      <h2 className="text-2xl font-bold mb-4">{editingId ? 'Edit Product' : 'Add Product'}</h2>
       <form onSubmit={handleSubmit} className="space-y-4">
         <input
           type="text"
@@ -162,6 +192,27 @@ const AddProduct: React.FC = () => {
           onChange={(e) => setReviews(e.target.value)}
           className="w-full border p-2 rounded"
         />
+        <input
+          type="number"
+          placeholder="Stock"
+          value={stock}
+          onChange={(e) => setStock(e.target.value)}
+          required
+          className="w-full border p-2 rounded"
+        />
+        <select
+          value={category}
+          onChange={(e) => setCategory(e.target.value)}
+          required
+          className="w-full border p-2 rounded"
+        >
+          <option value="">Select Category</option>
+          {categoryOptions.map((cat) => (
+            <option key={cat} value={cat}>
+              {cat}
+            </option>
+          ))}
+        </select>
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -212,73 +263,14 @@ const AddProduct: React.FC = () => {
               />
               <div className="flex-1">
                 {isEditing ? (
-                  <>
-                    <input
-                      type="text"
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="w-full border p-2 mb-2 rounded"
-                    />
-                    <input
-                      type="number"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      className="w-full border p-2 mb-2 rounded"
-                    />
-                    <input
-                      type="number"
-                      value={rating}
-                      onChange={(e) => setRating(e.target.value)}
-                      className="w-full border p-2 mb-2 rounded"
-                    />
-                    <input
-                      type="number"
-                      value={reviews}
-                      onChange={(e) => setReviews(e.target.value)}
-                      className="w-full border p-2 mb-2 rounded"
-                    />
-                    <label className="flex items-center gap-2 mb-2">
-                      <input
-                        type="checkbox"
-                        checked={featured}
-                        onChange={(e) => setFeatured(e.target.checked)}
-                      />
-                      Featured Product
-                    </label>
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={(e) => setImageFile(e.target.files?.[0] || null)}
-                      className="mb-2"
-                    />
-                    <div className="flex gap-2">
-                      <button
-                        className="bg-green-600 text-white px-3 py-1 rounded"
-                        onClick={handleSubmit}
-                      >
-                        Save
-                      </button>
-                      <button
-                        className="bg-gray-500 text-white px-3 py-1 rounded"
-                        onClick={() => {
-                          setEditingId(null);
-                          setName('');
-                          setPrice('');
-                          setRating('');
-                          setReviews('');
-                          setFeatured(false);
-                          setImageFile(null);
-                        }}
-                      >
-                        Cancel
-                      </button>
-                    </div>
-                  </>
+                  <p className="text-gray-500">Editing this product above ↑</p>
                 ) : (
                   <>
                     <h4 className="font-bold">{product.name}</h4>
                     <p>₹{product.price.toLocaleString('en-IN')}</p>
                     <p>Rating: {product.rating} ⭐ ({product.reviews} reviews)</p>
+                    <p>Stock: {product.stock}</p>
+                    <p>Category: {product.category}</p>
                     <p>{product.featured ? '🌟 Featured' : ''}</p>
                     <div className="mt-2 flex gap-2">
                       <button

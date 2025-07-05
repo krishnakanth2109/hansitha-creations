@@ -8,6 +8,8 @@ interface Product {
   rating?: number;
   reviews?: number;
   featured?: boolean;
+  category: string; // ✅ required to show category in UI
+  stock: number;    // ✅ required to show stock and handle stock-based logic
 }
 
 interface ProductContextType {
@@ -18,7 +20,7 @@ interface ProductContextType {
 
 export const ProductContext = createContext<ProductContextType>({
   products: [],
-  setProducts: () => {},
+  setProducts: () => { },
   loading: false,
 });
 

@@ -22,106 +22,20 @@ const Header = () => {
     : 0;
 
   const navigationItems = [
-    
     { title: 'Home', href: '/' },
     {
       title: 'Fabrics',
-      href: '/fabrics',
       dropdown: [
-        {
-          title: 'Cotton',
-          href: '/fabrics/Cotton',
-          subdropdown: [
-            { title: 'Mul Cotton', href: '/fabrics/cotton/mul-cotton' },
-          { title: '1 Inch Cotton', href: '/fabrics/cotton/1-inch' },
-          { title: '2 Inch Cotton', href: '/fabrics/cotton/2-inch' },
-          { title: 'Kadhi Cotton', href: '/fabrics/cotton/kadhi' },
-          { title: 'Chanderi Cotton', href: '/fabrics/cotton/chanderi' }
-          ]
-        },
-        {
-          title: 'Silk',
-        href: '/fabrics/silk',
-        subdropdown: [
-          { title: 'Chanderi Silk', href: '/fabrics/silk/chanderi' },
-          { title: 'Chenoru Silk', href: '/fabrics/silk/chenoru' },
-          { title: 'Soft Silk', href: '/fabrics/silk/soft' },
-          { title: 'Tabu Silk', href: '/fabrics/silk/tabu' }
-          ]
-        },
-        {
-        title: 'Crape',
-        href: '/fabrics/crape',
-        subdropdown: [
-          { title: 'Jute Crape', href: '/fabrics/crape/jute' },
-          { title: 'Soft Jute Crape', href: '/fabrics/crape/soft-jute' },
-          { title: 'Lenin Crape', href: '/fabrics/crape/lenin' },
-          { title: 'Net Crape', href: '/fabrics/crape/net' },
-          { title: 'Crape Checks', href: '/fabrics/crape/checks' },
-          { title: 'Jute Checks', href: '/fabrics/crape/jute-checks' },
-          { title: 'Banaras Crape', href: '/fabrics/crape/banaras' },
-          { title: 'Banaras Booties', href: '/fabrics/crape/booties' },
-          { title: 'Banaras 1 inch Border Crape', href: '/fabrics/crape/1-inch-border' },
-          { title: 'Jute Crape Double Shade', href: '/fabrics/crape/double-shade' },
-          { title: 'Munga Banaras', href: '/fabrics/crape/munga-banaras' },
-          { title: 'Satin Crape', href: '/fabrics/crape/satin' },
-          { title: 'Shimmer Crape', href: '/fabrics/crape/shimmer' },
-          { title: 'Chanderi Crape', href: '/fabrics/crape/chanderi' }
-        ]
-      },
-        {
-        title: 'Kota',
-        href: '/fabrics/kota',
-        subdropdown: [
-          { title: 'Tissue Kota', href: '/fabrics/kota/tissue' },
-          { title: 'Silk Mix Kota', href: '/fabrics/kota/silk-mix' },
-          { title: 'Cotton Mix Kota', href: '/fabrics/kota/cotton-mix' },
-          { title: 'Cotton Zari Kota', href: '/fabrics/kota/cotton-zari' },
-          { title: 'Cotton Pencil Kota', href: '/fabrics/kota/pencil' },
-          { title: 'Cotton 1 1/2 inch Kota', href: '/fabrics/kota/1-half-inch' },
-          { title: 'Kota Checks', href: '/fabrics/kota/checks' },
-          { title: 'Moonga Kota', href: '/fabrics/kota/moonga' },
-          { title: 'Supernet Kota', href: '/fabrics/kota/supernet' },
-          { title: 'Pure Silk Kota', href: '/fabrics/kota/pure-silk' }
-        ]
-      },
-
-       {
-        title: 'Georgette',
-        href: '/fabrics/georgette',
-        subdropdown: [
-          { title: 'Banaras Georgette', href: '/fabrics/georgette/banaras' },
-          { title: 'Georgette with Digital', href: '/fabrics/georgette/digital' },
-          { title: 'Cotton with Digital', href: '/fabrics/georgette/cotton-digital' },
-          { title: 'Mul.Mul with Digital', href: '/fabrics/georgette/mulmul-digital' },
-          { title: 'Shimmer Crape with Digital', href: '/fabrics/georgette/shimmer-digital' }
-        ]
-      },
-      {
-        title: 'Tusser',
-        href: '/fabrics/tusser',
-        subdropdown: [
-          { title: 'Semi Tusser', href: '/fabrics/tusser/semi' },
-          { title: 'Jute Tusser', href: '/fabrics/tusser/jute' },
-          { title: 'Falling Tusser', href: '/fabrics/tusser/falling' }
-        ]
-      },
-      {
-        title: 'Handlooms',
-        href: '/fabrics/handlooms',
-        subdropdown: [
-          { title: 'Kalamkari with Handlooms', href: '/fabrics/handlooms/kalamkari' },
-          { title: 'Pondur Khadi', href: '/fabrics/handlooms/pondur-khadi' },
-          { title: 'Mangalgiri Handlooms', href: '/fabrics/handlooms/mangalgiri' }
-        ]
-      },
-      
+        { title: 'Cotton', href: '/fabrics/Cotton' },
+        { title: 'Silk', href: '/fabrics/Silk' },
+        { title: 'Crape', href: '/fabrics/Crape' },
+        { title: 'Kota', href: '/fabrics/Kota' },
+        { title: 'Georgette', href: '/fabrics/Georgette' },
+        { title: 'Tusser', href: '/fabrics/Tusser' },
+        { title: 'Handlooms', href: '/fabrics/Handlooms' },
       ]
     },
-    {
-      title: 'New Arrivals',
-      href: '/new-arrivals',
-    },
+    { title: 'New Arrivals', href: '/new-arrivals' },
     { title: 'CEO Collections', href: '/collections' },
   ];
 
@@ -197,47 +111,41 @@ const Header = () => {
           <nav className="hidden md:flex items-center space-x-8">
             {navigationItems.map((item) => (
               <div key={item.title} className="relative group">
-                <Link
-                  to={item.href}
-                  className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors py-2"
+                <div
+                  className="flex items-center space-x-1 text-gray-700 hover:text-blue-600 transition-colors py-2 cursor-pointer"
                   onMouseEnter={() => setActiveDropdown(item.title)}
                   onMouseLeave={() => setActiveDropdown(null)}
                 >
-                  <span>{item.title}</span>
-                  {item.dropdown && <ChevronDown className="w-4 h-4" />}
-                </Link>
+                  {item.href ? (
+                    <Link to={item.href}>
+                      <span>{item.title}</span>
+                    </Link>
+                  ) : (
+                    <>
+                      <span>{item.title}</span>
+                      {item.dropdown && <ChevronDown className="w-4 h-4" />}
+                    </>
+                  )}
+                </div>
+
                 {item.dropdown && (
                   <div
-                    className={`absolute top-full left-0 bg-white shadow-lg rounded-lg py-2 w-48 transition-all duration-200 ${activeDropdown === item.title ? 'opacity-100 visible translate-y-0' : 'opacity-0 invisible -translate-y-2'
-                      }`}
+                    className={`absolute top-full left-0 bg-white shadow-lg rounded-lg py-2 w-48 transition-all duration-200 ${
+                      activeDropdown === item.title
+                        ? 'opacity-100 visible translate-y-0'
+                        : 'opacity-0 invisible -translate-y-2'
+                    }`}
                     onMouseEnter={() => setActiveDropdown(item.title)}
                     onMouseLeave={() => setActiveDropdown(null)}
                   >
                     {item.dropdown.map((dropdownItem) => (
-                      <div key={dropdownItem.title} className="relative group/sub">
-                        <Link
-                          to={dropdownItem.href}
-                          className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                        >
-                          <div className="flex items-center justify-between">
-                            <span>{dropdownItem.title}</span>
-                            {'subdropdown' in dropdownItem && <ChevronDown className="w-3 h-3" />}
-                          </div>
-                        </Link>
-                        {'subdropdown' in dropdownItem && (
-                          <div className="absolute left-full top-0 bg-white shadow-lg rounded-lg py-2 min-w-[300px] grid grid-cols-2 gap-1 opacity-0 invisible group-hover/sub:opacity-100 group-hover/sub:visible transition-all duration-200">
-                            {dropdownItem.subdropdown.map((subItem) => (
-                              <Link
-                                key={subItem.title}
-                                to={subItem.href}
-                                className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                              >
-                                {subItem.title}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <Link
+                        key={dropdownItem.title}
+                        to={dropdownItem.href}
+                        className="block px-4 py-2 text-gray-700 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                      >
+                        {dropdownItem.title}
+                      </Link>
                     ))}
                   </div>
                 )}
@@ -246,7 +154,11 @@ const Header = () => {
           </nav>
 
           <Link to="/" className="flex justify-center mx-auto">
-            <img src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png" alt="Hansitha Logo" className="h-16 w-auto mx-auto" />
+            <img
+              src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png"
+              alt="Hansitha Logo"
+              className="h-16 w-auto mx-auto"
+            />
           </Link>
 
           <div className="relative hidden md:block">
@@ -280,10 +192,11 @@ const Header = () => {
                       <ChevronDown className="w-4 h-4" />
                     </button>
                     <div
-                      className={`absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-md rounded-lg transform transition-all duration-200 origin-top-right z-50 ${showAccountDropdown
-                        ? 'scale-100 opacity-100 visible'
-                        : 'scale-95 opacity-0 invisible'
-                        }`}
+                      className={`absolute right-0 mt-2 w-40 bg-white border border-gray-200 shadow-md rounded-lg transform transition-all duration-200 origin-top-right z-50 ${
+                        showAccountDropdown
+                          ? 'scale-100 opacity-100 visible'
+                          : 'scale-95 opacity-0 invisible'
+                      }`}
                     >
                       <Link
                         to="/account"
@@ -358,29 +271,14 @@ const Header = () => {
                 {item.dropdown && activeDropdown === item.title && (
                   <div className="bg-gray-50 py-2">
                     {item.dropdown.map((dropdownItem) => (
-                      <div key={dropdownItem.title}>
-                        <Link
-                          to={dropdownItem.href}
-                          className="block px-8 py-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                          onClick={() => setIsMobileMenuOpen(false)}
-                        >
-                          {dropdownItem.title}
-                        </Link>
-                        {'subdropdown' in dropdownItem && (
-                          <div className="bg-gray-100">
-                            {dropdownItem.subdropdown.map((subItem) => (
-                              <Link
-                                key={subItem.title}
-                                to={subItem.href}
-                                className="block px-12 py-1 text-sm text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                              >
-                                {subItem.title}
-                              </Link>
-                            ))}
-                          </div>
-                        )}
-                      </div>
+                      <Link
+                        key={dropdownItem.title}
+                        to={dropdownItem.href}
+                        className="block px-8 py-2 text-gray-600 hover:bg-blue-50 hover:text-blue-600 transition-colors"
+                        onClick={() => setIsMobileMenuOpen(false)}
+                      >
+                        {dropdownItem.title}
+                      </Link>
                     ))}
                   </div>
                 )}

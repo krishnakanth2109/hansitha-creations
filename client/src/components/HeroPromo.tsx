@@ -24,7 +24,7 @@ export const HeroPromo = () => {
             <img
               src={promo.image}
               alt={promo.title}
-              className="w-full h-auto object-contain"
+              className="w-full h-auto object-contain rounded-full"
             />
           </div>
 

@@ -45,31 +45,6 @@ export const PromoSection = () => {
   return (
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-16">
-          {promoCards.map((card, index) => (
-            <div
-              key={index}
-              className={`relative overflow-hidden rounded-3xl bg-gradient-to-br ${card.bgColor} p-6 text-white min-h-[280px] flex flex-col justify-between group hover:shadow-2xl transition-all duration-300 hover:scale-105`}
-            >
-              <div>
-                <div className="text-4xl mb-4">{card.icon}</div>
-                <h3 className="text-xl font-bold mb-2">{card.title}</h3>
-                <p className="text-sm opacity-90 mb-1">{card.subtitle}</p>
-                <p className="text-xs opacity-80 mb-4">{card.description}</p>
-                {card.price && (
-                  <p className="text-2xl font-bold mb-4">{card.price}</p>
-                )}
-              </div>
-              <Button
-                variant="secondary"
-                className="bg-white/20 hover:bg-white/30 text-white border-white/30 rounded-full backdrop-blur-sm"
-              >
-                {card.buttonText}
-              </Button>
-            </div>
-          ))}
-        </div>
-
         {/* Feature benefits */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-gray-100">
           {[

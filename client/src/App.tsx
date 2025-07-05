@@ -22,9 +22,7 @@ import UserProfile from "./pages/UserProfile";
 import SSORedirectHandler from "./pages/SSORedirectHandler";
 import SearchResults from "./pages/SearchResults";
 import FeaturedProducts from "./pages/FeaturedProducts";
-
-
-
+import CategoryPage from './pages/CategoryPage';
 
 // Admin
 import AdminPage from "./admin/AdminPage";
@@ -59,6 +57,7 @@ const App = () => {
                     <Route path="/account" element={<UserProfile />} />
                     <Route path="/search" element={<SearchResults />} />
                     <Route path="/featured" element={<FeaturedProducts />} />
+                    <Route path="/fabrics/:category" element={<CategoryPage />} />
 
                     {/* Static pages */}
                     <Route
