@@ -22,6 +22,8 @@ app.use("/api/products", productRoutes);
 app.use("/api/hero-promos", heroPromoRoutes);
 app.use("/api/orders", orderRoutes); // <-- Order email handling
 
+
+
 // MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {

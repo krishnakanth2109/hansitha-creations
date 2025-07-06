@@ -1,4 +1,12 @@
-import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
+import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
 
 // ✅ Types
 export type CartItem = {
@@ -23,7 +31,9 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
+  const { user, isSignedIn } = useUser();
 
+  // 🔁 Load from localStorage on first load
   useEffect(() => {
     const savedCart = localStorage.getItem('cart');
     if (savedCart) {
@@ -31,9 +41,60 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     }
   }, []);
 
+  // 💾 Save to localStorage on every change
   useEffect(() => {
     localStorage.setItem('cart', JSON.stringify(cart));
   }, [cart]);
+
+  // 🔐 Load from backend on login
+  useEffect(() => {
+    const fetchCart = async () => {
+      if (isSignedIn && user?.id) {
+        try {
+          const res = await axios.get(`/api/cart/${user.id}`);
+          const backendCart: CartItem[] = res.data;
+
+          // Merge with local cart if exists
+          const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+          const mergedCart = mergeCarts(backendCart, localCart);
+          setCart(mergedCart);
+          localStorage.setItem('cart', JSON.stringify(mergedCart));
+
+          // Save merged result back to backend
+          await axios.post(`/api/cart/${user.id}`, { items: mergedCart });
+        } catch (err) {
+          console.error('Failed to fetch or sync cart:', err);
+        }
+      }
+    };
+
+    fetchCart();
+  }, [isSignedIn, user?.id]);
+
+  // ☁️ Sync to backend on cart change (if logged in)
+  useEffect(() => {
+    if (isSignedIn && user?.id) {
+      axios
+        .post(`/api/cart/${user.id}`, { items: cart })
+        .catch((err) => console.error('Failed to save cart:', err));
+    }
+  }, [cart, isSignedIn, user?.id]);
+
+  const mergeCarts = (a: CartItem[], b: CartItem[]) => {
+    const map = new Map<string, CartItem>();
+    [...a, ...b].forEach((item) => {
+      if (map.has(item.id)) {
+        const existing = map.get(item.id)!;
+        map.set(item.id, {
+          ...existing,
+          quantity: existing.quantity + item.quantity,
+        });
+      } else {
+        map.set(item.id, { ...item });
+      }
+    });
+    return Array.from(map.values());
+  };
 
   const addToCart = (item: Omit<CartItem, 'quantity'>) => {
     setCart((prev) => {

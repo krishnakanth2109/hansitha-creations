@@ -1,9 +1,20 @@
 const express = require('express');
-const { placeOrder } = require('../controllers/orderController');
-const { ClerkExpressWithAuth } = require('@clerk/clerk-sdk-node');
-
 const router = express.Router();
 
-router.post('/place-order', ClerkExpressWithAuth(), placeOrder);
+router.post('/place-order', async (req, res) => {
+  try {
+    const { products } = req.body;
+    console.log('Received order:', products);
+    res.status(200).json({ message: 'Order placed successfully' });
+  } catch (err) {
+    res.status(500).json({ message: 'Failed to place order' });
+  }
+});
 
-module.exports = router;
+// src/server/controllers/orderController.js
+module.exports = {
+  placeOrder: (req, res) => {
+    res.json({ message: 'Order placed (mock)' });
+  }
+};
+
