@@ -9,7 +9,7 @@ dotenv.config();
 const app = express();
 
 // Import routes
-const heroPromoRoutes = require("./routes/heroPromo.route");
+const heroPromoRoutes = require("./heroPromo.route");
 const productRoutes = require("./product.route");
 const orderRoutes = require("./routes/orderRoutes");
 
