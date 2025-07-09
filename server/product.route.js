@@ -1,6 +1,6 @@
 const express = require('express');
 const router = express.Router();
-const Product = require('../server/product.model');
+const Product = require('../models/product.model'); // Make sure this path is correct
 
 // Create Product
 router.post('/', async (req, res) => {

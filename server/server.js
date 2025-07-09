@@ -8,8 +8,8 @@ dotenv.config();
 
 const app = express();
 
-// Import routes and controllers
-const heroPromoRoutes = require("./heroPromo.route");
+// Import routes
+const heroPromoRoutes = require("./routes/heroPromo.route");
 const productRoutes = require("./product.route");
 const orderRoutes = require("./routes/orderRoutes");
 
@@ -20,9 +20,7 @@ app.use(express.json());
 // API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/hero-promos", heroPromoRoutes);
-app.use("/api/orders", orderRoutes); // <-- Order email handling
-
-
+app.use("/api/orders", orderRoutes);
 
 // MongoDB
 mongoose
@@ -53,12 +51,11 @@ const ImageSchema = new mongoose.Schema({
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
 
-// Carousel Upload
+// Upload Carousel
 app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   try {
     const { carouselId, heading, subtext } = req.body;
-    if (!carouselId)
-      return res.status(400).json({ message: "Missing carouselId" });
+    if (!carouselId) return res.status(400).json({ message: "Missing carouselId" });
 
     let existing = await ImageModel.findOne({ carouselId });
     if (!existing) existing = new ImageModel({ carouselId });
@@ -82,7 +79,7 @@ app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   }
 });
 
-// Carousel Delete
+// Delete Carousel
 app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
     const { carouselId } = req.params;
@@ -97,7 +94,7 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   }
 });
 
-// Get carousel images
+// Get Carousel Images
 app.get("/api/carousel-images", async (req, res) => {
   try {
     const images = await ImageModel.find({});
