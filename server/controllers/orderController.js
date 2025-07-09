@@ -1,5 +1,5 @@
 const Order = require('../models/order.model');
-const { sendOrderConfirmationEmail } = require('../utils/emailService');
+const { sendOrderConfirmationEmail } = require('../utils/email/email.Service');
 
 exports.placeOrder = async (req, res) => {
   try {
