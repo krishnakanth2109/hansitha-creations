@@ -4,7 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { CheckCircle, Mail } from 'lucide-react';
 
+// Sample order data — replace this with actual cart/order context or props
+const orderedProducts = [
+  { name: 'Kurta', price: 1299, quantity: 2 },
+  { name: 'Jeans', price: 2099, quantity: 1 },
+  { name: 'T-Shirt', quantity: 1 }, // No price: will fallback to ₹0
+];
+
 const OrderConfirmation = () => {
+  const calculateTotal = () => {
+    return orderedProducts.reduce((total, item) => {
+      if (typeof item.price === 'number') {
+        return total + item.price * item.quantity;
+      }
+      return total;
+    }, 0);
+  };
+
   return (
     <div className="min-h-screen bg-gray-50 py-16">
       <div className="container mx-auto px-4">
@@ -33,6 +49,31 @@ const OrderConfirmation = () => {
             </Card>
           </div>
 
+          {/* 🛍️ Order Summary */}
+          <div className="bg-white shadow rounded-lg p-6 mb-8 text-left">
+            <h2 className="text-lg font-semibold mb-4">Order Summary</h2>
+            <ul className="divide-y">
+              {orderedProducts.map((item, index) => (
+                <li key={index} className="flex justify-between py-2 text-sm">
+                  <span>
+                    {item.name} × {item.quantity}
+                  </span>
+                  <span>
+                    ₹
+                    {typeof item.price === 'number'
+                      ? item.price.toLocaleString('en-IN')
+                      : '0'}
+                  </span>
+                </li>
+              ))}
+            </ul>
+            <div className="flex justify-between font-bold pt-4 border-t mt-4">
+              <span>Total</span>
+              <span>₹{calculateTotal().toLocaleString('en-IN')}</span>
+            </div>
+          </div>
+
+          {/* Navigation */}
           <div className="space-y-4">
             <Button asChild size="lg">
               <Link to="/shop">Continue Shopping</Link>

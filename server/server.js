@@ -11,7 +11,8 @@ const app = express();
 // Import routes
 const heroPromoRoutes = require("./heroPromo.route");
 const productRoutes = require("./product.route");
-const orderRoutes = require("./routes/orderRoutes");
+
+
 
 // Middleware
 app.use(cors());
@@ -20,7 +21,6 @@ app.use(express.json());
 // API Routes
 app.use("/api/products", productRoutes);
 app.use("/api/hero-promos", heroPromoRoutes);
-app.use("/api/orders", orderRoutes);
 
 // MongoDB
 mongoose

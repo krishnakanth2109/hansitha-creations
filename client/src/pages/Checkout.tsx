@@ -8,7 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Lock, MapPin, User } from 'lucide-react';
-import axios from 'axios';
+import { useUser } from '@clerk/clerk-react';
 
 interface CheckoutFormData {
   email: string;
@@ -30,10 +30,11 @@ interface CheckoutFormData {
   billingZipCode: string;
 }
 
-const Checkout = () => {
+const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
+  const { user } = useUser();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -64,26 +65,15 @@ const Checkout = () => {
     }));
   };
 
-  const formatCardNumber = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    const matches = v.match(/\d{4,16}/g);
-    const match = matches?.[0] || '';
-    const parts = [];
-    for (let i = 0; i < match.length; i += 4) {
-      parts.push(match.substring(i, i + 4));
-    }
-    return parts.join(' ');
+  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value.replace(/\D/g, '');
+    const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
+    setFormData(prev => ({ ...prev, cardNumber: formatted }));
   };
 
   const formatExpiryDate = (value: string) => {
     const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
     return v.length >= 2 ? v.substring(0, 2) + '/' + v.substring(2, 4) : v;
-  };
-
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
-    setFormData(prev => ({ ...prev, cardNumber: formatted }));
   };
 
   const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -92,13 +82,13 @@ const Checkout = () => {
   };
 
   const validateForm = () => {
-    const requiredFields = [
+    const requiredFields: (keyof CheckoutFormData)[] = [
       'email', 'firstName', 'lastName', 'address', 'city', 'state', 'zipCode',
       'phone', 'cardNumber', 'expiryDate', 'cvv', 'nameOnCard'
     ];
 
     for (const field of requiredFields) {
-      if (!formData[field as keyof CheckoutFormData]) {
+      if (!formData[field]) {
         toast({
           title: 'Error',
           description: `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field.`,
@@ -130,12 +120,19 @@ const Checkout = () => {
       return;
     }
 
+    if (!user?.id) {
+      toast({ title: 'Error', description: 'You must be signed in to place an order.', variant: 'destructive' });
+      return;
+    }
+
     setIsProcessing(true);
 
     try {
       const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
 
-      await axios.post('/api/orders/place-order', {
+      // ✅ Simulate fake order placement (no backend call)
+      console.log('Mock Order:', {
+        userId: user.id,
         products: cartItems.map(item => ({
           name: item.name,
           quantity: item.quantity,
@@ -143,11 +140,14 @@ const Checkout = () => {
         })),
       });
 
+      await new Promise(resolve => setTimeout(resolve, 1000)); // simulate delay
+
       localStorage.setItem('lastOrderNumber', orderNumber);
       clearCart();
       toast({ title: 'Order Placed Successfully!', description: 'Thank you for your purchase!' });
       navigate('/order-confirmation');
-    } catch {
+    } catch (err) {
+      console.error(err);
       toast({ title: 'Payment Failed', description: 'Try again later.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
@@ -180,53 +180,44 @@ const Checkout = () => {
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Left - Form */}
             <div className="space-y-6">
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <User className="w-5 h-5" /> Contact Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <InputGroup id="email" label="Email Address" value={formData.email} onChange={handleInputChange} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputGroup id="firstName" label="First Name" value={formData.firstName} onChange={handleInputChange} />
-                    <InputGroup id="lastName" label="Last Name" value={formData.lastName} onChange={handleInputChange} />
-                  </div>
-                  <InputGroup id="phone" label="Phone Number" value={formData.phone} onChange={handleInputChange} />
-                </CardContent>
-              </Card>
+              <CheckoutSection
+                icon={<User className="w-5 h-5" />}
+                title="Contact Information"
+                fields={[
+                  { id: 'email', label: 'Email Address' },
+                  { id: 'firstName', label: 'First Name' },
+                  { id: 'lastName', label: 'Last Name' },
+                  { id: 'phone', label: 'Phone Number' },
+                ]}
+                formData={formData}
+                handleChange={handleInputChange}
+              />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <MapPin className="w-5 h-5" /> Shipping Address
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <InputGroup id="address" label="Street Address" value={formData.address} onChange={handleInputChange} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputGroup id="city" label="City" value={formData.city} onChange={handleInputChange} />
-                    <InputGroup id="state" label="State" value={formData.state} onChange={handleInputChange} />
-                  </div>
-                  <InputGroup id="zipCode" label="ZIP Code" value={formData.zipCode} onChange={handleInputChange} />
-                </CardContent>
-              </Card>
+              <CheckoutSection
+                icon={<MapPin className="w-5 h-5" />}
+                title="Shipping Address"
+                fields={[
+                  { id: 'address', label: 'Street Address' },
+                  { id: 'city', label: 'City' },
+                  { id: 'state', label: 'State' },
+                  { id: 'zipCode', label: 'ZIP Code' },
+                ]}
+                formData={formData}
+                handleChange={handleInputChange}
+              />
 
-              <Card>
-                <CardHeader>
-                  <CardTitle className="flex items-center gap-2">
-                    <CreditCard className="w-5 h-5" /> Payment Information
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <InputGroup id="nameOnCard" label="Name on Card" value={formData.nameOnCard} onChange={handleInputChange} />
-                  <InputGroup id="cardNumber" label="Card Number" value={formData.cardNumber} onChange={handleCardNumberChange} maxLength={19} />
-                  <div className="grid grid-cols-2 gap-4">
-                    <InputGroup id="expiryDate" label="Expiry Date" value={formData.expiryDate} onChange={handleExpiryDateChange} maxLength={5} />
-                    <InputGroup id="cvv" label="CVV" value={formData.cvv} onChange={handleInputChange} maxLength={4} />
-                  </div>
-                </CardContent>
-              </Card>
+              <CheckoutSection
+                icon={<CreditCard className="w-5 h-5" />}
+                title="Payment Information"
+                fields={[
+                  { id: 'nameOnCard', label: 'Name on Card' },
+                  { id: 'cardNumber', label: 'Card Number', onChange: handleCardNumberChange, maxLength: 19 },
+                  { id: 'expiryDate', label: 'Expiry Date', onChange: handleExpiryDateChange, maxLength: 5 },
+                  { id: 'cvv', label: 'CVV', maxLength: 4 },
+                ]}
+                formData={formData}
+                handleChange={handleInputChange}
+              />
             </div>
 
             {/* Right - Summary */}
@@ -291,6 +282,7 @@ const Checkout = () => {
 
 export default Checkout;
 
+// Reusable Components
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>
@@ -303,4 +295,36 @@ const SummaryRow = ({ label, value }: { label: string; value: number }) => (
     <span>{label}</span>
     <span>₹{value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
   </div>
+);
+
+const CheckoutSection = ({
+  icon,
+  title,
+  fields,
+  formData,
+  handleChange,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  fields: any[];
+  formData: CheckoutFormData;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) => (
+  <Card>
+    <CardHeader>
+      <CardTitle className="flex items-center gap-2">{icon} {title}</CardTitle>
+    </CardHeader>
+    <CardContent className="space-y-4">
+      {fields.map(field => (
+        <InputGroup
+          key={field.id}
+          id={field.id}
+          label={field.label}
+          value={formData[field.id]}
+          onChange={field.onChange || handleChange}
+          maxLength={field.maxLength}
+        />
+      ))}
+    </CardContent>
+  </Card>
 );

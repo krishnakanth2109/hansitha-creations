@@ -51,8 +51,8 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     const fetchCart = async () => {
       if (isSignedIn && user?.id) {
         try {
-          const res = await axios.get(`/api/cart/${user.id}`);
-          const backendCart: CartItem[] = res.data;
+          const res = await axios.get(`/api/cart/user/${user.id}`); // ✅ Fixed route
+          const backendCart: CartItem[] = res.data.items || [];
 
           // Merge with local cart if exists
           const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
@@ -61,7 +61,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
           localStorage.setItem('cart', JSON.stringify(mergedCart));
 
           // Save merged result back to backend
-          await axios.post(`/api/cart/${user.id}`, { items: mergedCart });
+          await axios.post(`/api/cart/user/${user.id}`, { items: mergedCart }); // ✅ Fixed route
         } catch (err) {
           console.error('Failed to fetch or sync cart:', err);
         }
@@ -75,7 +75,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     if (isSignedIn && user?.id) {
       axios
-        .post(`/api/cart/${user.id}`, { items: cart })
+        .post(`/api/cart/user/${user.id}`, { items: cart }) // ✅ Fixed route
         .catch((err) => console.error('Failed to save cart:', err));
     }
   }, [cart, isSignedIn, user?.id]);

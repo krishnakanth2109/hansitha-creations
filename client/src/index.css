@@ -92,6 +92,38 @@
   }
 }
 
+@layer utilities {
+  .animate-fadeInRight {
+    animation: fadeInRight 0.3s ease-in-out forwards;
+  }
+
+  .animate-fadeOutRight {
+    animation: fadeOutRight 0.3s ease-in-out forwards;
+  }
+
+  @keyframes fadeInRight {
+    from {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
+
+  @keyframes fadeOutRight {
+    from {
+      opacity: 1;
+      transform: translateX(0);
+    }
+    to {
+      opacity: 0;
+      transform: translateX(30px);
+    }
+  }
+}
+
 @layer base {
   * {
     @apply border-border;

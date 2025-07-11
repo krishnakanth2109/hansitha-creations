@@ -7,7 +7,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import { ProductProvider } from "./context/ProductContext";
 
-import Header from "./components/Header";
+import Layout from "./components/Layout"; // ✅ NEW
 
 // Pages
 import Home from "./pages/Home";
@@ -27,7 +27,6 @@ import CategoryPage from './pages/CategoryPage';
 // Admin
 import AdminPage from "./admin/AdminPage";
 
-// React Query setup
 const queryClient = new QueryClient();
 
 const App = () => {
@@ -39,49 +38,130 @@ const App = () => {
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <div className="min-h-screen flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<Home />} />
-                    <Route path="/shop" element={<Shop />} />
-                    <Route path="/shop/*" element={<Shop />} />
-                    <Route path="/categories/*" element={<Shop />} />
-                    <Route path="/cart" element={<Cart />} />
-                    <Route path="/checkout" element={<Checkout />} />
-                    <Route path="/order-confirmation" element={<OrderConfirmation />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
-                    <Route path="/signup" element={<Signup />} />
-                    <Route path="/admin" element={<AdminPage />} />
-                    <Route path="/account" element={<UserProfile />} />
-                    <Route path="/search" element={<SearchResults />} />
-                    <Route path="/featured" element={<FeaturedProducts />} />
-                    <Route path="/fabrics/:category" element={<CategoryPage />} />
+              <Routes>
+                {/* Public Routes with Layout */}
+                <Route
+                  path="/"
+                  element={
+                    <Layout>
+                      <Home />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/shop"
+                  element={
+                    <Layout>
+                      <Shop />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/shop/*"
+                  element={
+                    <Layout>
+                      <Shop />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/categories/*"
+                  element={
+                    <Layout>
+                      <Shop />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/cart"
+                  element={
+                    <Layout>
+                      <Cart />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/checkout"
+                  element={
+                    <Layout>
+                      <Checkout />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/order-confirmation"
+                  element={
+                    <Layout>
+                      <OrderConfirmation />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/account"
+                  element={
+                    <Layout>
+                      <UserProfile />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/search"
+                  element={
+                    <Layout>
+                      <SearchResults />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/featured"
+                  element={
+                    <Layout>
+                      <FeaturedProducts />
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/fabrics/:category"
+                  element={
+                    <Layout>
+                      <CategoryPage />
+                    </Layout>
+                  }
+                />
 
-                    {/* Static pages */}
-                    <Route
-                      path="/about"
-                      element={
-                        <div className="min-h-screen flex items-center justify-center">
-                          <h1 className="text-4xl font-bold">About Page</h1>
-                        </div>
-                      }
-                    />
-                    <Route
-                      path="/contact"
-                      element={
-                        <div className="min-h-screen flex items-center justify-center">
-                          <h1 className="text-4xl font-bold">Contact Page</h1>
-                        </div>
-                      }
-                    />
+                {/* Static Pages */}
+                <Route
+                  path="/about"
+                  element={
+                    <Layout>
+                      <div className="min-h-screen flex items-center justify-center">
+                        <h1 className="text-4xl font-bold">About Page</h1>
+                      </div>
+                    </Layout>
+                  }
+                />
+                <Route
+                  path="/contact"
+                  element={
+                    <Layout>
+                      <div className="min-h-screen flex items-center justify-center">
+                        <h1 className="text-4xl font-bold">Contact Page</h1>
+                      </div>
+                    </Layout>
+                  }
+                />
 
-                    {/* 404 */}
-                    <Route path="*" element={<NotFound />} />
-                  </Routes>
-                </main>
-              </div>
+                {/* Auth Pages (without layout) */}
+                <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
+                <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
+
+                {/* Admin (you can wrap in Layout if needed) */}
+                <Route path="/admin" element={<AdminPage />} />
+
+                {/* 404 */}
+                <Route path="*" element={<NotFound />} />
+              </Routes>
             </BrowserRouter>
           </ProductProvider>
         </CartProvider>

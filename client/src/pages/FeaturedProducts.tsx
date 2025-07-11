@@ -3,16 +3,22 @@ import { ProductContext } from '../context/ProductContext';
 import { Star } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
+import { useNavigate } from 'react-router-dom';
 
 const FeaturedProducts: React.FC = () => {
   const { products, loading } = useContext(ProductContext);
   const { addToCart } = useCart();
+  const navigate = useNavigate();
 
   if (loading) return <p className="p-4 text-center">Loading featured products...</p>;
 
   const featured = Array.isArray(products)
     ? products.filter((product) => product.featured)
     : [];
+
+  const handleProductClick = (product: any) => {
+    navigate(`/product/${product._id}`, { state: { product } });
+  };
 
   return (
     <div className="p-6">
@@ -29,7 +35,8 @@ const FeaturedProducts: React.FC = () => {
             return (
               <div
                 key={product._id}
-                className="bg-white border rounded-lg shadow hover:shadow-md transition p-4 flex flex-col"
+                onClick={() => handleProductClick(product)}
+                className="bg-white border rounded-lg shadow hover:shadow-md transition p-4 flex flex-col cursor-pointer"
               >
                 <img
                   src={product.image}
@@ -83,7 +90,8 @@ const FeaturedProducts: React.FC = () => {
                 </p>
 
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (isOutOfStock) return;
                     addToCart({
                       id: product._id,
