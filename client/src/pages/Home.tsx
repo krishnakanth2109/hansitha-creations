@@ -166,7 +166,7 @@ const Home = () => {
       )}
 
       {/* Bottom Navigation - mobile only */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 block lg:hidden">
+      <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">
         <BottomNavBar onAccountClick={openSignIn} />
       </div>
     </div>

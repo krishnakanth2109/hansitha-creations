@@ -9,7 +9,7 @@ import Sidebar from '../components/Sidebar';
 import SignInPanel from '../components/SignInPanel';
 import { Footer } from '../components/Footer';
 import BottomNavBar from '../components/BottomNavBar';
-import { useSwipeable } from 'react-swipeable'; 
+import { useSwipeable } from 'react-swipeable';
 
 import {
   disableBodyScroll,
@@ -42,8 +42,8 @@ const ProductDetailsPage = () => {
     setIsSidebarOpen(false);
   };
   const closeSignIn = () => setIsSignInOpen(false);
-  
-   // 👇 swipe handlers
+
+  // 👇 swipe handlers
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => document.getElementById('related-scroll')?.scrollBy({ left: 250, behavior: 'smooth' }),
     onSwipedRight: () => document.getElementById('related-scroll')?.scrollBy({ left: -250, behavior: 'smooth' }),

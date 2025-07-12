@@ -31,7 +31,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             )}
 
             <main>{children}</main>
-            <BottomNavBar onAccountClick={openSignIn} />
+            <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">
+                <BottomNavBar onAccountClick={openSignIn} />
+            </div>
 
         </div>
     );
