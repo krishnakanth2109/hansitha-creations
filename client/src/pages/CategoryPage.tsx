@@ -1,7 +1,6 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useNavigate } from 'react-router-dom';
 import { useProductContext } from '../context/ProductContext';
-import { Star } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
 
@@ -10,19 +9,23 @@ const CategoryPage: React.FC = () => {
   const { products, loading } = useProductContext();
   const { addToCart } = useCart();
   const [sortBy, setSortBy] = useState('default');
+  const navigate = useNavigate();
 
   const filteredProducts = products
     .filter((p) => p.category?.toLowerCase().trim() === category?.toLowerCase().trim())
     .sort((a, b) => {
       if (sortBy === 'price-low') return a.price - b.price;
       if (sortBy === 'price-high') return b.price - a.price;
-      if (sortBy === 'rating-high') return (b.rating ?? 0) - (a.rating ?? 0);
       return 0;
     });
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [category]);
+
+  const handleProductClick = (product: any) => {
+    navigate(`/product/${product.name}`, { state: { product } });
+  };
 
   return (
     <div className="p-6">
@@ -55,7 +58,8 @@ const CategoryPage: React.FC = () => {
             return (
               <div
                 key={product._id}
-                className="bg-white border rounded-lg shadow hover:shadow-md transition p-4 flex flex-col"
+                onClick={() => handleProductClick(product)}
+                className="bg-white border rounded-lg shadow hover:shadow-md transition p-4 flex flex-col cursor-pointer"
               >
                 <img
                   src={product.image}
@@ -70,20 +74,7 @@ const CategoryPage: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between mb-2 text-sm text-gray-600">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < Math.floor(product.rating ?? 0)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="ml-2">({product.reviews ?? 0})</span>
-                  </div>
+                <div className="text-sm text-gray-600 mb-2">
                   <span
                     className={`font-medium ${
                       isLowStock ? 'text-orange-500' : 'text-gray-600'
@@ -109,7 +100,8 @@ const CategoryPage: React.FC = () => {
                 </p>
 
                 <button
-                  onClick={() => {
+                  onClick={(e) => {
+                    e.stopPropagation();
                     if (isOutOfStock) return;
                     addToCart({
                       id: product._id,
