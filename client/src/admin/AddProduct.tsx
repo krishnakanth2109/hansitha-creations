@@ -22,11 +22,10 @@ const AddProduct: React.FC = () => {
 
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
-  const [rating, setRating] = useState('');
-  const [reviews, setReviews] = useState('');
   const [stock, setStock] = useState('');
   const [category, setCategory] = useState('');
   const [featured, setFeatured] = useState(false);
+  const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -63,6 +62,11 @@ const AddProduct: React.FC = () => {
         return;
       }
 
+      if (!description.trim()) {
+        toast.error('Please enter a product description');
+        return;
+      }
+
       if (imageFile) {
         imageUrl = await uploadImageToCloudinary(imageFile);
       }
@@ -70,11 +74,10 @@ const AddProduct: React.FC = () => {
       const productData = {
         name,
         price: Number(price),
-        rating: Number(rating),
-        reviews: Number(reviews),
         stock: Number(stock),
         featured,
         category,
+        description,
         ...(imageUrl && { image: imageUrl }),
       };
 
@@ -94,6 +97,7 @@ const AddProduct: React.FC = () => {
         toast.success('Product updated!');
         setEditingId(null);
       } else {
+        console.log('Sending data to backend:', { ...productData, image: imageUrl });
         const res = await fetch(`${API_URL}/api/products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -119,11 +123,10 @@ const AddProduct: React.FC = () => {
   const resetForm = () => {
     setName('');
     setPrice('');
-    setRating('');
-    setReviews('');
     setStock('');
     setFeatured(false);
     setCategory('');
+    setDescription('');
     setImageFile(null);
     setEditingId(null);
   };
@@ -132,11 +135,10 @@ const AddProduct: React.FC = () => {
     setEditingId(product._id);
     setName(product.name);
     setPrice(product.price.toString());
-    setRating(product.rating.toString());
-    setReviews(product.reviews.toString());
     setStock(product.stock?.toString() || '');
     setFeatured(product.featured);
     setCategory(product.category || '');
+    setDescription(product.description || '');
     setImageFile(null);
   };
 
@@ -180,20 +182,6 @@ const AddProduct: React.FC = () => {
         />
         <input
           type="number"
-          placeholder="Rating (1-5)"
-          value={rating}
-          onChange={(e) => setRating(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="number"
-          placeholder="Reviews"
-          value={reviews}
-          onChange={(e) => setReviews(e.target.value)}
-          className="w-full border p-2 rounded"
-        />
-        <input
-          type="number"
           placeholder="Stock"
           value={stock}
           onChange={(e) => setStock(e.target.value)}
@@ -213,6 +201,13 @@ const AddProduct: React.FC = () => {
             </option>
           ))}
         </select>
+        <textarea
+          placeholder="Description"
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          required
+          className="w-full border p-2 rounded min-h-[100px]"
+        />
         <label className="flex items-center gap-2">
           <input
             type="checkbox"
@@ -268,10 +263,11 @@ const AddProduct: React.FC = () => {
                   <>
                     <h4 className="font-bold">{product.name}</h4>
                     <p>₹{product.price.toLocaleString('en-IN')}</p>
-                    <p>Rating: {product.rating} ⭐ ({product.reviews} reviews)</p>
                     <p>Stock: {product.stock}</p>
                     <p>Category: {product.category}</p>
                     <p>{product.featured ? '🌟 Featured' : ''}</p>
+                    <p>Description: {product.description}
+                    </p>
                     <div className="mt-2 flex gap-2">
                       <button
                         className="bg-yellow-500 text-white px-3 py-1 rounded"

@@ -8,41 +8,40 @@ dotenv.config();
 
 const app = express();
 
-// Import routes
-const heroPromoRoutes = require("./heroPromo.route");
-const productRoutes = require("./product.route");
-
-
-
 // Middleware
 app.use(cors());
 app.use(express.json());
 
-// API Routes
-app.use("/api/products", productRoutes);
-app.use("/api/hero-promos", heroPromoRoutes);
-
-// MongoDB
+// Connect to MongoDB
 mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
   })
-  .then(() => console.log("MongoDB connected"))
-  .catch((err) => console.error("MongoDB connection error:", err));
+  .then(() => console.log("✅ MongoDB connected"))
+  .catch((err) => console.error("❌ MongoDB connection error:", err));
 
-// Cloudinary config
+// Cloudinary Config
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
 });
 
-// Multer
+// Multer for in-memory file handling
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Carousel Schema
+// Routes
+const heroPromoRoutes = require("./heroPromo.route");
+const productRoutes = require('./routes/productRoutes');
+
+app.use('/api/products', productRoutes);
+app.use("/api/hero-promos", heroPromoRoutes);
+
+// =========================
+// 📸 Carousel Schema & Routes
+// =========================
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
   imageUrl: { type: String, default: "" },
@@ -68,8 +67,8 @@ app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
       existing.imageUrl = result.secure_url;
     }
 
-    if (heading) existing.heading = heading;
-    if (subtext) existing.subtext = subtext;
+    existing.heading = heading || existing.heading;
+    existing.subtext = subtext || existing.subtext;
 
     await existing.save();
     res.json({ success: true, message: "Carousel updated successfully." });
@@ -84,8 +83,10 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
     const { carouselId } = req.params;
     const deleted = await ImageModel.findOneAndDelete({ carouselId });
-    if (!deleted)
+
+    if (!deleted) {
       return res.status(404).json({ success: false, message: "Carousel not found" });
+    }
 
     res.json({ success: true, message: "Carousel deleted successfully." });
   } catch (error) {
@@ -105,7 +106,9 @@ app.get("/api/carousel-images", async (req, res) => {
   }
 });
 
-// Newsletter Schema
+// =========================
+// 📧 Newsletter Schema & Route
+// =========================
 const NewsletterSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   subscribedAt: { type: Date, default: Date.now },
@@ -131,6 +134,8 @@ app.post("/api/newsletter", async (req, res) => {
   }
 });
 
-// Start Server
+// =========================
+// 🚀 Start the Server
+// =========================
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

@@ -1,6 +1,5 @@
 import React, { useContext } from 'react';
 import { ProductContext } from '../context/ProductContext';
-import { Star } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
@@ -17,7 +16,7 @@ const FeaturedProducts: React.FC = () => {
     : [];
 
   const handleProductClick = (product: any) => {
-    navigate(`/product/${product._id}`, { state: { product } });
+    navigate(`/product/${product.name}`, { state: { product } });
   };
 
   return (
@@ -43,7 +42,6 @@ const FeaturedProducts: React.FC = () => {
                   alt={product.name}
                   className="w-full h-auto object-cover rounded mb-3"
                 />
-
                 <div className="flex justify-between items-start mb-1">
                   <h3 className="font-semibold text-lg">{product.name}</h3>
                   <span className="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded-full">
@@ -51,20 +49,7 @@ const FeaturedProducts: React.FC = () => {
                   </span>
                 </div>
 
-                <div className="flex items-center justify-between mb-2 text-sm text-gray-600">
-                  <div className="flex items-center">
-                    {[...Array(5)].map((_, i) => (
-                      <Star
-                        key={i}
-                        className={`w-4 h-4 ${
-                          i < Math.floor(product.rating ?? 0)
-                            ? 'text-yellow-400 fill-current'
-                            : 'text-gray-300'
-                        }`}
-                      />
-                    ))}
-                    <span className="ml-2">({product.reviews ?? 0})</span>
-                  </div>
+                <div className="text-sm text-gray-600 mb-2">
                   <span
                     className={`font-medium ${
                       isLowStock ? 'text-orange-500' : 'text-gray-600'

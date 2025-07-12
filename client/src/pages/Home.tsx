@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import Header from '../components/Header';
@@ -10,6 +10,11 @@ import { PromoSection } from '@/components/PromoSection';
 import { HeroSection } from '@/components/HeroSection';
 import FeaturedProducts from '@/pages/FeaturedProducts';
 import { HeroPromo } from '@/components/HeroPromo';
+import {
+  disableBodyScroll,
+  enableBodyScroll,
+  clearAllBodyScrollLocks,
+} from 'body-scroll-lock';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -18,23 +23,45 @@ const Home = () => {
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3); // Replace this with dynamic cart count if needed
+  const [cartCount, setCartCount] = useState(3); // Optional
 
   const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
   const [carouselSlides, setCarouselSlides] = useState([
-    { image: "", heading: "", subtext: "" },
-    { image: "", heading: "", subtext: "" },
-    { image: "", heading: "", subtext: "" }
+    { image: '', heading: '', subtext: '' },
+    { image: '', heading: '', subtext: '' },
+    { image: '', heading: '', subtext: '' },
   ]);
   const [currentSlide, setCurrentSlide] = useState(0);
+
+  const sidebarRef = useRef<HTMLDivElement>(null);
+  const signInRef = useRef<HTMLDivElement>(null);
 
   const openSidebar = () => setIsSidebarOpen(true);
   const closeSidebar = () => setIsSidebarOpen(false);
   const openSignIn = () => {
     setIsSignInOpen(true);
-    setIsSidebarOpen(false); // Close sidebar when opening sign-in
+    setIsSidebarOpen(false);
   };
   const closeSignIn = () => setIsSignInOpen(false);
+
+  // ✅ Scroll Lock when sidebar or sign-in is open
+  useEffect(() => {
+    const target = isSidebarOpen
+      ? sidebarRef.current
+      : isSignInOpen
+        ? signInRef.current
+        : null;
+
+    if (target) {
+      disableBodyScroll(target);
+    } else {
+      clearAllBodyScrollLocks();
+    }
+
+    return () => {
+      clearAllBodyScrollLocks();
+    };
+  }, [isSidebarOpen, isSignInOpen]);
 
   // ✅ Fetch featured products
   useEffect(() => {
@@ -43,7 +70,7 @@ const Home = () => {
         const res = await axios.get(`${API_URL}/api/products`);
         setFeaturedProducts(res.data.slice(0, 8));
       } catch (err) {
-        console.error("Failed to fetch products", err);
+        console.error('Failed to fetch products', err);
       }
     };
     fetchProducts();
@@ -55,9 +82,9 @@ const Home = () => {
       try {
         const res = await axios.get(`${API_URL}/api/carousel-images`);
         const mapping = {
-          carousel1: { image: "", heading: "", subtext: "" },
-          carousel2: { image: "", heading: "", subtext: "" },
-          carousel3: { image: "", heading: "", subtext: "" },
+          carousel1: { image: '', heading: '', subtext: '' },
+          carousel2: { image: '', heading: '', subtext: '' },
+          carousel3: { image: '', heading: '', subtext: '' },
         };
 
         res.data.forEach((item: any) => {
@@ -76,7 +103,7 @@ const Home = () => {
           mapping.carousel3,
         ]);
       } catch (err) {
-        console.error("Failed to load carousel images", err);
+        console.error('Failed to load carousel images', err);
       }
     };
 
@@ -97,51 +124,47 @@ const Home = () => {
       id: product._id || product.id,
       name: product.name,
       price: product.price,
-      image: product.image
+      image: product.image,
     });
   };
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-
       {/* Page Content */}
       <HeroSection />
       <HeroPromo />
       <FeaturedProducts />
       <PromoSection />
       <Footer />
-      {/* Bottom Navigation - mobile only and sticky */}
+
+      {/* Bottom Navigation - mobile only */}
       <div className="fixed bottom-0 left-0 right-0 z-30 block lg:hidden">
         <BottomNavBar onAccountClick={openSignIn} />
       </div>
 
-      {/* Sidebar */}
-      <Sidebar
-        isOpen={isSidebarOpen}
-        onClose={closeSidebar}
-        onLoginClick={openSignIn}
-      />
-
-      {/* Sign In Panel */}
-      <SignInPanel
-        isOpen={isSignInOpen}
-        onClose={closeSignIn}
-      />
-
-      {/* Overlay for Sidebar */}
+      {/* Sidebar with scroll lock */}
       {isSidebarOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40 lg:hidden"
-          onClick={closeSidebar}
-        />
+        <>
+          <Sidebar
+            ref={sidebarRef}
+            isOpen={isSidebarOpen}
+            onClose={closeSidebar}
+            onLoginClick={openSignIn}
+          />
+          <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={closeSidebar} />
+        </>
       )}
 
-      {/* Overlay for Sign In */}
+      {/* Sign In Panel with scroll lock */}
       {isSignInOpen && (
-        <div
-          className="fixed inset-0 bg-black/50 z-40"
-          onClick={closeSignIn}
-        />
+        <>
+          <SignInPanel
+            ref={signInRef}
+            isOpen={isSignInOpen}
+            onClose={closeSignIn}
+          />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={closeSignIn} />
+        </>
       )}
     </div>
   );

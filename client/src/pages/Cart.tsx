@@ -3,8 +3,20 @@ import { Link } from 'react-router-dom';
 import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 
+// Format price safely
+const formatPrice = (value?: number) =>
+  typeof value === 'number'
+    ? `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
+    : '₹0.00';
+
 const Cart = () => {
-  const { cartItems, updateQuantity, removeFromCart, getTotalPrice, clearCart } = useCart();
+  const {
+    cartItems,
+    updateQuantity,
+    removeFromCart,
+    getTotalPrice,
+    clearCart,
+  } = useCart();
 
   if (cartItems.length === 0) {
     return (
@@ -65,7 +77,7 @@ const Cart = () => {
                           {item.name}
                         </h3>
                         <p className="text-blue-600 font-semibold">
-                          ₹{item.price.toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          {formatPrice(item.price)}
                         </p>
                       </div>
 
@@ -73,6 +85,7 @@ const Cart = () => {
                         <button
                           onClick={() => updateQuantity(item.id, item.quantity - 1)}
                           className="p-1 rounded-full hover:bg-gray-100 transition-colors"
+                          disabled={item.quantity <= 1}
                         >
                           <Minus className="w-4 h-4 text-gray-600" />
                         </button>
@@ -87,9 +100,7 @@ const Cart = () => {
 
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-800">
-                          ₹{(item.price * item.quantity).toLocaleString('en-IN', {
-                            minimumFractionDigits: 2,
-                          })}
+                          {formatPrice(item.price && item.quantity ? item.price * item.quantity : 0)}
                         </p>
                         <button
                           onClick={() => removeFromCart(item.id)}
@@ -114,7 +125,7 @@ const Cart = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Subtotal</span>
                   <span className="font-medium">
-                    ₹{getTotalPrice().toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    {formatPrice(getTotalPrice())}
                   </span>
                 </div>
                 <div className="flex justify-between">
@@ -124,16 +135,14 @@ const Cart = () => {
                 <div className="flex justify-between">
                   <span className="text-gray-600">Tax</span>
                   <span className="font-medium">
-                    ₹{(getTotalPrice() * 0.1).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                    {formatPrice(getTotalPrice() * 0.1)}
                   </span>
                 </div>
                 <div className="border-t pt-4">
                   <div className="flex justify-between text-lg font-semibold">
                     <span>Total</span>
                     <span className="text-blue-600">
-                      ₹{(getTotalPrice() * 1.1).toLocaleString('en-IN', {
-                        minimumFractionDigits: 2,
-                      })}
+                      {formatPrice(getTotalPrice() * 1.1)}
                     </span>
                   </div>
                 </div>

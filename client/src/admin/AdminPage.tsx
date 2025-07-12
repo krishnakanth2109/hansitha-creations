@@ -7,6 +7,7 @@ import { Menu, X } from 'lucide-react';
 import { useUser } from "@clerk/clerk-react";
 import { Navigate, Link } from "react-router-dom";
 import AdminPromoEditor from '../components/AdminPromoEditor';
+import EditProductPage from './EditProductPage';
 
 const AdminPage = () => {
   const { user, isLoaded } = useUser();
@@ -38,6 +39,8 @@ const AdminPage = () => {
     switch (activeTab) {
       case 'add':
         return <AddProduct />;
+      case 'edit':
+        return <EditProductPage />;
       case 'carousel':
         return <CarouselManager />;
         case 'promo':
@@ -75,6 +78,12 @@ const AdminPage = () => {
         className="block w-full text-left hover:bg-blue-700 p-2 rounded"
       >
         Add Products
+      </button>
+      <button
+        onClick={() => { setActiveTab('edit'); setIsMobileSidebarOpen(false); }}
+        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
+      >
+        Edit Products
       </button>
       <button
         onClick={() => { setActiveTab('carousel'); setIsMobileSidebarOpen(false); }}
