@@ -28,7 +28,7 @@ const CategoryCircle = () => {
 
   const handleClick = (categoryName: string) => {
     const slug = categoryName.toLowerCase().replace(/\s+/g, '-');
-    window.location.href = `http://localhost:8080/fabrics/${slug}`;
+    window.location.href = `/fabrics/${slug}`;
   };
 
   return (
