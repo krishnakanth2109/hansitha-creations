@@ -9,7 +9,7 @@ import { Footer } from '@/components/Footer';
 import { PromoSection } from '@/components/PromoSection';
 import { HeroSection } from '@/components/HeroSection';
 import FeaturedProducts from '@/pages/FeaturedProducts';
-import  CategoryCircle  from '@/components/CategoryCircle';
+import CategoryCircle from '@/components/CategoryCircle';
 import {
   disableBodyScroll,
   enableBodyScroll,
@@ -132,10 +132,15 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Page Content */}
       <HeroSection />
-      <div className="px-6">
-      <h2 className="text-2xl font-semibold mb-4">Shop by Category</h2>
-      <CategoryCircle />
-    </div>
+      <div className="px-4 sm:px-6 lg:px-8 py-10 bg-white">
+        <div className="max-w-7xl mx-auto">
+          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
+            Shop by Category
+          </h2>
+          <CategoryCircle />
+        </div>
+      </div>
+
       <FeaturedProducts />
       <PromoSection />
       <Footer />
