@@ -9,6 +9,7 @@ import Sidebar from '../components/Sidebar';
 import SignInPanel from '../components/SignInPanel';
 import { Footer } from '../components/Footer';
 import BottomNavBar from '../components/BottomNavBar';
+import { useSwipeable } from 'react-swipeable'; 
 
 import {
   disableBodyScroll,
@@ -25,6 +26,7 @@ const ProductDetailsPage = () => {
   const { products } = useContext(ProductContext);
   const { addToCart } = useCart();
   const navigate = useNavigate();
+  const [autoScroll, setAutoScroll] = useState(true);
 
   const [product, setProduct] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -40,6 +42,28 @@ const ProductDetailsPage = () => {
     setIsSidebarOpen(false);
   };
   const closeSignIn = () => setIsSignInOpen(false);
+  
+   // 👇 swipe handlers
+  const swipeHandlers = useSwipeable({
+    onSwipedLeft: () => document.getElementById('related-scroll')?.scrollBy({ left: 250, behavior: 'smooth' }),
+    onSwipedRight: () => document.getElementById('related-scroll')?.scrollBy({ left: -250, behavior: 'smooth' }),
+    trackMouse: true,
+  });
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      if (!autoScroll) return;
+      const el = document.getElementById('related-scroll');
+      if (el) {
+        if (el.scrollLeft + el.clientWidth >= el.scrollWidth) {
+          el.scrollTo({ left: 0, behavior: 'smooth' });
+        } else {
+          el.scrollBy({ left: 220, behavior: 'smooth' });
+        }
+      }
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [autoScroll, product]);
 
   // Scroll Lock
   useEffect(() => {
@@ -185,8 +209,8 @@ const ProductDetailsPage = () => {
               onClick={handleAddToCart}
               disabled={product.stock === 0}
               className={`px-4 py-2 rounded-lg font-semibold transition duration-200 ${product.stock === 0
-                  ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                  : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
                 }`}
             >
               {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
@@ -196,40 +220,54 @@ const ProductDetailsPage = () => {
 
         {related.length > 0 && (
           <div className="mt-12">
-            <h2 className="text-2xl font-bold mb-4">Related Products</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
-              {related.map((item) => (
-                <div
-                  key={item._id}
-                  className="bg-white border text-center rounded-lg shadow hover:shadow-md transition p-4 cursor-pointer"
-                  onClick={() =>
-                    navigate(`/product/${encodeURIComponent(item.name)}`, {
-                      state: { product: item },
-                    })
-                  }
-                >
-                  <img
-                    src={item.image}
-                    alt={item.name}
-                    className="w-full h-auto object-cover rounded mb-2"
-                  />
-                  <h3 className="text-lg font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-500">{item.category}</p>
-                  <p className="text-blue-600 font-bold mt-1">
-                    ₹{item.price.toLocaleString('en-IN')}
-                  </p>
-                  <button
-                    onClick={handleAddToCart}
-                    disabled={product.stock === 0}
-                    className={`px-4 py-2 rounded-lg font-semibold transition duration-200 ${product.stock === 0
-                        ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                        : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                      }`}
-                  >
-                    {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                  </button>
-                </div>
-              ))}
+            <div className="flex items-center justify-between mb-4">
+              <h2 className="text-2xl font-bold">Related Products</h2>
+              <button
+                onClick={() => navigate(`/fabrics/${encodeURIComponent(product.category.toLowerCase())}`)}
+                className="text-blue-600 hover:underline text-sm"
+              >
+                View All
+              </button>
+            </div>
+
+            <div
+              id="related-wrapper"
+              className="relative group"
+              onMouseEnter={() => setAutoScroll(false)}
+              onMouseLeave={() => setAutoScroll(true)}
+              {...swipeHandlers} // 👈 apply swipe handlers
+            >
+              <div
+                id="related-scroll"
+                className="flex overflow-x-auto space-x-4 pb-2 scrollbar-thin scrollbar-thumb-gray-300 snap-x snap-mandatory scroll-smooth"
+              >
+                {related
+                  .slice()
+                  .reverse()
+                  .slice(0, 4)
+                  .map((item) => (
+                    <div
+                      key={item._id}
+                      className="snap-start min-w-[220px] max-w-[220px] bg-white border rounded-lg shadow hover:shadow-md transition p-4 text-center cursor-pointer flex-shrink-0"
+                      onClick={() =>
+                        navigate(`/product/${encodeURIComponent(item.name)}`, {
+                          state: { product: item },
+                        })
+                      }
+                    >
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-full h-40 object-cover rounded mb-2"
+                      />
+                      <h3 className="text-lg font-semibold truncate">{item.name}</h3>
+                      <p className="text-sm text-gray-500 truncate">{item.category}</p>
+                      <p className="text-blue-600 font-bold mt-1">
+                        ₹{item.price.toLocaleString('en-IN')}
+                      </p>
+                    </div>
+                  ))}
+              </div>
             </div>
           </div>
         )}
