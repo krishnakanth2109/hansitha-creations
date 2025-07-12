@@ -4,36 +4,14 @@ import CarouselManager from './CarouselManager';
 import OrdersDashboard from './OrdersDashboard';
 import AdminProfile from './AdminProfile';
 import { Menu, X } from 'lucide-react';
-import { useUser } from "@clerk/clerk-react";
-import { Navigate, Link } from "react-router-dom";
-import AdminPromoEditor from '../components/AdminPromoEditor';
+import { Link } from 'react-router-dom';
 import EditProductPage from './EditProductPage';
+import AdminCategoryPanel from './AdminCategoryPanel';
 
 const AdminPage = () => {
-  const { user, isLoaded } = useUser();
   const [activeTab, setActiveTab] = useState('add');
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
-
-  if (!isLoaded) {
-    return (
-      <div className="flex items-center justify-center h-screen text-xl font-semibold">
-        Loading...
-      </div>
-    );
-  }
-
-  if (!user) {
-    return (
-      <div className="flex items-center justify-center h-screen text-xl font-semibold">
-        You Don't Have Access for This Page.
-      </div>
-    );
-  }
-
-  const role = user?.publicMetadata?.role;
-  if (!role) return <div>No role set</div>;
-  if (role !== 'admin') return <Navigate to="/" replace />;
 
   const renderContent = () => {
     switch (activeTab) {
@@ -43,8 +21,8 @@ const AdminPage = () => {
         return <EditProductPage />;
       case 'carousel':
         return <CarouselManager />;
-        case 'promo':
-      return <AdminPromoEditor />;
+      case 'circle':
+        return <AdminCategoryPanel />;
       case 'orders':
         return <OrdersDashboard />;
       case 'profile':
@@ -56,12 +34,8 @@ const AdminPage = () => {
 
   const SidebarLinks = () => (
     <>
-      {/* Top: Admin Panel + Close (X) */}
       <div className="flex items-center justify-between mb-6">
-        <Link
-          to="/admin"
-          className="text-2xl font-bold hover:text-pink-400"
-        >
+        <Link to="/admin" className="text-2xl font-bold hover:text-pink-400">
           Admin Panel
         </Link>
         <button
@@ -72,46 +46,27 @@ const AdminPage = () => {
         </button>
       </div>
 
-      {/* Sidebar buttons */}
-      <button
-        onClick={() => { setActiveTab('add'); setIsMobileSidebarOpen(false); }}
-        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
-      >
-        Add Products
-      </button>
-      <button
-        onClick={() => { setActiveTab('edit'); setIsMobileSidebarOpen(false); }}
-        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
-      >
-        Edit Products
-      </button>
-      <button
-        onClick={() => { setActiveTab('carousel'); setIsMobileSidebarOpen(false); }}
-        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
-      >
-        Carousel Images
-      </button>
-      <button
-        onClick={() => { setActiveTab('promo'); setIsMobileSidebarOpen(false); }}
-        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
-      >
-        Promo Editor
-      </button>
-      <button
-        onClick={() => { setActiveTab('orders'); setIsMobileSidebarOpen(false); }}
-        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
-      >
-        Orders Dashboard
-      </button>
-      <button
-        onClick={() => { setActiveTab('profile'); setIsMobileSidebarOpen(false); }}
-        className="block w-full text-left hover:bg-blue-700 p-2 rounded"
-      >
-        Admin Profile
-      </button>
+      {[
+        ['add', 'Add Products'],
+        ['edit', 'Edit Products'],
+        ['carousel', 'Carousel Images'],
+        ['circle', 'Category Circle'],
+        ['orders', 'Orders Dashboard'],
+        ['profile', 'Admin Profile'],
+      ].map(([key, label]) => (
+        <button
+          key={key}
+          onClick={() => {
+            setActiveTab(key);
+            setIsMobileSidebarOpen(false);
+          }}
+          className="block w-full text-left hover:bg-blue-700 p-2 rounded"
+        >
+          {label}
+        </button>
+      ))}
     </>
   );
-
 
   return (
     <div className="flex min-h-screen">
@@ -125,9 +80,6 @@ const AdminPage = () => {
       {/* Mobile Sidebar (Drawer) */}
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 bg-white z-50 p-6 sm:hidden">
-          <div className="flex justify-between items-center mb-6">
-
-          </div>
           <nav className="space-y-4 text-black">
             <SidebarLinks />
           </nav>
@@ -136,7 +88,7 @@ const AdminPage = () => {
 
       {/* Main Content */}
       <div className="flex-1 bg-gray-50">
-        {/* Top bar with toggle buttons */}
+        {/* Top bar */}
         <div className="flex items-center justify-between p-4">
           {/* Mobile toggle */}
           <button

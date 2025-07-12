@@ -4,6 +4,8 @@ const multer = require("multer");
 const mongoose = require("mongoose");
 const { v2: cloudinary } = require("cloudinary");
 const dotenv = require("dotenv");
+const categoryRoutes = require('./routes/categories');
+
 dotenv.config();
 
 const app = express();
@@ -11,6 +13,7 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
+app.use('/api/categories', categoryRoutes);
 
 // Connect to MongoDB
 mongoose

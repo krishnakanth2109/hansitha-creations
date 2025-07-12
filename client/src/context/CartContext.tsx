@@ -6,7 +6,6 @@ import React, {
   ReactNode,
 } from 'react';
 import axios from 'axios';
-import { useUser } from '@clerk/clerk-react';
 
 // ✅ Types
 export type CartItem = {
@@ -29,9 +28,13 @@ type CartContextType = {
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
+// ✅ Placeholder for user ID (replace with your own auth system)
+const getUserId = () => {
+  return localStorage.getItem('userId'); // Replace this with your actual auth logic
+};
+
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
-  const { user, isSignedIn } = useUser();
 
   // 🔁 Load from localStorage on first load
   useEffect(() => {
@@ -49,36 +52,38 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
   // 🔐 Load from backend on login
   useEffect(() => {
     const fetchCart = async () => {
-      if (isSignedIn && user?.id) {
-        try {
-          const res = await axios.get(`/api/cart/user/${user.id}`); // ✅ Fixed route
-          const backendCart: CartItem[] = res.data.items || [];
+      const userId = getUserId();
+      if (!userId) return;
 
-          // Merge with local cart if exists
-          const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
-          const mergedCart = mergeCarts(backendCart, localCart);
-          setCart(mergedCart);
-          localStorage.setItem('cart', JSON.stringify(mergedCart));
+      try {
+        const res = await axios.get(`/api/cart/user/${userId}`);
+        const backendCart: CartItem[] = res.data.items || [];
 
-          // Save merged result back to backend
-          await axios.post(`/api/cart/user/${user.id}`, { items: mergedCart }); // ✅ Fixed route
-        } catch (err) {
-          console.error('Failed to fetch or sync cart:', err);
-        }
+        // Merge with local cart if exists
+        const localCart = JSON.parse(localStorage.getItem('cart') || '[]');
+        const mergedCart = mergeCarts(backendCart, localCart);
+        setCart(mergedCart);
+        localStorage.setItem('cart', JSON.stringify(mergedCart));
+
+        // Save merged result back to backend
+        await axios.post(`/api/cart/user/${userId}`, { items: mergedCart });
+      } catch (err) {
+        console.error('Failed to fetch or sync cart:', err);
       }
     };
 
     fetchCart();
-  }, [isSignedIn, user?.id]);
+  }, []);
 
   // ☁️ Sync to backend on cart change (if logged in)
   useEffect(() => {
-    if (isSignedIn && user?.id) {
+    const userId = getUserId();
+    if (userId) {
       axios
-        .post(`/api/cart/user/${user.id}`, { items: cart }) // ✅ Fixed route
+        .post(`/api/cart/user/${userId}`, { items: cart })
         .catch((err) => console.error('Failed to save cart:', err));
     }
-  }, [cart, isSignedIn, user?.id]);
+  }, [cart]);
 
   const mergeCarts = (a: CartItem[], b: CartItem[]) => {
     const map = new Map<string, CartItem>();

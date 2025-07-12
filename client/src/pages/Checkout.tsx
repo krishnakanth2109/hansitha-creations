@@ -8,7 +8,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Lock, MapPin, User } from 'lucide-react';
-import { useUser } from '@clerk/clerk-react';
 
 interface CheckoutFormData {
   email: string;
@@ -34,7 +33,6 @@ const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
   const { toast } = useToast();
-  const { user } = useUser();
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [formData, setFormData] = useState<CheckoutFormData>({
@@ -120,19 +118,19 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    if (!user?.id) {
-      toast({ title: 'Error', description: 'You must be signed in to place an order.', variant: 'destructive' });
-      return;
-    }
+    // Optional: check your own auth system (e.g. localStorage userId)
+    // const userId = localStorage.getItem('userId');
+    // if (!userId) {
+    //   toast({ title: 'Error', description: 'You must be logged in to place an order.', variant: 'destructive' });
+    //   return;
+    // }
 
     setIsProcessing(true);
 
     try {
       const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
 
-      // ✅ Simulate fake order placement (no backend call)
       console.log('Mock Order:', {
-        userId: user.id,
         products: cartItems.map(item => ({
           name: item.name,
           quantity: item.quantity,
@@ -140,7 +138,7 @@ const Checkout: React.FC = () => {
         })),
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1000)); // simulate delay
+      await new Promise(resolve => setTimeout(resolve, 1000));
 
       localStorage.setItem('lastOrderNumber', orderNumber);
       clearCart();

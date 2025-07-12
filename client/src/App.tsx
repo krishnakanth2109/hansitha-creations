@@ -15,15 +15,14 @@ import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import Checkout from "./pages/Checkout";
 import OrderConfirmation from "./pages/OrderConfirmation";
-import Login from "./pages/SignIn";
-import Signup from "./pages/Signup";
 import NotFound from "./pages/NotFound";
-import UserProfile from "./pages/UserProfile";
 import SSORedirectHandler from "./pages/SSORedirectHandler";
 import SearchResults from "./pages/SearchResults";
 import FeaturedProducts from "./pages/FeaturedProducts";
 import CategoryPage from './pages/CategoryPage';
 import ProductDetailsPage from "./pages/ProductDetailsPage";
+import AdminCategoryPanel from '../src/admin/AdminCategoryPanel';
+import CategoryCircle from './components/CategoryCircle';
 
 // Admin
 import AdminPage from "./admin/AdminPage";
@@ -59,22 +58,6 @@ const App = () => {
                   }
                 />
                 <Route
-                  path="/shop/*"
-                  element={
-                    <Layout>
-                      <Shop />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/categories/*"
-                  element={
-                    <Layout>
-                      <Shop />
-                    </Layout>
-                  }
-                />
-                <Route
                   path="/cart"
                   element={
                     <Layout>
@@ -95,14 +78,6 @@ const App = () => {
                   element={
                     <Layout>
                       <OrderConfirmation />
-                    </Layout>
-                  }
-                />
-                <Route
-                  path="/account"
-                  element={
-                    <Layout>
-                      <UserProfile />
                     </Layout>
                   }
                 />
@@ -153,11 +128,9 @@ const App = () => {
                   }
                 />
                 <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
+                <Route path="/" element={<CategoryCircle />} />
+                <Route path="/admin/categories" element={<AdminCategoryPanel />} />
 
-
-                {/* Auth Pages (without layout) */}
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
                 <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
 
                 {/* Admin (you can wrap in Layout if needed) */}
