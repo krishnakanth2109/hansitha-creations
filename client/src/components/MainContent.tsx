@@ -1,7 +1,7 @@
 
 import { useState } from 'react';
 import { Star, Heart, ShoppingCart } from 'lucide-react';
-import ProductDetails from './ProductDetails';
+import ProductDetails from '../pages/ProductDetailsPage';
 import { useToast } from '@/hooks/use-toast';
 
 const MainContent = () => {
@@ -95,13 +95,7 @@ const MainContent = () => {
 
   if (selectedProduct) {
     return (
-      <ProductDetails
-        product={selectedProduct}
-        onBack={() => setSelectedProduct(null)}
-        onAddToCart={handleAddToCart}
-        allProducts={featuredProducts}
-        onProductSelect={handleProductClick}
-      />
+      <ProductDetails />
     );
   }
 

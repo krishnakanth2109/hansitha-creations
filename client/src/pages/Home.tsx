@@ -137,11 +137,6 @@ const Home = () => {
       <PromoSection />
       <Footer />
 
-      {/* Bottom Navigation - mobile only */}
-      <div className="fixed bottom-0 left-0 right-0 z-30 block lg:hidden">
-        <BottomNavBar onAccountClick={openSignIn} />
-      </div>
-
       {/* Sidebar with scroll lock */}
       {isSidebarOpen && (
         <>
@@ -166,6 +161,11 @@ const Home = () => {
           <div className="fixed inset-0 bg-black/50 z-40" onClick={closeSignIn} />
         </>
       )}
+
+      {/* Bottom Navigation - mobile only */}
+      <div className="fixed bottom-0 left-0 right-0 z-30 block lg:hidden">
+        <BottomNavBar onAccountClick={openSignIn} />
+      </div>
     </div>
   );
 };

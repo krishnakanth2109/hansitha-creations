@@ -23,11 +23,11 @@ import SSORedirectHandler from "./pages/SSORedirectHandler";
 import SearchResults from "./pages/SearchResults";
 import FeaturedProducts from "./pages/FeaturedProducts";
 import CategoryPage from './pages/CategoryPage';
-import ProductDetails from "./components/ProductDetails";
+import ProductDetailsPage from "./pages/ProductDetailsPage";
 
 // Admin
 import AdminPage from "./admin/AdminPage";
-import { i } from "node_modules/@clerk/clerk-react/dist/useAuth-CbDfW7Rs.d.mts";
+// import { i } from "node_modules/@clerk/clerk-react/dist/useAuth-CbDfW7Rs.d.mts";
 
 const queryClient = new QueryClient();
 
@@ -152,7 +152,8 @@ const App = () => {
                     </Layout>
                   }
                 />
-                <Route path="/product/:productName" element={<ProductDetails />} />
+                <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
+
 
                 {/* Auth Pages (without layout) */}
                 <Route path="/login" element={<Login />} />
