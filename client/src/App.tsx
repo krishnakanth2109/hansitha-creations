@@ -129,7 +129,8 @@ const App = () => {
                 />
                 <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
                 <Route path="/" element={<CategoryCircle />} />
-                <Route path="/admin/categories" element={<AdminCategoryPanel />} />
+                <Route path="/fabrics/:categoryName" element={<AdminCategoryPanel />} />
+
 
                 <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
 
