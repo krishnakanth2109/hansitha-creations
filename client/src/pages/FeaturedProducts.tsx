@@ -29,8 +29,8 @@ const FeaturedProducts: React.FC = () => {
   };
 
   return (
-    <div className="relative p-6">
-      <h2 className="text-3xl text-center font-bold mb-6" style={{ color: '#453AB9' }}>
+    <div className="relative p-6 bg-white">
+      <h2 className="text-3xl text-center text-brandPink font-bold mb-6">
         FEATURED PRODUCTS
       </h2>
 

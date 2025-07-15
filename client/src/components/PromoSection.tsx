@@ -46,7 +46,7 @@ export const PromoSection = () => {
     <section className="py-16 bg-white">
       <div className="container mx-auto px-4">
         {/* Feature benefits */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 border-t border-gray-100">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
             { icon: '🚚', title: 'Free Shipping', desc: 'For all Orders Over 1000' },
             { icon: '💳', title: 'Secured Payment', desc: 'Payment Cards Accepted' },

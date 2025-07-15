@@ -2,9 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 const CarouselManager = () => {
   const [selectedCarousel, setSelectedCarousel] = useState('carousel1');
-  const [selectedFile, setSelectedFile] = useState(null);
-  const [heading, setHeading] = useState('');
-  const [subtext, setSubtext] = useState('');
+  const [desktopFile, setDesktopFile] = useState<File | null>(null);
+  const [mobileFile, setMobileFile] = useState<File | null>(null);
   const [carouselData, setCarouselData] = useState([]);
 
   // Fetch existing carousels
@@ -18,33 +17,39 @@ const CarouselManager = () => {
     fetchCarousels();
   }, []);
 
-  // Upload image or text
-  const handleUpload = async (e) => {
+  // Upload image(s)
+  const handleUpload = async (e: React.FormEvent) => {
     e.preventDefault();
     const formData = new FormData();
     formData.append('carouselId', selectedCarousel);
-    if (selectedFile) formData.append('image', selectedFile);
-    if (heading) formData.append('heading', heading);
-    if (subtext) formData.append('subtext', subtext);
+    if (desktopFile) formData.append('image', desktopFile);
+    if (mobileFile) formData.append('mobileImage', mobileFile);
 
     const res = await fetch('https://hansitha-web-storefront.onrender.com/api/upload-carousel', {
       method: 'POST',
       body: formData,
     });
+
     const data = await res.json();
     if (res.ok) {
       alert('Uploaded!');
-      setSelectedFile(null);
-      setHeading('');
-      setSubtext('');
+      setDesktopFile(null);
+      setMobileFile(null);
+      resetFileInputs();
       fetchCarousels();
     } else {
       alert('Upload failed: ' + data.message);
     }
   };
 
-  // Delete a carousel
-  const handleDelete = async (carouselId) => {
+  const resetFileInputs = () => {
+    const desktopInput = document.getElementById('desktopInput') as HTMLInputElement;
+    const mobileInput = document.getElementById('mobileInput') as HTMLInputElement;
+    if (desktopInput) desktopInput.value = '';
+    if (mobileInput) mobileInput.value = '';
+  };
+
+  const handleDelete = async (carouselId: string) => {
     if (!window.confirm(`Delete ${carouselId}?`)) return;
     const res = await fetch(`https://hansitha-web-storefront.onrender.com/api/delete-carousel/${carouselId}`, {
       method: 'DELETE',
@@ -65,7 +70,7 @@ const CarouselManager = () => {
       {/* Upload Form */}
       <form onSubmit={handleUpload} className="space-y-4 border-b pb-6">
         <div>
-          <label>Select Banner</label>
+          <label className="block font-semibold mb-1">Select Banner</label>
           <select
             value={selectedCarousel}
             onChange={(e) => setSelectedCarousel(e.target.value)}
@@ -77,73 +82,91 @@ const CarouselManager = () => {
           </select>
         </div>
 
+        {/* Desktop Image Upload */}
         <div>
-  <label className="block font-semibold mb-1">Upload Image</label>
-  <div className="flex items-center gap-4 mb-2">
-    <input
-      id="imageInput"
-      type="file"
-      accept="image/*"
-      onChange={(e) => setSelectedFile(e.target.files[0])}
-      className="flex-1"
-    />
-    {selectedFile && (
-      <button
-        type="button"
-        onClick={() => {
-          setSelectedFile(null);
-          const input = document.getElementById('imageInput') as HTMLInputElement;
-if (input) input.value = '';
-        }}
-        className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
-      >
-        Remove
-      </button>
-    )}
-  </div>
-
-  {selectedFile && (
-    <img
-      src={URL.createObjectURL(selectedFile)}
-      alt="Preview"
-      className="w-full object-contain rounded border max-h-[500px]"
-    />
-  )}
-</div>
-        <div>
-          <label>Banner Title</label>
-          <input
-            type="text"
-            value={heading}
-            onChange={(e) => setHeading(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
+          <label className="block font-semibold mb-1">Upload Desktop Image</label>
+          <div className="flex items-center gap-4 mb-2">
+            <input
+              id="desktopInput"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setDesktopFile(e.target.files?.[0] || null)}
+              className="flex-1"
+            />
+            {desktopFile && (
+              <button
+                type="button"
+                onClick={() => setDesktopFile(null)}
+                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {desktopFile && (
+            <img
+              src={URL.createObjectURL(desktopFile)}
+              alt="Desktop Preview"
+              className="w-full object-contain rounded border max-h-[300px]"
+            />
+          )}
         </div>
 
+        {/* Mobile Image Upload */}
         <div>
-          <label>Banner Paragraph</label>
-          <input
-            type="text"
-            value={subtext}
-            onChange={(e) => setSubtext(e.target.value)}
-            className="w-full p-2 border rounded"
-          />
+          <label className="block font-semibold mb-1">Upload Mobile Image</label>
+          <div className="flex items-center gap-4 mb-2">
+            <input
+              id="mobileInput"
+              type="file"
+              accept="image/*"
+              onChange={(e) => setMobileFile(e.target.files?.[0] || null)}
+              className="flex-1"
+            />
+            {mobileFile && (
+              <button
+                type="button"
+                onClick={() => setMobileFile(null)}
+                className="bg-red-500 text-white px-3 py-1 rounded hover:bg-red-600"
+              >
+                Remove
+              </button>
+            )}
+          </div>
+          {mobileFile && (
+            <img
+              src={URL.createObjectURL(mobileFile)}
+              alt="Mobile Preview"
+              className="w-full object-contain rounded border max-h-[300px]"
+            />
+          )}
         </div>
 
         <button className="bg-blue-600 text-white px-4 py-2 rounded">Upload</button>
       </form>
 
-      {/* Preview Section */}
+      {/* Existing Carousel Preview */}
       <div className="space-y-4">
         <h3 className="text-xl font-semibold">Existing Banners</h3>
         <div className="grid md:grid-cols-3 gap-6">
-          {carouselData.map((item) => (
+          {carouselData.map((item: any) => (
             <div key={item.carouselId} className="border rounded p-4 shadow">
-              {item.imageUrl && (
-                <img src={item.imageUrl} alt="Carousel" className="w-full h-40 object-cover mb-2 rounded" />
-              )}
-              <h4 className="font-bold">{item.heading || "No Heading"}</h4>
-              <p className="text-gray-600">{item.subtext || "No Subtext"}</p>
+              <div>
+                <p className="text-sm text-gray-500 mb-1 font-medium">Desktop Image</p>
+                {item.imageUrl ? (
+                  <img src={item.imageUrl} alt="Desktop" className="w-full h-40 object-cover mb-2 rounded" />
+                ) : (
+                  <p className="text-gray-400">No desktop image</p>
+                )}
+              </div>
+              <div>
+                <p className="text-sm text-gray-500 mb-1 font-medium">Mobile Image</p>
+                {item.mobileImageUrl ? (
+                  <img src={item.mobileImageUrl} alt="Mobile" className="w-full h-40 object-cover mb-2 rounded" />
+                ) : (
+                  <p className="text-gray-400">No mobile image</p>
+                )}
+              </div>
               <p className="text-sm text-gray-400 mt-2">{item.carouselId}</p>
               <button
                 onClick={() => handleDelete(item.carouselId)}

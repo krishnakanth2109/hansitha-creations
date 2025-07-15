@@ -135,8 +135,8 @@ const Home = () => {
 
       <div className="px-4 sm:px-6 lg:px-8 py-10 bg-white">
         <div className="max-w-7xl mx-auto">
-          <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
-            Shop by Category
+          <h2 className="text-3xl font-bold text-brandBlue mb-8 text-center">
+            SHOP BY CATEGORY
           </h2>
           <CategoryCircle />
         </div>

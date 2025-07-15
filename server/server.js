@@ -10,7 +10,6 @@ const crypto = require("crypto");
 // Routes
 const categoryRoutes = require('./routes/categories');
 const checkoutRoutes = require('./routes/checkoutRoutes');
-const heroPromoRoutes = require("./heroPromo.route");
 const productRoutes = require('./routes/productRoutes');
 
 dotenv.config();
@@ -93,35 +92,42 @@ app.get('/', (req, res) => {
 app.use('/api/categories', categoryRoutes);
 app.use('/api', checkoutRoutes); 
 app.use('/api/products', productRoutes);
-app.use("/api/hero-promos", heroPromoRoutes);
 
 // ✅ Carousel Schema + Routes
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
-  imageUrl: { type: String, default: "" },
-  heading: { type: String, default: "" },
-  subtext: { type: String, default: "" },
+  imageUrl: { type: String, default: "" },          // Desktop image
+  mobileImageUrl: { type: String, default: "" },    // Mobile image
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
 
-app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
+// ✅ Upload Desktop and Mobile Carousel Images
+app.post("/api/upload-carousel", upload.fields([
+  { name: "image", maxCount: 1 },
+  { name: "mobileImage", maxCount: 1 }
+]), async (req, res) => {
   try {
-    const { carouselId, heading, subtext } = req.body;
+    const { carouselId } = req.body;
     if (!carouselId) return res.status(400).json({ message: "Missing carouselId" });
 
     let existing = await ImageModel.findOne({ carouselId });
     if (!existing) existing = new ImageModel({ carouselId });
 
-    if (req.file) {
-      const base64 = `data:${req.file.mimetype};base64,${req.file.buffer.toString("base64")}`;
+    if (req.files?.image?.[0]) {
+      const base64 = `data:${req.files.image[0].mimetype};base64,${req.files.image[0].buffer.toString("base64")}`;
       const result = await cloudinary.uploader.upload(base64, {
         folder: "carousel_images",
       });
       existing.imageUrl = result.secure_url;
     }
 
-    existing.heading = heading || existing.heading;
-    existing.subtext = subtext || existing.subtext;
+    if (req.files?.mobileImage?.[0]) {
+      const base64 = `data:${req.files.mobileImage[0].mimetype};base64,${req.files.mobileImage[0].buffer.toString("base64")}`;
+      const result = await cloudinary.uploader.upload(base64, {
+        folder: "carousel_images/mobile",
+      });
+      existing.mobileImageUrl = result.secure_url;
+    }
 
     await existing.save();
     res.json({ success: true, message: "Carousel updated successfully." });
@@ -131,6 +137,7 @@ app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   }
 });
 
+// ✅ Delete Carousel
 app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
     const { carouselId } = req.params;
@@ -147,6 +154,7 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   }
 });
 
+// ✅ Fetch Carousel Images
 app.get("/api/carousel-images", async (req, res) => {
   try {
     const images = await ImageModel.find({});

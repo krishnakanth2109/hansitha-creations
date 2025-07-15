@@ -1,4 +1,6 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
+import Papa from 'papaparse';
+import toast from 'react-hot-toast';
 
 // 🌐 Cloudinary & API base from env
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`;
@@ -6,7 +8,7 @@ const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 const API_BASE = import.meta.env.VITE_API_URL;
 
 type Category = {
-  _id: string;
+  _id?: string;
   name: string;
   image: string;
 };
@@ -17,6 +19,7 @@ const AdminCategoryPanel = () => {
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [uploading, setUploading] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
 
   useEffect(() => {
     fetchCategories();
@@ -43,12 +46,7 @@ const AdminCategoryPanel = () => {
 
   const handleUpload = async () => {
     if (!name || !imageFile) {
-      alert('Category name and image are required.');
-      return;
-    }
-
-    if (!CLOUDINARY_UPLOAD_URL || !CLOUDINARY_UPLOAD_PRESET) {
-      alert('Missing Cloudinary configuration.');
+      toast.error('Category name and image are required.');
       return;
     }
 
@@ -64,6 +62,7 @@ const AdminCategoryPanel = () => {
         method: 'POST',
         body: formData,
       });
+
       const cloudinaryData = await cloudinaryRes.json();
       const imageUrl = cloudinaryData.secure_url;
 
@@ -79,13 +78,13 @@ const AdminCategoryPanel = () => {
       if (!mongoRes.ok) throw new Error('Failed to save category');
 
       await fetchCategories();
-      alert('Category added!');
+      toast.success('Category added!');
       setName('');
       setImageFile(null);
       setPreviewUrl(null);
     } catch (err) {
       console.error(err);
-      alert('Upload failed');
+      toast.error('Upload failed');
     } finally {
       setUploading(false);
     }
@@ -102,17 +101,63 @@ const AdminCategoryPanel = () => {
       if (!res.ok) throw new Error('Delete failed');
 
       await fetchCategories();
-      alert('Category deleted');
+      toast.success('Category deleted');
     } catch (err) {
       console.error(err);
-      alert('Error deleting category');
+      toast.error('Error deleting category');
     }
+  };
+
+  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    Papa.parse(file, {
+      header: true,
+      skipEmptyLines: true,
+      complete: async function (results) {
+        const parsed = results.data as Category[];
+        let successCount = 0;
+        let errorCount = 0;
+
+        for (const cat of parsed) {
+          if (!cat.name || !cat.image) {
+            errorCount++;
+            continue;
+          }
+
+          try {
+            const res = await fetch(`${API_BASE}/api/categories`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify(cat),
+            });
+
+            if (!res.ok) throw new Error('Failed to add');
+
+            successCount++;
+          } catch (err) {
+            console.error(err);
+            errorCount++;
+          }
+        }
+
+        toast.success(`${successCount} categories added, ${errorCount} failed`);
+        await fetchCategories();
+
+        // Clear file input
+        if (fileInputRef.current) fileInputRef.current.value = '';
+      },
+    });
   };
 
   return (
     <div className="max-w-2xl mx-auto p-6 bg-white shadow rounded">
       <h2 className="text-2xl font-bold mb-4">Manage Categories</h2>
 
+      {/* Add Category Manually */}
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
@@ -140,6 +185,25 @@ const AdminCategoryPanel = () => {
         {uploading ? 'Uploading...' : 'Add Category'}
       </button>
 
+      {/* Bulk Upload */}
+      <div className="mb-8">
+        <h3 className="text-lg font-semibold mb-2">Bulk Upload Categories via CSV</h3>
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".csv"
+          onChange={handleCSVUpload}
+          className="block w-full text-sm text-gray-500
+            file:mr-4 file:py-2 file:px-4
+            file:rounded-full file:border-0
+            file:text-sm file:font-semibold
+            file:bg-blue-50 file:text-blue-700
+            hover:file:bg-blue-100
+          "
+        />
+      </div>
+
+      {/* Existing Categories */}
       <h3 className="text-xl font-semibold mb-3">Existing Categories</h3>
       <ul className="space-y-4">
         {categories.map((cat) => (
@@ -160,7 +224,7 @@ const AdminCategoryPanel = () => {
                 Edit
               </button>
               <button
-                onClick={() => handleDelete(cat._id)}
+                onClick={() => handleDelete(cat._id!)}
                 className="text-red-600 hover:underline"
               >
                 Delete
