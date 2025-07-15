@@ -7,6 +7,8 @@ import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 import { CartProvider } from "./context/CartContext";
 import { ProductProvider } from "./context/ProductContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
+import { WishlistProvider } from "./context/WishlistContext";
+import WishlistPage from './pages/WishlistPage';
 
 import Layout from "./components/Layout";
 
@@ -29,37 +31,35 @@ import AdminCategoryPanel from "./admin/AdminCategoryPanel";
 
 const queryClient = new QueryClient();
 
-// 👇 AppRoutes moved into a separate BrowserRouter scope
 const AppRoutes = () => {
   const location = useLocation();
 
   return (
-    <>
-      <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<Layout><Home /></Layout>} />
-        <Route path="/shop" element={<Layout><Shop /></Layout>} />
-        <Route path="/cart" element={<Layout><Cart /></Layout>} />
-        <Route path="/order-confirmation" element={<Layout><OrderConfirmation /></Layout>} />
-        <Route path="/search" element={<Layout><SearchResults /></Layout>} />
-        <Route path="/featured" element={<Layout><FeaturedProducts /></Layout>} />
-        <Route path="/fabrics/:category" element={<Layout><CategoryPage /></Layout>} />
-        <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-        <Route path="/about" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">About Page</h1></div></Layout>} />
-        <Route path="/contact" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">Contact Page</h1></div></Layout>} />
-        <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
+    <Routes>
+      {/* Public Routes */}
+      <Route path="/" element={<Layout><Home /></Layout>} />
+      <Route path="/shop" element={<Layout><Shop /></Layout>} />
+      <Route path="/cart" element={<Layout><Cart /></Layout>} />
+      <Route path="/order-confirmation" element={<Layout><OrderConfirmation /></Layout>} />
+      <Route path="/search" element={<Layout><SearchResults /></Layout>} />
+      <Route path="/featured" element={<Layout><FeaturedProducts /></Layout>} />
+      <Route path="/fabrics/:category" element={<Layout><CategoryPage /></Layout>} />
+      <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
+      <Route path="/about" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">About Page</h1></div></Layout>} />
+      <Route path="/contact" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">Contact Page</h1></div></Layout>} />
+      <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
 
-        {/* Admin Routes */}
-        <Route path="/admin" element={<AdminPage />} />
-        <Route path="/fabrics/:categoryName" element={<AdminCategoryPanel />} />
+      {/* Admin Routes */}
+      <Route path="/admin" element={<AdminPage />} />
+      <Route path="/fabrics/:categoryName" element={<AdminCategoryPanel />} />
 
-        {/* SSO Handler */}
-        <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
+      {/* SSO Handler */}
+      <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
 
-        {/* 404 */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
-    </>
+      {/* 404 */}
+      <Route path="*" element={<NotFound />} />
+      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} /> 
+    </Routes>
   );
 };
 
@@ -69,13 +69,15 @@ const App = () => {
       <TooltipProvider>
         <CartProvider>
           <ProductProvider>
-            <BrowserRouter>
-              <CurrencyProvider>
-                <Toaster />
-                <Sonner />
-                <AppRoutes />
-              </CurrencyProvider>
-            </BrowserRouter>
+            <WishlistProvider>
+              <BrowserRouter>
+                <CurrencyProvider>
+                  <Toaster />
+                  <Sonner />
+                  <AppRoutes />
+                </CurrencyProvider>
+              </BrowserRouter>
+            </WishlistProvider>
           </ProductProvider>
         </CartProvider>
       </TooltipProvider>

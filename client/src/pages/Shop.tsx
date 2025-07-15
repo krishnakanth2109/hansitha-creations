@@ -3,7 +3,7 @@ import { ProductContext } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
-import { X } from 'lucide-react';
+import { X, Heart, HeartIcon } from 'lucide-react';
 import clsx from 'clsx';
 import { useCurrency } from '@/context/CurrencyContext';
 import { Footer } from '../components/Footer';
@@ -19,7 +19,21 @@ const Shop: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number>(10000);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
   const [showFilterMobile, setShowFilterMobile] = useState(false);
-  const [isMobile, setIsMobile] = useState(false);
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== 'undefined') {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
+  const [wishlist, setWishlist] = useState<string[]>([]);
+
+  const toggleWishlist = (productId: string) => {
+    setWishlist((prev) =>
+      prev.includes(productId)
+        ? prev.filter((id) => id !== productId)
+        : [...prev, productId]
+    );
+  };
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
@@ -53,28 +67,28 @@ const Shop: React.FC = () => {
   const uniqueCategories = [...new Set(productList.map((p) => p.category))];
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen bg-white">
       <main className="p-4 flex-grow">
-        {/* Header with Filter button on Mobile */}
-        <div className="lg:hidden flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">🛍️ Products</h2>
+        {/* Mobile Heading and Filter Button */}
+        <div className="flex items-center justify-between mb-4 lg:hidden">
+          <h2 className="text-2xl font-bold">🛍️ Products</h2>
           <button
             onClick={() => setShowFilterMobile(true)}
-            className="bg-blue-50 text-blue-700 border border-blue-300 px-4 py-2 rounded-md shadow font-medium hover:bg-blue-100 transition"
+            className="bg-gray-100 text-gray-800 border border-gray-300 px-4 py-2 rounded shadow"
           >
             ☰ Filters
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[20%_80%] gap-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[20%_80%] gap-6 relative">
           {/* Sidebar Filter */}
           <aside
             className={clsx(
               'bg-white w-full lg:w-auto p-6 overflow-y-auto transition-transform duration-300 ease-in-out shadow-lg',
               {
-                'fixed inset-x-0 bottom-0 transform translate-y-0 z-40': showFilterMobile && isMobile,
-                'fixed inset-x-0 bottom-0 transform translate-y-full z-40': !showFilterMobile && isMobile,
-                'lg:sticky top-[100px] block': true,
+                'fixed inset-0 transform translate-x-0 z-40': showFilterMobile && isMobile,
+                'fixed inset-0 transform -translate-x-full z-40': !showFilterMobile && isMobile,
+                'lg:sticky top-[100px] block': true
               }
             )}
             style={{ maxHeight: 'calc(100vh - 140px)' }}
@@ -159,57 +173,63 @@ const Shop: React.FC = () => {
             </div>
           </aside>
 
-          {/* Product List */}
+          {/* Background Blur */}
+          {isMobile && showFilterMobile && (
+            <div
+              className="fixed inset-0 bg-black bg-opacity-40 z-30 lg:hidden"
+              onClick={() => setShowFilterMobile(false)}
+            />
+          )}
+
+          {/* Product Cards */}
           <section className="lg:pl-0">
+            <h2 className="text-2xl font-bold mb-4 hidden lg:block">🛍️ Products</h2>
             {filtered.length === 0 ? (
               <p>No products match your filters.</p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-4 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-6">
                 {filtered.map((product) => {
-                  const isLowStock = product.stock <= 5 && product.stock > 0;
                   const isOutOfStock = product.stock === 0;
+                  const isWishlisted = wishlist.includes(product._id);
 
                   return (
                     <div
                       key={product._id}
                       onClick={() => handleProductClick(product)}
-                      className="bg-white border rounded-xl shadow hover:shadow-md transition p-4 flex flex-col cursor-pointer"
+                      className="w-full max-w-[220px] mx-auto cursor-pointer group"
                     >
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-full h-auto object-cover rounded mb-3"
-                      />
-                      <div className="flex justify-between items-start mb-1">
-                        <h3 className="font-semibold text-lg line-clamp-2">{product.name}</h3>
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-1 rounded-full">
-                          {product.category}
-                        </span>
-                      </div>
-                      <div className="text-sm text-gray-600 mb-2">
-                        <span
-                          className={`font-medium ${isLowStock ? 'text-orange-500' : 'text-gray-600'}`}
+                      <div className="relative">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className={`w-full h-[280px] object-cover rounded ${product.stock === 0 ? 'grayscale opacity-40' : ''}`}
+                        />
+
+                        {/* Heart Icon */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            toggleWishlist(product._id);
+                          }}
+                          className="absolute top-2 right-2 z-10 bg-white p-1 rounded-full shadow-md transition-transform duration-150 active:scale-110"
+                          title={wishlist.includes(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
                         >
-                          Stock: {product.stock}
-                        </span>
+                          {wishlist.includes(product._id) ? (
+                            <HeartIcon className="w-5 h-5 text-red-500 fill-red-500" />
+                          ) : (
+                            <Heart className="w-5 h-5 text-red-500" />
+                          )}
+                        </button>
                       </div>
-                      {isLowStock && (
-                        <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded mb-2 w-max">
-                          Low Stock
-                        </span>
-                      )}
-                      {isOutOfStock && (
-                        <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded mb-2 w-max">
-                          Out of Stock
-                        </span>
-                      )}
-                      <p className="text-blue-600 font-bold text-xl mb-4">
-                        {formatPrice(product.price)}
-                      </p>
+
+                      <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
+
+                      <p className="text-blue-600 font-bold text-base text-center">{formatPrice(product.price)}</p>
+
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (isOutOfStock) return;
+                          if (product.stock === 0) return;
                           addToCart({
                             id: product._id,
                             name: product.name,
@@ -218,14 +238,13 @@ const Shop: React.FC = () => {
                           });
                           toast.success(`${product.name} added to cart!`);
                         }}
-                        disabled={isOutOfStock}
-                        className={`mt-auto px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out ${
-                          isOutOfStock
-                            ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                            : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                        }`}
+                        disabled={product.stock === 0}
+                        className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${product.stock === 0
+                          ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                          : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+                          }`}
                       >
-                        {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
+                        {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
                       </button>
                     </div>
                   );
@@ -236,7 +255,6 @@ const Shop: React.FC = () => {
         </div>
       </main>
 
-      {/* Sticky Footer */}
       <Footer />
     </div>
   );
