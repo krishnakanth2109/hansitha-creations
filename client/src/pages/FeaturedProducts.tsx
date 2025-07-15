@@ -30,7 +30,7 @@ const FeaturedProducts: React.FC = () => {
 
   return (
     <div className="relative p-6 bg-white">
-      <h2 className="text-3xl text-center text-brandPink font-bold mb-6">
+      <h2 className="text-2xl text-center text-brandPink font-bold mb-6">
         FEATURED PRODUCTS
       </h2>
 
@@ -38,47 +38,52 @@ const FeaturedProducts: React.FC = () => {
         <p>No featured products found.</p>
       ) : (
         <div className="relative">
-          {/* Scroll Buttons */}
-          <button
-            onClick={() => scroll('left')}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
-          >
-            <ChevronLeft className="w-6 h-6" />
-          </button>
+          {/* Outer Container with padding for buttons */}
+          <div className="relative">
+            {/* Left Button (outside) */}
+            <button
+              onClick={() => scroll('left')}
+              className="absolute -left-6 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
+            >
+              <ChevronLeft className="w-6 h-6" />
+            </button>
 
-          <div
-            ref={scrollRef}
-            className="flex overflow-x-auto gap-4 no-scrollbar scroll-smooth px-8"
-          >
-            {featured.map((product) => (
-              <div
-                key={product._id}
-                onClick={() => handleProductClick(product)}
-                className="min-w-[220px] max-w-[220px] flex-shrink-0 cursor-pointer"
-              >
-                <div className="overflow-hidden rounded">
-                  <img
-                    src={product.image}
-                    alt={product.name}
-                    className="object-cover w-[834px] h-[364px]"
-                  />
+            {/* Scrollable Products Row */}
+            <div
+              ref={scrollRef}
+              className="flex overflow-x-auto gap-4 no-scrollbar scroll-smooth px-8"
+            >
+              {featured.map((product) => (
+                <div
+                  key={product._id}
+                  onClick={() => handleProductClick(product)}
+                  className="min-w-[220px] max-w-[220px] flex-shrink-0 cursor-pointer"
+                >
+                  <div className="overflow-hidden rounded">
+                    <img
+                      src={product.image}
+                      alt={product.name}
+                      className="object-cover w-[834px] h-[364px]"
+                    />
+                  </div>
+                  <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
+                  <div className="flex gap-2 items-center mt-1">
+                    <span className="text-lg font-semibold text-black">
+                      {formatPrice(product.price)}
+                    </span>
+                  </div>
                 </div>
-                <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
-                <div className="flex gap-2 items-center mt-1">
-                  <span className="text-lg font-semibold text-black">
-                    {formatPrice(product.price)}
-                  </span>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
+
+            {/* Right Button (outside) */}
+            <button
+              onClick={() => scroll('right')}
+              className="absolute -right-6 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
+            >
+              <ChevronRight className="w-6 h-6" />
+            </button>
           </div>
-
-          <button
-            onClick={() => scroll('right')}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
-          >
-            <ChevronRight className="w-6 h-6" />
-          </button>
         </div>
       )}
     </div>
