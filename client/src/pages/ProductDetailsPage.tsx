@@ -17,7 +17,6 @@ import {
 } from 'body-scroll-lock';
 
 import axios from 'axios';
-import { useCurrency } from '@/context/CurrencyContext';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -26,7 +25,6 @@ const ProductDetailsPage = () => {
   const location = useLocation();
   const { products } = useContext(ProductContext);
   const { addToCart } = useCart();
-  const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const [autoScroll, setAutoScroll] = useState(true);
 
@@ -45,6 +43,7 @@ const ProductDetailsPage = () => {
   };
   const closeSignIn = () => setIsSignInOpen(false);
 
+  // 👇 swipe handlers
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => document.getElementById('related-scroll')?.scrollBy({ left: 250, behavior: 'smooth' }),
     onSwipedRight: () => document.getElementById('related-scroll')?.scrollBy({ left: -250, behavior: 'smooth' }),
@@ -66,6 +65,7 @@ const ProductDetailsPage = () => {
     return () => clearInterval(interval);
   }, [autoScroll, product]);
 
+  // Scroll Lock
   useEffect(() => {
     const target = isSidebarOpen ? sidebarRef.current : isSignInOpen ? signInRef.current : null;
     if (target) disableBodyScroll(target);
@@ -73,6 +73,7 @@ const ProductDetailsPage = () => {
     return () => clearAllBodyScrollLocks();
   }, [isSidebarOpen, isSignInOpen]);
 
+  // Scroll to top and load product
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -83,7 +84,7 @@ const ProductDetailsPage = () => {
       }
 
       if (!name) return;
-      setProduct(null);
+      setProduct(null); // clear old product
 
       try {
         const decodedName = decodeURIComponent(name);
@@ -167,18 +168,20 @@ const ProductDetailsPage = () => {
           </div>
 
           <div className="space-y-4">
+            {/* Breadcrumb */}
             <p className="text-sm text-gray-500">
               <Link to="/" className="hover:underline text-blue-600">Home</Link>
               {product.breadcrumb?.map((crumb: string, i: number) => (
-                <span key={i}>
+                <>
                   {' > '}
                   <Link
+                    key={i}
                     to={`/categories/${encodeURIComponent(crumb.toLowerCase())}`}
                     className="hover:underline text-blue-600"
                   >
                     {crumb}
                   </Link>
-                </span>
+                </>
               ))}
               {' > '}<span className="text-gray-800 font-medium">{product.name}</span>
             </p>
@@ -196,11 +199,10 @@ const ProductDetailsPage = () => {
 
             <p className="text-gray-600 whitespace-pre-line">
               <strong>Description:</strong> <br />
-              {product.description}
-            </p>
+              {product.description}</p>
 
             <p className="text-2xl font-bold text-green-600">
-              {formatPrice(product.price)}
+              ₹{product.price.toLocaleString('en-IN')}
             </p>
 
             <button
@@ -233,7 +235,7 @@ const ProductDetailsPage = () => {
               className="relative group"
               onMouseEnter={() => setAutoScroll(false)}
               onMouseLeave={() => setAutoScroll(true)}
-              {...swipeHandlers}
+              {...swipeHandlers} // 👈 apply swipe handlers
             >
               <div
                 id="related-scroll"
@@ -261,7 +263,7 @@ const ProductDetailsPage = () => {
                       <h3 className="text-lg font-semibold truncate">{item.name}</h3>
                       <p className="text-sm text-gray-500 truncate">{item.category}</p>
                       <p className="text-blue-600 font-bold mt-1">
-                        {formatPrice(item.price)}
+                        ₹{item.price.toLocaleString('en-IN')}
                       </p>
                     </div>
                   ))}
@@ -270,7 +272,6 @@ const ProductDetailsPage = () => {
           </div>
         )}
       </div>
-
       <Footer />
 
       <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">

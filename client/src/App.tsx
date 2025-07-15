@@ -24,6 +24,8 @@ import FeaturedProducts from "./pages/FeaturedProducts";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import Checkout from "./pages/Checkout";
+import Login from './pages/Login';
+import Register from './pages/Register';
 
 // Admin
 import AdminPage from "./admin/AdminPage";
@@ -48,6 +50,8 @@ const AppRoutes = () => {
       <Route path="/about" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">About Page</h1></div></Layout>} />
       <Route path="/contact" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">Contact Page</h1></div></Layout>} />
       <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
+      <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminPage />} />
@@ -58,7 +62,7 @@ const AppRoutes = () => {
 
       {/* 404 */}
       <Route path="*" element={<NotFound />} />
-      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} /> 
+      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
     </Routes>
   );
 };

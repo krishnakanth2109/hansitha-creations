@@ -26,5 +26,5 @@
       "@/*": ["./src/*"]
     }
   },
-  "include": ["src", "../server/utils/cloudinary.js", "../server/middleware"]
+  "include": ["src", "../server/utils/cloudinary.js", "../server/middleware", "../server/routes/ProtectedRoute.tsx"]
 }

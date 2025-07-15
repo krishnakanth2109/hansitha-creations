@@ -6,6 +6,9 @@ const { v2: cloudinary } = require("cloudinary");
 const dotenv = require("dotenv");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
+const cookieParser = require("cookie-parser");
+const authRoutes = require("./routes/auth.routes.js");
+const userRoutes = require("./routes/user.routes.js");
 
 // Routes
 const categoryRoutes = require('./routes/categories');
@@ -92,6 +95,9 @@ app.get('/', (req, res) => {
 app.use('/api/categories', categoryRoutes);
 app.use('/api', checkoutRoutes); 
 app.use('/api/products', productRoutes);
+
+app.use('/api/auth', authRoutes);
+app.use('/api/user', userRoutes);
 
 // ✅ Carousel Schema + Routes
 const ImageSchema = new mongoose.Schema({
