@@ -8,6 +8,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
 import { CreditCard, Lock, MapPin, User } from 'lucide-react';
+import { initiateRazorpayPayment } from '../utils/razorpay';
 
 interface CheckoutFormData {
   email: string;
@@ -118,35 +119,45 @@ const Checkout: React.FC = () => {
       return;
     }
 
-    // Optional: check your own auth system (e.g. localStorage userId)
-    // const userId = localStorage.getItem('userId');
-    // if (!userId) {
-    //   toast({ title: 'Error', description: 'You must be logged in to place an order.', variant: 'destructive' });
-    //   return;
-    // }
-
     setIsProcessing(true);
 
-    try {
-      const orderNumber = `ORD-${Date.now().toString().slice(-6)}`;
+    const subtotal = getTotalPrice();
+    const shipping = subtotal > 50 ? 0 : 99;
+    const tax = subtotal * 0.08;
+    const total = subtotal + shipping + tax;
 
-      console.log('Mock Order:', {
-        products: cartItems.map(item => ({
-          name: item.name,
-          quantity: item.quantity,
-          price: item.price,
-        })),
+    const orderPayload = {
+      ...formData,
+      cartItems,
+      totalAmount: total,
+    };
+
+    try {
+      const res = await fetch(`http://localhost:5000/api/checkout`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(orderPayload),
       });
 
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      if (!res.ok) throw new Error('Failed to save order');
 
-      localStorage.setItem('lastOrderNumber', orderNumber);
-      clearCart();
-      toast({ title: 'Order Placed Successfully!', description: 'Thank you for your purchase!' });
-      navigate('/order-confirmation');
+      await initiateRazorpayPayment({
+        amount: total,
+        items: cartItems,
+        onSuccess: () => {
+          localStorage.setItem('lastOrderNumber', `ORD-${Date.now().toString().slice(-6)}`);
+          clearCart();
+          toast({ title: 'Payment Success', description: 'Thank you for your purchase!' });
+          navigate('/order-confirmation');
+        },
+        onFailure: () => {
+          toast({ title: 'Verification Failed', description: 'Payment was successful but verification failed.', variant: 'destructive' });
+        }
+      });
     } catch (err) {
-      console.error(err);
-      toast({ title: 'Payment Failed', description: 'Try again later.', variant: 'destructive' });
+      toast({ title: 'Error', description: 'Order could not be saved.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -280,7 +291,6 @@ const Checkout: React.FC = () => {
 
 export default Checkout;
 
-// Reusable Components
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>

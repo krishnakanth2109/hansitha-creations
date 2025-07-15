@@ -4,7 +4,14 @@ const multer = require("multer");
 const mongoose = require("mongoose");
 const { v2: cloudinary } = require("cloudinary");
 const dotenv = require("dotenv");
+const Razorpay = require("razorpay");
+const crypto = require("crypto");
+
+// Routes
 const categoryRoutes = require('./routes/categories');
+const checkoutRoutes = require('./routes/checkoutRoutes');
+const heroPromoRoutes = require("./heroPromo.route");
+const productRoutes = require('./routes/productRoutes');
 
 dotenv.config();
 
@@ -13,38 +20,82 @@ const app = express();
 // Middleware
 app.use(cors());
 app.use(express.json());
-app.use('/api/categories', categoryRoutes);
 
-// Connect to MongoDB
-mongoose
-  .connect(process.env.MONGO_URI, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true,
-  })
-  .then(() => console.log("✅ MongoDB connected"))
-  .catch((err) => console.error("❌ MongoDB connection error:", err));
-
-// Cloudinary Config
+// Cloudinary config
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
 });
 
-// Multer for in-memory file handling
+// Multer setup
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Routes
-const heroPromoRoutes = require("./heroPromo.route");
-const productRoutes = require('./routes/productRoutes');
+// ✅ Razorpay config
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
 
+// ✅ Razorpay Create Order
+app.post('/api/payment/orders', async (req, res) => {
+  try {
+    const { amount } = req.body;
+    const order = await razorpay.orders.create({
+      amount,
+      currency: 'INR',
+      receipt: `receipt_order_${Date.now()}`
+    });
+    res.json(order);
+  } catch (err) {
+    console.error("Razorpay order error:", err);
+    res.status(500).send('Error creating Razorpay order');
+  }
+});
+
+// ✅ Razorpay Verify Payment
+app.post('/api/payment/verify', async (req, res) => {
+  const {
+    razorpay_order_id,
+    razorpay_payment_id,
+    razorpay_signature,
+  } = req.body;
+
+  const generated_signature = crypto
+    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .update(`${razorpay_order_id}|${razorpay_payment_id}`)
+    .digest('hex');
+
+  if (generated_signature === razorpay_signature) {
+    return res.status(200).json({ success: true });
+  } else {
+    return res.status(400).json({ success: false, message: "Invalid signature" });
+  }
+});
+
+// ✅ MongoDB Connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  dbName: 'web-store'
+}).then(() => {
+  console.log("✅ MongoDB connected");
+}).catch(err => {
+  console.error("❌ MongoDB connection error:", err);
+});
+
+app.get('/', (req, res) => {
+  res.send('API is working');
+});
+
+// ✅ API Routes
+app.use('/api/categories', categoryRoutes);
+app.use('/api', checkoutRoutes); 
 app.use('/api/products', productRoutes);
 app.use("/api/hero-promos", heroPromoRoutes);
 
-// =========================
-// 📸 Carousel Schema & Routes
-// =========================
+// ✅ Carousel Schema + Routes
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
   imageUrl: { type: String, default: "" },
@@ -53,7 +104,6 @@ const ImageSchema = new mongoose.Schema({
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
 
-// Upload Carousel
 app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   try {
     const { carouselId, heading, subtext } = req.body;
@@ -81,7 +131,6 @@ app.post("/api/upload-carousel", upload.single("image"), async (req, res) => {
   }
 });
 
-// Delete Carousel
 app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
     const { carouselId } = req.params;
@@ -98,7 +147,6 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   }
 });
 
-// Get Carousel Images
 app.get("/api/carousel-images", async (req, res) => {
   try {
     const images = await ImageModel.find({});
@@ -109,14 +157,12 @@ app.get("/api/carousel-images", async (req, res) => {
   }
 });
 
-// =========================
-// 📧 Newsletter Schema & Route
-// =========================
+// ✅ Newsletter
 const NewsletterSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   subscribedAt: { type: Date, default: Date.now },
 });
-const Newsletter = mongoose.model("Newsletter", NewsletterSchema, "Newsletters");
+const Newsletter = mongoose.model("Newsletter", NewsletterSchema);
 
 app.post("/api/newsletter", async (req, res) => {
   const { email } = req.body;
@@ -137,8 +183,6 @@ app.post("/api/newsletter", async (req, res) => {
   }
 });
 
-// =========================
-// 🚀 Start the Server
-// =========================
+// ✅ Start Server
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));

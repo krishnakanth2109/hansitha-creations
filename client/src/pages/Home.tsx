@@ -132,6 +132,7 @@ const Home = () => {
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
       {/* Page Content */}
       <HeroSection />
+
       <div className="px-4 sm:px-6 lg:px-8 py-10 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-3xl font-bold text-gray-900 mb-8 text-center">
@@ -169,7 +170,6 @@ const Home = () => {
           <div className="fixed inset-0 bg-black/50 z-40" onClick={closeSignIn} />
         </>
       )}
-
       {/* Bottom Navigation - mobile only */}
       <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">
         <BottomNavBar onAccountClick={openSignIn} />

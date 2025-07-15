@@ -1,13 +1,14 @@
-import React, { useContext } from 'react';
+import React, { useContext, useRef } from 'react';
 import { ProductContext } from '../context/ProductContext';
-import { useCart } from '../context/CartContext';
-import { toast } from 'react-hot-toast';
 import { useNavigate } from 'react-router-dom';
+import { ChevronLeft, ChevronRight } from 'lucide-react';
+import { useCurrency } from '@/context/CurrencyContext';
 
 const FeaturedProducts: React.FC = () => {
   const { products, loading } = useContext(ProductContext);
-  const { addToCart } = useCart();
   const navigate = useNavigate();
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const { formatPrice } = useCurrency();
 
   if (loading) return <p className="p-4 text-center">Loading featured products...</p>;
 
@@ -19,85 +20,65 @@ const FeaturedProducts: React.FC = () => {
     navigate(`/product/${product.name}`, { state: { product } });
   };
 
+  const scroll = (direction: 'left' | 'right') => {
+    const container = scrollRef.current;
+    if (container) {
+      const scrollAmount = direction === 'left' ? -300 : 300;
+      container.scrollBy({ left: scrollAmount, behavior: 'smooth' });
+    }
+  };
+
   return (
-    <div className="p-6">
-      <h2 className="text-3xl font-bold mb-6">🌟 Featured Products</h2>
+    <div className="relative p-6">
+      <h2 className="text-3xl text-center font-bold mb-6" style={{ color: '#453AB9' }}>
+        FEATURED PRODUCTS
+      </h2>
 
       {featured.length === 0 ? (
         <p>No featured products found.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-          {featured.map((product) => {
-            const isLowStock = product.stock <= 5 && product.stock > 0;
-            const isOutOfStock = product.stock === 0;
+        <div className="relative">
+          {/* Scroll Buttons */}
+          <button
+            onClick={() => scroll('left')}
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
+          >
+            <ChevronLeft className="w-6 h-6" />
+          </button>
 
-            return (
+          <div
+            ref={scrollRef}
+            className="flex overflow-x-auto gap-4 no-scrollbar scroll-smooth px-8"
+          >
+            {featured.map((product) => (
               <div
                 key={product._id}
                 onClick={() => handleProductClick(product)}
-                className="bg-white border rounded-lg shadow hover:shadow-md transition p-4 flex flex-col cursor-pointer"
+                className="min-w-[220px] max-w-[220px] flex-shrink-0 cursor-pointer"
               >
-                <img
-                  src={product.image}
-                  alt={product.name}
-                  className="w-full h-auto object-cover rounded mb-3"
-                />
-                <div className="flex justify-between items-start mb-1">
-                  <h3 className="font-semibold text-lg">{product.name}</h3>
-                  <span className="text-xs bg-pink-100 text-pink-700 px-2 py-1 rounded-full">
-                    {product.category}
+                <div className="overflow-hidden rounded">
+                  <img
+                    src={product.image}
+                    alt={product.name}
+                    className="object-cover w-[834px] h-[364px]"
+                  />
+                </div>
+                <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
+                <div className="flex gap-2 items-center mt-1">
+                  <span className="text-lg font-semibold text-black">
+                    {formatPrice(product.price)}
                   </span>
                 </div>
-
-                <div className="text-sm text-gray-600 mb-2">
-                  <span
-                    className={`font-medium ${
-                      isLowStock ? 'text-orange-500' : 'text-gray-600'
-                    }`}
-                  >
-                    Stock: {product.stock}
-                  </span>
-                </div>
-
-                {isLowStock && (
-                  <span className="text-xs text-orange-600 bg-orange-100 px-2 py-1 rounded mb-2 w-max">
-                    Low Stock
-                  </span>
-                )}
-                {isOutOfStock && (
-                  <span className="text-xs text-red-600 bg-red-100 px-2 py-1 rounded mb-2 w-max">
-                    Out of Stock
-                  </span>
-                )}
-
-                <p className="text-blue-600 font-bold text-xl mb-4">
-                  ₹{product.price.toLocaleString('en-IN')}
-                </p>
-
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    if (isOutOfStock) return;
-                    addToCart({
-                      id: product._id,
-                      name: product.name,
-                      price: product.price,
-                      image: product.image,
-                    });
-                    toast.success(`${product.name} added to cart!`);
-                  }}
-                  disabled={isOutOfStock}
-                  className={`mt-auto px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out ${
-                    isOutOfStock
-                      ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                      : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                  }`}
-                >
-                  {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-                </button>
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          <button
+            onClick={() => scroll('right')}
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
+          >
+            <ChevronRight className="w-6 h-6" />
+          </button>
         </div>
       )}
     </div>

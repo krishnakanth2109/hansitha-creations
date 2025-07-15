@@ -3,11 +3,13 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { useProductContext } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
+import { useCurrency } from '@/context/CurrencyContext';
 
 const CategoryPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
   const { products, loading } = useProductContext();
   const { addToCart } = useCart();
+  const { formatPrice } = useCurrency();
   const [sortBy, setSortBy] = useState('default');
   const navigate = useNavigate();
 
@@ -96,7 +98,7 @@ const CategoryPage: React.FC = () => {
                 )}
 
                 <p className="text-blue-600 font-bold text-xl mb-4">
-                  ₹{product.price.toLocaleString('en-IN')}
+                  {formatPrice(product.price)}
                 </p>
 
                 <button

@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { CurrencySelector } from './CurrencySelector';
 import {
     Facebook,
     Instagram,
@@ -124,6 +125,12 @@ export const Footer = () => {
                         {message && (
                             <p className="text-sm mt-2 text-pink-400">{message}</p>
                         )}
+                        {/* Currency Selector embedded below newsletter */}
+                        <div className="mt-6">
+                            <h5 className="font-semibold mb-2">Select Your Currency</h5>
+                            <CurrencySelector />
+                        </div>
+
                     </div>
                 </div>
 
