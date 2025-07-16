@@ -17,7 +17,7 @@ export const AuthProvider = ({ children }) => {
   // Login function
   const login = async (credentials) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, credentials, {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/account`, credentials, {
         withCredentials: true, // in case you're using cookies
       });
       const loggedInUser = response.data.user;
