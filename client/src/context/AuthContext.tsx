@@ -1,72 +1,45 @@
-// 📁 src/context/AuthContext.tsx
 import { createContext, useContext, useEffect, useState } from 'react';
 import axios from 'axios';
 
-interface User {
-  _id: string;
-  name: string;
-  email: string;
-  cart: any[];
-  wishlist: any[];
-  orders: any[];
-  address?: string;
-}
+const AuthContext = createContext(null);
 
-interface AuthContextType {
-  user: User | null;
-  loading: boolean;
-  login: (email: string, password: string) => Promise<void>;
-  register: (data: { email: string; password: string; name: string }) => Promise<void>;
-  logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
-}
+export const AuthProvider = ({ children }) => {
+  const [user, setUser] = useState(null);
 
-const AuthContext = createContext<AuthContextType | null>(null);
+  // Load user from localStorage on mount
+  useEffect(() => {
+    const storedUser = localStorage.getItem('user');
+    if (storedUser) {
+      setUser(JSON.parse(storedUser));
+    }
+  }, []);
 
-export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
-  const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const refreshUser = async () => {
+  // Login function
+  const login = async (credentials) => {
     try {
-      setLoading(true);
-      const res = await axios.get('/api/user/me', { withCredentials: true });
-      setUser(res.data);
-    } catch {
-      setUser(null);
-    } finally {
-      setLoading(false);
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, credentials, {
+        withCredentials: true, // in case you're using cookies
+      });
+      const loggedInUser = response.data.user;
+      setUser(loggedInUser);
+      localStorage.setItem('user', JSON.stringify(loggedInUser));
+      return { success: true };
+    } catch (error) {
+      return { success: false, message: error.response?.data?.message || 'Login failed' };
     }
   };
 
-  useEffect(() => {
-    refreshUser();
-  }, []);
-
-  const login = async (email: string, password: string) => {
-    await axios.post('/api/auth/login', { email, password }, { withCredentials: true });
-    await refreshUser();
-  };
-
-  const register = async (data: { email: string; password: string; name: string }) => {
-    await axios.post('/api/auth/register', data, { withCredentials: true });
-    await refreshUser();
-  };
-
-  const logout = async () => {
-    await axios.post('/api/auth/logout', {}, { withCredentials: true });
+  // Logout function
+  const logout = () => {
     setUser(null);
+    localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, login, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) throw new Error('useAuth must be used within AuthProvider');
-  return context;
-};
+export const useAuth = () => useContext(AuthContext);

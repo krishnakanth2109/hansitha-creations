@@ -20,7 +20,10 @@ dotenv.config();
 const app = express();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: ['http://localhost:8080','https://hansithacreations.netlify.app/'],   // or your deployed frontend
+  credentials: true
+}));
 app.use(express.json());
 
 // Cloudinary config
