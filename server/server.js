@@ -7,37 +7,37 @@ const dotenv = require("dotenv");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
+
 const authRoutes = require("./routes/auth.routes.js");
 const userRoutes = require("./routes/user.routes.js");
-
-// Routes
-const categoryRoutes = require('./routes/categories');
-const checkoutRoutes = require('./routes/checkoutRoutes');
-const productRoutes = require('./routes/productRoutes');
+const categoryRoutes = require("./routes/categories");
+const checkoutRoutes = require("./routes/checkoutRoutes");
+const productRoutes = require("./routes/productRoutes");
 
 dotenv.config();
 
 const app = express();
 
-// Middleware
+// ✅ Middleware (order matters!)
 app.use(cors({
-  origin: ['http://localhost:8080','https://hansithacreations.netlify.app/'],   // or your deployed frontend
+  origin: ['http://localhost:8080', 'https://hansithacreations.netlify.app'],
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json()); // ✅ THIS FIXES req.body being undefined!
+app.use(cookieParser());
 
-// Cloudinary config
+// ✅ Cloudinary Config
 cloudinary.config({
   cloud_name: process.env.CLOUD_NAME,
   api_key: process.env.CLOUD_KEY,
   api_secret: process.env.CLOUD_SECRET,
 });
 
-// Multer setup
+// ✅ Multer setup
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// ✅ Razorpay config
+// ✅ Razorpay setup
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
@@ -59,7 +59,7 @@ app.post('/api/payment/orders', async (req, res) => {
   }
 });
 
-// ✅ Razorpay Verify Payment
+// ✅ Razorpay Verify
 app.post('/api/payment/verify', async (req, res) => {
   const {
     razorpay_order_id,
@@ -90,27 +90,23 @@ mongoose.connect(process.env.MONGO_URI, {
   console.error("❌ MongoDB connection error:", err);
 });
 
-app.get('/', (req, res) => {
-  res.send('API is working');
-});
-
 // ✅ API Routes
-app.use('/api/categories', categoryRoutes);
-app.use('/api', checkoutRoutes); 
-app.use('/api/products', productRoutes);
+app.get('/', (req, res) => res.send('API is working'));
 
+app.use('/api/categories', categoryRoutes);
+app.use('/api', checkoutRoutes);
+app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/user', userRoutes);
 
 // ✅ Carousel Schema + Routes
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
-  imageUrl: { type: String, default: "" },          // Desktop image
-  mobileImageUrl: { type: String, default: "" },    // Mobile image
+  imageUrl: { type: String, default: "" },
+  mobileImageUrl: { type: String, default: "" },
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
 
-// ✅ Upload Desktop and Mobile Carousel Images
 app.post("/api/upload-carousel", upload.fields([
   { name: "image", maxCount: 1 },
   { name: "mobileImage", maxCount: 1 }
@@ -124,17 +120,13 @@ app.post("/api/upload-carousel", upload.fields([
 
     if (req.files?.image?.[0]) {
       const base64 = `data:${req.files.image[0].mimetype};base64,${req.files.image[0].buffer.toString("base64")}`;
-      const result = await cloudinary.uploader.upload(base64, {
-        folder: "carousel_images",
-      });
+      const result = await cloudinary.uploader.upload(base64, { folder: "carousel_images" });
       existing.imageUrl = result.secure_url;
     }
 
     if (req.files?.mobileImage?.[0]) {
       const base64 = `data:${req.files.mobileImage[0].mimetype};base64,${req.files.mobileImage[0].buffer.toString("base64")}`;
-      const result = await cloudinary.uploader.upload(base64, {
-        folder: "carousel_images/mobile",
-      });
+      const result = await cloudinary.uploader.upload(base64, { folder: "carousel_images/mobile" });
       existing.mobileImageUrl = result.secure_url;
     }
 
@@ -146,7 +138,6 @@ app.post("/api/upload-carousel", upload.fields([
   }
 });
 
-// ✅ Delete Carousel
 app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
     const { carouselId } = req.params;
@@ -163,7 +154,6 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   }
 });
 
-// ✅ Fetch Carousel Images
 app.get("/api/carousel-images", async (req, res) => {
   try {
     const images = await ImageModel.find({});
