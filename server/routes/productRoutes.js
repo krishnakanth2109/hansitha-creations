@@ -13,6 +13,7 @@ router.post('/', async (req, res) => {
       category,
       stock,
       description,
+      extraImages = [], // ✅ added
     } = req.body;
 
     const product = new Product({
@@ -23,6 +24,7 @@ router.post('/', async (req, res) => {
       category,
       stock,
       description,
+      extraImages, // ✅ added
     });
 
     const saved = await product.save();
@@ -76,11 +78,34 @@ router.get('/search', async (req, res) => {
 // ✅ Update Product by ID
 router.put('/:id', async (req, res) => {
   try {
+    const {
+      name,
+      price,
+      image,
+      featured,
+      category,
+      stock,
+      description,
+      extraImages = [], // ✅ added
+    } = req.body;
+
     const updated = await Product.findByIdAndUpdate(
       req.params.id,
-      { $set: req.body },
+      {
+        $set: {
+          name,
+          price,
+          image,
+          featured,
+          category,
+          stock,
+          description,
+          extraImages, // ✅ added
+        },
+      },
       { new: true }
     );
+
     res.json(updated);
   } catch (err) {
     console.error('Update error:', err);

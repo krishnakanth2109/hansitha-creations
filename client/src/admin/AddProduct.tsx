@@ -28,6 +28,8 @@ const AddProduct: React.FC = () => {
   const [featured, setFeatured] = useState(false);
   const [description, setDescription] = useState('');
   const [imageFile, setImageFile] = useState<File | null>(null);
+  const [extraImageFiles, setExtraImageFiles] = useState<File[]>([]);
+  const [extraImagesPreview, setExtraImagesPreview] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
@@ -56,6 +58,7 @@ const AddProduct: React.FC = () => {
     try {
       setUploading(true);
       let imageUrl = '';
+      let extraImageUrls: string[] = [];
 
       if (!editingId && !imageFile) {
         toast.error('Please upload an image');
@@ -76,6 +79,12 @@ const AddProduct: React.FC = () => {
         imageUrl = await uploadImageToCloudinary(imageFile);
       }
 
+      if (extraImageFiles.length > 0) {
+        extraImageUrls = await Promise.all(
+          extraImageFiles.slice(0, 3).map((file) => uploadImageToCloudinary(file))
+        );
+      }
+
       const productData = {
         name,
         price: Number(price),
@@ -84,6 +93,7 @@ const AddProduct: React.FC = () => {
         category,
         description,
         ...(imageUrl && { image: imageUrl }),
+        ...(extraImageUrls.length > 0 && { extraImages: extraImageUrls }),
       };
 
       if (editingId) {
@@ -105,7 +115,7 @@ const AddProduct: React.FC = () => {
         const res = await fetch(`${API_URL}/api/products`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ...productData, image: imageUrl }),
+          body: JSON.stringify(productData),
         });
 
         if (!res.ok) throw new Error('Add failed');
@@ -132,6 +142,8 @@ const AddProduct: React.FC = () => {
     setCategory('');
     setDescription('');
     setImageFile(null);
+    setExtraImageFiles([]);
+    setExtraImagesPreview([]);
     setEditingId(null);
   };
 
@@ -144,6 +156,8 @@ const AddProduct: React.FC = () => {
     setCategory(product.category || '');
     setDescription(product.description || '');
     setImageFile(null);
+    setExtraImageFiles([]);
+    setExtraImagesPreview(product.extraImages || []);
   };
 
   const handleDelete = async (id: string) => {
@@ -216,13 +230,11 @@ const AddProduct: React.FC = () => {
       skipEmptyLines: true,
       complete: async function (results) {
         const products = results.data as any[];
-
         let successCount = 0;
         let errorCount = 0;
 
         for (const product of products) {
           if (!product.name || !product.price || !product.stock || !product.category) {
-            console.warn('Skipping invalid row:', product);
             errorCount++;
             continue;
           }
@@ -245,21 +257,16 @@ const AddProduct: React.FC = () => {
             });
 
             if (!res.ok) throw new Error('Upload failed');
-
             const saved = await res.json();
             setProducts((prev: any) => [...prev, saved]);
             successCount++;
-          } catch (err) {
-            console.error('Error uploading product:', product.name, err);
+          } catch {
             errorCount++;
           }
         }
 
-        toast.success(`${successCount} product(s) added. ${errorCount} failed.`);
-
-        if (fileInputRef.current) {
-          fileInputRef.current.value = '';
-        }
+        toast.success(`${successCount} added, ${errorCount} failed.`);
+        if (fileInputRef.current) fileInputRef.current.value = '';
       },
     });
   };
@@ -285,8 +292,27 @@ const AddProduct: React.FC = () => {
         <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="w-full" />
         {imageFile && (
           <div className="mt-4">
-            <p className="text-sm mb-2">Image Preview:</p>
+            <p className="text-sm mb-2">Main Image Preview:</p>
             <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-48 h-48 object-cover rounded border" />
+          </div>
+        )}
+        <label className="block font-medium">Extra Images (Max 3)</label>
+        <input
+          type="file"
+          multiple
+          accept="image/*"
+          onChange={(e) => {
+            const files = Array.from(e.target.files || []).slice(0, 3);
+            setExtraImageFiles(files);
+            setExtraImagesPreview(files.map((file) => URL.createObjectURL(file)));
+          }}
+          className="w-full"
+        />
+        {extraImagesPreview.length > 0 && (
+          <div className="mt-2 flex gap-2 flex-wrap">
+            {extraImagesPreview.map((url, idx) => (
+              <img key={idx} src={url} alt={`extra-${idx}`} className="w-24 h-24 object-cover rounded border" />
+            ))}
           </div>
         )}
         <button type="submit" disabled={uploading} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
@@ -294,9 +320,9 @@ const AddProduct: React.FC = () => {
         </button>
       </form>
 
-      {/* Bulk Upload Section */}
+      {/* CSV Upload */}
       <div className="my-10 border-t pt-6">
-        <h3 className="text-xl font-semibold mb-4">Bulk Upload Products via CSV</h3>
+        <h3 className="text-xl font-semibold mb-4">Bulk Upload via CSV</h3>
         <input ref={fileInputRef} type="file" accept=".csv" onChange={handleCSVUpload} className="block mt-2" />
       </div>
 
@@ -308,47 +334,42 @@ const AddProduct: React.FC = () => {
             <label className="text-xl font-semibold">Existing Products</label>
           </div>
           {selectedIds.length > 0 && (
-            <button
-              className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700"
-              onClick={handleBulkDelete}
-            >
+            <button className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700" onClick={handleBulkDelete}>
               Delete Selected ({selectedIds.length})
             </button>
           )}
         </div>
 
-        {products.map((product: any) => {
-          const isEditing = editingId === product._id;
-          return (
-            <div key={product._id} className="border p-4 rounded mb-4 flex items-start gap-4">
-              <input
-                type="checkbox"
-                checked={selectedIds.includes(product._id)}
-                onChange={() => toggleSelect(product._id)}
-                className="mt-2"
-              />
-              <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
-              <div className="flex-1">
-                {isEditing ? (
-                  <p className="text-gray-500">Editing this product above ↑</p>
-                ) : (
-                  <>
-                    <h4 className="font-bold">{product.name}</h4>
-                    <p>₹{product.price.toLocaleString('en-IN')}</p>
-                    <p>Stock: {product.stock}</p>
-                    <p>Category: {product.category}</p>
-                    <p>{product.featured ? '🌟 Featured' : ''}</p>
-                    <p>Description: {product.description}</p>
-                    <div className="mt-2 flex gap-2">
-                      <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => handleEdit(product)}>Edit</button>
-                      <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={() => handleDelete(product._id)}>Delete</button>
-                    </div>
-                  </>
-                )}
+        {products.map((product: any) => (
+          <div key={product._id} className="border p-4 rounded mb-4 flex items-start gap-4">
+            <input
+              type="checkbox"
+              checked={selectedIds.includes(product._id)}
+              onChange={() => toggleSelect(product._id)}
+              className="mt-2"
+            />
+            <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
+            <div className="flex-1">
+              <h4 className="font-bold">{product.name}</h4>
+              <p>₹{product.price.toLocaleString('en-IN')}</p>
+              <p>Stock: {product.stock}</p>
+              <p>Category: {product.category}</p>
+              <p>{product.featured ? '🌟 Featured' : ''}</p>
+              <p>Description: {product.description}</p>
+              {product.extraImages?.length > 0 && (
+                <div className="mt-2 flex gap-2">
+                  {product.extraImages.map((img: string, idx: number) => (
+                    <img key={idx} src={img} className="w-16 h-16 object-cover rounded" />
+                  ))}
+                </div>
+              )}
+              <div className="mt-2 flex gap-2">
+                <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => handleEdit(product)}>Edit</button>
+                <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={() => handleDelete(product._id)}>Delete</button>
               </div>
             </div>
-          );
-        })}
+          </div>
+        ))}
       </div>
     </div>
   );
