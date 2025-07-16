@@ -26,6 +26,9 @@ import ProductDetailsPage from "./pages/ProductDetailsPage";
 import Checkout from "./pages/Checkout";
 import Login from './pages/Login';
 import Register from './pages/Register';
+import Account from '@/pages/Account';
+import Orders from '@/pages/Orders';
+import Addresses from '@/pages/Addresses';
 
 // Admin
 import AdminPage from "./admin/AdminPage";
@@ -52,6 +55,9 @@ const AppRoutes = () => {
       <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
+      <Route path="/account" element={<Account />} />
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/addresses" element={<Addresses />} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminPage />} />

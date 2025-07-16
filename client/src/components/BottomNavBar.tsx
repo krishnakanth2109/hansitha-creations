@@ -14,6 +14,7 @@ import { useCart } from '@/context/CartContext';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useWishlist } from '@/context/WishlistContext';
 import { useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
 
 interface BottomNavBarProps {
   onAccountClick: () => void;
@@ -22,13 +23,13 @@ interface BottomNavBarProps {
 const BottomNavBar = ({ onAccountClick }: BottomNavBarProps) => {
   const { cartItems } = useCart();
   const { wishlist } = useWishlist();
+  const { user } = useAuth(); // Updated: uses your current context
   const navigate = useNavigate();
   const location = useLocation();
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistCount = wishlist.length;
 
-  // Scroll to top when pathname changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
@@ -68,9 +69,12 @@ const BottomNavBar = ({ onAccountClick }: BottomNavBarProps) => {
     },
     {
       label: 'Account',
-      href: '#',
+      href: user ? '/account' : '/login',
       badge: 0,
-      onClick: onAccountClick,
+      onClick: () => {
+        onAccountClick?.();
+        navigate(user ? '/account' : '/login');
+      },
       icon: User,
       activeIcon: UserIcon,
     },
@@ -78,9 +82,7 @@ const BottomNavBar = ({ onAccountClick }: BottomNavBarProps) => {
 
   return (
     <nav className="bg-white border-t border-gray-200 shadow-md w-full fixed bottom-0 z-50 md:rounded-none md:static md:shadow-none">
-      <div
-        className="flex items-center justify-around h-16 max-w-md mx-auto sm:rounded-2xl sm:mb-4 sm:mx-4 sm:shadow-xl sm:bg-white sm:border sm:border-gray-200 sm:overflow-hidden"
-      >
+      <div className="flex items-center justify-around h-16 max-w-md mx-auto sm:rounded-2xl sm:mb-4 sm:mx-4 sm:shadow-xl sm:bg-white sm:border sm:border-gray-200 sm:overflow-hidden">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.href;
           const Icon = isActive ? item.activeIcon : item.icon;
@@ -90,7 +92,7 @@ const BottomNavBar = ({ onAccountClick }: BottomNavBarProps) => {
               key={index}
               onClick={() => {
                 item.onClick();
-                window.scrollTo(0, 0); // ensure scroll to top even with custom click
+                window.scrollTo(0, 0);
               }}
               className={`flex flex-col items-center justify-center flex-1 h-full space-y-1 transition-all duration-200 ${
                 isActive

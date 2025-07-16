@@ -54,6 +54,7 @@ const Register = () => {
         <button type="submit" className="w-full bg-green-600 text-white py-2 rounded">
           Register
         </button>
+        <a href='/login' className='ml-44'>Login</a>
       </form>
     </div>
   );

@@ -15,7 +15,7 @@ const Login = () => {
     e.preventDefault();
     try {
       await login(email, password);
-      navigate('/');
+      navigate('/account');
     } catch (err: any) {
       setError(err.response?.data?.message || 'Login failed');
     }
@@ -45,6 +45,7 @@ const Login = () => {
         <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">
           Login
         </button>
+        <a href='/register' className='ml-44'>Register</a>
       </form>
     </div>
   );
