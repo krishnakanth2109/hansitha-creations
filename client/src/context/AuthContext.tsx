@@ -1,12 +1,25 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
 import axios from 'axios';
 
-const AuthContext = createContext(null);
+interface User {
+  _id: string;
+  name: string;
+  email: string;
+  // Add more fields if needed
+}
 
-export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+interface AuthContextType {
+  user: User | null;
+  login: (credentials: { email: string; password: string }) => Promise<{ success: boolean; message?: string }>;
+  register: (data: { name: string; email: string; password: string }) => Promise<any>;
+  logout: () => void;
+}
 
-  // Load user from localStorage on mount
+const AuthContext = createContext<AuthContextType | null>(null);
+
+export const AuthProvider = ({ children }: { children: ReactNode }) => {
+  const [user, setUser] = useState<User | null>(null);
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
@@ -14,44 +27,54 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // 🔐 Login function
-  const login = async (credentials) => {
+  const login = async (credentials: { email: string; password: string }) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, credentials, {
-        withCredentials: true, // If using cookies
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        credentials,
+        { withCredentials: true }
+      );
       const loggedInUser = response.data.user;
       setUser(loggedInUser);
       localStorage.setItem('user', JSON.stringify(loggedInUser));
       return { success: true };
-    } catch (error) {
-      return { success: false, message: error.response?.data?.message || 'Login failed' };
+    } catch (error: any) {
+      return {
+        success: false,
+        message: error.response?.data?.message || 'Login failed',
+      };
     }
   };
 
-  // 🆕 Register function
-  const register = async (data) => {
+  const register = async (data: { name: string; email: string; password: string }) => {
     try {
-      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, data, {
-        withCredentials: true, // Optional, based on backend
-      });
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/register`,
+        data,
+        { withCredentials: true }
+      );
       return response.data;
     } catch (error) {
       throw error;
     }
   };
 
-  // 🚪 Logout function
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout, register }}>
+    <AuthContext.Provider value={{ user, login, register, logout }}>
       {children}
     </AuthContext.Provider>
   );
 };
 
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = (): AuthContextType => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error('useAuth must be used within an AuthProvider');
+  }
+  return context;
+};

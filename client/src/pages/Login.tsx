@@ -1,4 +1,3 @@
-// 📁 src/pages/Login.tsx
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
@@ -13,11 +12,13 @@ const Login = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    try {
-      await login(email, password);
-      navigate('/account');
-    } catch (err: any) {
-      setError(err.response?.data?.message || 'Login failed');
+    setError('');
+    const result = await login({ email, password });
+
+    if (result.success) {
+      navigate('/account'); // ✅ Redirect on successful login
+    } else {
+      setError(result.message); // ❌ Show error if login fails
     }
   };
 
@@ -45,7 +46,7 @@ const Login = () => {
         <button type="submit" className="w-full bg-blue-600 text-white py-2 rounded">
           Login
         </button>
-        <a href='/register' className='ml-44'>Register</a>
+        <a href="/register" className="block text-center text-sm text-blue-600 mt-2">Register</a>
       </form>
     </div>
   );

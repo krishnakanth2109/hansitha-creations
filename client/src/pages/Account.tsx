@@ -8,9 +8,11 @@ const Account = () => {
 
   useEffect(() => {
     if (!user) {
-      navigate('/account');
+      navigate('/login');
     }
   }, [user, navigate]);
+
+  if (user === null) return <p className="text-center mt-10">Loading...</p>;
 
   const handleLogout = () => {
     logout();

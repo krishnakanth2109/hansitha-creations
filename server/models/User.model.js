@@ -27,14 +27,6 @@ const userSchema = new mongoose.Schema({
   ]
 }, { timestamps: true });
 
-// 🔐 Hash password before save
-userSchema.pre('save', async function (next) {
-  if (this.isModified('password')) {
-    this.password = await bcrypt.hash(this.password, 10);
-  }
-  next();
-});
-
 // 🔐 Compare password method
 userSchema.methods.comparePassword = function (password) {
   return bcrypt.compare(password, this.password);
