@@ -34,22 +34,23 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ✅ Login Route
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
-    console.log("Login request received:", email);
+    console.log("📨 Login Request:", email, password);
 
     const user = await User.findOne({ email });
+    console.log("🔍 Found user:", user);
+
     if (!user) {
       console.log("❌ User not found");
       return res.status(400).json({ message: "Invalid credentials" });
     }
 
-    const valid = await user.comparePassword(password);
-    console.log("Password match:", valid);
+    const isMatch = await user.comparePassword(password);
+    console.log("🔐 Password match:", isMatch);
 
-    if (!valid) {
+    if (!isMatch) {
       console.log("❌ Incorrect password");
       return res.status(400).json({ message: "Invalid credentials" });
     }
@@ -62,11 +63,17 @@ router.post("/login", async (req, res) => {
         sameSite: "Lax",
         secure: process.env.NODE_ENV === "production",
       })
-      .json({ id: user._id, name: user.name, email: user.email });
+      .json({
+        user: {
+          id: user._id,
+          email: user.email,
+          name: user.name,
+        },
+      });
 
   } catch (err) {
-    console.error("🔥 Login error:", err);
-    res.status(500).json({ message: "Server error during login" });
+    console.error("🔥 Login error:", err.message, err.stack);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
