@@ -14,11 +14,11 @@ export const AuthProvider = ({ children }) => {
     }
   }, []);
 
-  // Login function
+  // 🔐 Login function
   const login = async (credentials) => {
     try {
       const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/login`, credentials, {
-        withCredentials: true, // in case you're using cookies
+        withCredentials: true, // If using cookies
       });
       const loggedInUser = response.data.user;
       setUser(loggedInUser);
@@ -29,14 +29,26 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-  // Logout function
+  // 🆕 Register function
+  const register = async (data) => {
+    try {
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/api/auth/register`, data, {
+        withCredentials: true, // Optional, based on backend
+      });
+      return response.data;
+    } catch (error) {
+      throw error;
+    }
+  };
+
+  // 🚪 Logout function
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, logout }}>
+    <AuthContext.Provider value={{ user, login, logout, register }}>
       {children}
     </AuthContext.Provider>
   );
