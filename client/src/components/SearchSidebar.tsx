@@ -1,10 +1,11 @@
+// src/components/SearchSidebar.tsx
 import React, { useState, useEffect } from 'react';
 import { Search, X } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import ReactDOM from 'react-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
-// Skeleton component
+// Skeleton Loader
 const SkeletonItem = () => (
   <div className="w-full px-4 py-2 animate-pulse">
     <div className="h-4 bg-gray-200 rounded w-3/4 mb-1" />
@@ -23,6 +24,7 @@ const SearchSidebar = ({ isOpen, onClose }: SearchSidebarProps) => {
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch search results
   useEffect(() => {
     const fetchResults = async () => {
       if (!searchQuery.trim()) {
@@ -49,6 +51,7 @@ const SearchSidebar = ({ isOpen, onClose }: SearchSidebarProps) => {
     return () => clearTimeout(delay);
   }, [searchQuery]);
 
+  // Clear state when sidebar closes
   useEffect(() => {
     if (!isOpen) {
       setSearchQuery('');
@@ -56,6 +59,7 @@ const SearchSidebar = ({ isOpen, onClose }: SearchSidebarProps) => {
     }
   }, [isOpen]);
 
+  // Actual sidebar portal rendering
   return ReactDOM.createPortal(
     <AnimatePresence>
       {isOpen && (
@@ -77,6 +81,7 @@ const SearchSidebar = ({ isOpen, onClose }: SearchSidebarProps) => {
             transition={{ type: 'tween', duration: 0.3 }}
             className="fixed top-0 left-0 w-full max-w-sm h-full bg-white shadow-2xl z-[999] p-4 border-r border-gray-200"
           >
+            {/* Header */}
             <div className="flex justify-between items-center mb-4">
               <h2 className="text-lg font-semibold">Search</h2>
               <button onClick={onClose}>
@@ -84,7 +89,7 @@ const SearchSidebar = ({ isOpen, onClose }: SearchSidebarProps) => {
               </button>
             </div>
 
-            {/* Input */}
+            {/* Search Input */}
             <div className="relative mb-4">
               <input
                 type="text"
@@ -102,7 +107,7 @@ const SearchSidebar = ({ isOpen, onClose }: SearchSidebarProps) => {
               <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             </div>
 
-            {/* Results */}
+            {/* Search Results */}
             {loading ? (
               <div className="space-y-2">
                 <SkeletonItem />

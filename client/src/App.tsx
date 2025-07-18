@@ -16,6 +16,10 @@ import Layout from "./components/Layout";
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
+import AboutPage from './pages/About';
+import ContactPage from './pages/Contact';
+import NewArrivalsPage from './pages/NewArrivals';
+import CEOCollectionsPage from './pages/CEOCollections';
 import OrderConfirmation from "./pages/OrderConfirmation";
 import NotFound from "./pages/NotFound";
 import SSORedirectHandler from "./pages/SSORedirectHandler";
@@ -50,8 +54,10 @@ const AppRoutes = () => {
       <Route path="/featured" element={<Layout><FeaturedProducts /></Layout>} />
       <Route path="/fabrics/:category" element={<Layout><CategoryPage /></Layout>} />
       <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-      <Route path="/about" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">About Page</h1></div></Layout>} />
-      <Route path="/contact" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">Contact Page</h1></div></Layout>} />
+      <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+      <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+      <Route path="/new-arrivals" element={<Layout><NewArrivalsPage /></Layout>} />
+      <Route path="/ceo-collections" element={<Layout><CEOCollectionsPage /></Layout>} />
       <Route path="/product/:name" element={<Layout><ProductDetailsPage key={location.pathname} /></Layout>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />

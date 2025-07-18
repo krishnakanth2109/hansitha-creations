@@ -1,8 +1,9 @@
+// components/Header.tsx
+import { useEffect, useRef, useState } from 'react';
 import { Menu, ShoppingCart, Heart, Search, User } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { useEffect, useState } from 'react';
 import SearchSidebar from './SearchSidebar';
 
 interface HeaderProps {
@@ -13,23 +14,38 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const { cart, refreshCart } = useCart();
   const { wishlist, refreshWishlist } = useWishlist();
   const [searchOpen, setSearchOpen] = useState(false);
+  const sidebarRef = useRef<HTMLDivElement>(null);
   const navigate = useNavigate();
   const user = null; // Replace with real auth user later
 
   const cartCount = cart?.reduce((sum, item) => sum + item.quantity, 0) || 0;
   const wishlistCount = wishlist?.length || 0;
 
-  // Optional: Refresh on mount
   useEffect(() => {
     refreshCart();
     refreshWishlist();
   }, []);
 
+  // ✅ Handle outside click
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (
+        searchOpen &&
+        sidebarRef.current &&
+        !sidebarRef.current.contains(e.target as Node)
+      ) {
+        setSearchOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [searchOpen]);
+
   return (
     <>
       <header className="sticky top-0 z-30 bg-white/95 shadow-sm backdrop-blur-sm border-b border-gray-200">
         <div className="flex items-center justify-between h-16 px-4 max-w-7xl mx-auto">
-          {/* Left: Hamburger + Desktop Search */}
           <div className="flex items-center gap-2">
             <button
               onClick={onMenuClick}
@@ -45,7 +61,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             </button>
           </div>
 
-          {/* Center: Logo */}
           <Link to="/" className="flex justify-center mx-auto">
             <img
               src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png"
@@ -54,9 +69,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             />
           </Link>
 
-          {/* Right: Icons */}
           <div className="flex items-center gap-4">
-            {/* Wishlist */}
             <div className="relative hidden md:block">
               <button
                 onClick={() => navigate('/wishlist')}
@@ -71,7 +84,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               </button>
             </div>
 
-            {/* Cart */}
             <div className="relative">
               <button
                 onClick={() => navigate('/cart')}
@@ -86,7 +98,6 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               </button>
             </div>
 
-            {/* Account */}
             <div className="relative hidden md:block">
               <button
                 onClick={() => navigate(user ? '/account' : '/login')}

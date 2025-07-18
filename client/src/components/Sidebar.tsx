@@ -1,22 +1,19 @@
 import React, { forwardRef, useEffect, useState } from 'react';
 import ReactDOM from 'react-dom';
 import {
-  X, Search, Home, Store, Info, Phone, User, ArrowLeft,
+  X, Home, Store, Info, Phone, ArrowLeft,
 } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
-  onLoginClick: () => void;
 }
 
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
-  ({ isOpen, onClose, onLoginClick }, ref) => {
+  ({ isOpen, onClose }, ref) => {
     const navigate = useNavigate();
     const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'fabrics'>('menu');
-    const [searchQuery, setSearchQuery] = useState('');
-    const [searchResults, setSearchResults] = useState<any[]>([]);
 
     const menuItems = [
       { icon: Home, label: 'Home', href: '/' },
@@ -33,36 +30,26 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
 
     const fabrics = ['Cotton', 'Silk', 'Crape', 'Kota', 'Georgette', 'Tusser', 'Handlooms'];
 
-    // ✅ Live search (debounced)
     useEffect(() => {
-      const fetchResults = async () => {
-        if (searchQuery.trim() === '') {
-          setSearchResults([]);
-          return;
-        }
-        try {
-          const res = await fetch(
-            `${import.meta.env.VITE_API_URL}/api/products/search?q=${searchQuery}`
-          );
-          const data = await res.json();
-          setSearchResults(data.slice(0, 5));
-        } catch (err) {
-          console.error('Search failed:', err);
+      if (!isOpen) setActiveTab('menu');
+    }, [isOpen]);
+
+    // ✅ Outside click
+    useEffect(() => {
+      const handleClickOutside = (event: MouseEvent) => {
+        const sidebar = (ref as React.RefObject<HTMLDivElement>)?.current;
+        if (sidebar && !sidebar.contains(event.target as Node)) {
+          onClose();
         }
       };
 
-      const delay = setTimeout(fetchResults, 300);
-      return () => clearTimeout(delay);
-    }, [searchQuery]);
-
-    // ✅ Reset search on close
-    useEffect(() => {
-      if (!isOpen) {
-        setSearchQuery('');
-        setSearchResults([]);
-        setActiveTab('menu');
+      if (isOpen) {
+        document.addEventListener('mousedown', handleClickOutside);
       }
-    }, [isOpen]);
+      return () => {
+        document.removeEventListener('mousedown', handleClickOutside);
+      };
+    }, [isOpen, onClose, ref]);
 
     if (!isOpen) return null;
 
@@ -79,52 +66,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
           <button onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100">
             <X className="w-5 h-5 text-gray-600" />
           </button>
-        </div>
-
-        {/* Search */}
-        <div className="p-4 border-b border-gray-200 relative">
-          <div className="relative">
-            <input
-              type="text"
-              placeholder="Search for products"
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && searchQuery.trim()) {
-                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                  onClose();
-                }
-              }}
-              className="w-full pl-4 pr-12 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 outline-none"
-            />
-            <Search className="absolute right-4 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-          </div>
-
-          {searchResults.length > 0 && (
-            <div className="absolute left-0 right-0 mt-2 bg-white border border-gray-200 rounded-md shadow-md z-50 max-h-60 overflow-y-auto">
-              {searchResults.map((product) => (
-                <button
-                  key={product._id}
-                  onClick={() => {
-                    navigate(`/product/${product.name}`, { state: { product } });
-                    onClose();
-                  }}
-                  className="w-full text-left px-4 py-2 hover:bg-gray-100 text-sm text-gray-700"
-                >
-                  {product.name}
-                </button>
-              ))}
-              <button
-                onClick={() => {
-                  navigate(`/search?q=${encodeURIComponent(searchQuery.trim())}`);
-                  onClose();
-                }}
-                className="w-full text-left px-4 py-2 border-t border-gray-100 text-purple-600 hover:bg-purple-50 font-medium"
-              >
-                View All Results
-              </button>
-            </div>
-          )}
         </div>
 
         {/* Tabs */}
@@ -167,17 +108,6 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
                   </span>
                 </a>
               ))}
-              <div className="pt-4 mt-4 border-t border-gray-200">
-                <button
-                  onClick={onLoginClick}
-                  className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-100 group w-full"
-                >
-                  <User className="w-5 h-5 text-gray-600 group-hover:text-purple-600" />
-                  <span className="text-gray-800 group-hover:text-purple-600 font-medium">
-                    Login / Register
-                  </span>
-                </button>
-              </div>
             </div>
           )}
 
