@@ -25,11 +25,11 @@ router.post("/login", async (req, res) => {
       .cookie("token", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV === "production",
-        sameSite: "Lax",
+        sameSite: "None",
         maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
       })
       .status(200)
-      .json({ user: { id: user._id, name: user.name, email: user.email } });
+      .json({ user: { id: user._id, name: user.name, email: user.email, wishlist: user.wishlist, cart: user.cart } });
 
   } catch (err) {
     console.error("Login Error:", err);
@@ -37,17 +37,18 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Get current user (secure)
 router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .populate("wishlist")
       .populate("cart.product");
-    res.json(user);
+
+    res.json({ user }); // ✅ Wrap inside a `user` key
   } catch (err) {
     res.status(500).json({ message: "Error fetching user", error: err });
   }
 });
+
 
 // ✅ Add to cart
 router.post("/cart", auth, async (req, res) => {

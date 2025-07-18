@@ -6,6 +6,11 @@ interface User {
   _id: string;
   name: string;
   email: string;
+   wishlist?: string[];
+  cart?: {
+    productId: string;
+    quantity: number;
+  }[];
   // Add more fields if needed
 }
 
