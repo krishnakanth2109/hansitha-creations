@@ -52,7 +52,7 @@ const AppRoutes = () => {
       <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
       <Route path="/about" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">About Page</h1></div></Layout>} />
       <Route path="/contact" element={<Layout><div className="min-h-screen flex items-center justify-center"><h1 className="text-4xl font-bold">Contact Page</h1></div></Layout>} />
-      <Route path="/product/:name" element={<ProductDetailsPage key={location.pathname} />} />
+      <Route path="/product/:name" element={<Layout><ProductDetailsPage key={location.pathname} /></Layout>} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/account" element={<Account />} />

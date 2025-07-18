@@ -4,9 +4,9 @@ import { ProductContext } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
 
-import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import SignInPanel from '../components/SignInPanel';
+import SearchSidebar from '../components/SearchSidebar';
 import { Footer } from '../components/Footer';
 import BottomNavBar from '../components/BottomNavBar';
 import { useSwipeable } from 'react-swipeable';
@@ -26,11 +26,12 @@ const ProductDetailsPage = () => {
   const { products } = useContext(ProductContext);
   const { addToCart } = useCart();
   const navigate = useNavigate();
-  const [autoScroll, setAutoScroll] = useState(true);
 
   const [product, setProduct] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
+  const [isSearchOpen, setSearchOpen] = useState(false); // ✅ Added
+  const [autoScroll, setAutoScroll] = useState(true);
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const signInRef = useRef<HTMLDivElement>(null);
@@ -43,7 +44,6 @@ const ProductDetailsPage = () => {
   };
   const closeSignIn = () => setIsSignInOpen(false);
 
-  // 👇 swipe handlers
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () => document.getElementById('related-scroll')?.scrollBy({ left: 250, behavior: 'smooth' }),
     onSwipedRight: () => document.getElementById('related-scroll')?.scrollBy({ left: -250, behavior: 'smooth' }),
@@ -65,7 +65,6 @@ const ProductDetailsPage = () => {
     return () => clearInterval(interval);
   }, [autoScroll, product]);
 
-  // Scroll Lock
   useEffect(() => {
     const target = isSidebarOpen ? sidebarRef.current : isSignInOpen ? signInRef.current : null;
     if (target) disableBodyScroll(target);
@@ -73,7 +72,6 @@ const ProductDetailsPage = () => {
     return () => clearAllBodyScrollLocks();
   }, [isSidebarOpen, isSignInOpen]);
 
-  // Scroll to top and load product
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
 
@@ -84,7 +82,7 @@ const ProductDetailsPage = () => {
       }
 
       if (!name) return;
-      setProduct(null); // clear old product
+      setProduct(null);
 
       try {
         const decodedName = decodeURIComponent(name);
@@ -127,8 +125,7 @@ const ProductDetailsPage = () => {
 
   return (
     <>
-      <Header onMenuClick={openSidebar} />
-
+      {/* ✅ Sidebar */}
       {isSidebarOpen && (
         <>
           <Sidebar
@@ -141,6 +138,7 @@ const ProductDetailsPage = () => {
         </>
       )}
 
+      {/* ✅ Sign In Panel */}
       {isSignInOpen && (
         <>
           <SignInPanel ref={signInRef} isOpen={isSignInOpen} onClose={closeSignIn} />
@@ -148,6 +146,15 @@ const ProductDetailsPage = () => {
         </>
       )}
 
+      {/* ✅ Search Sidebar */}
+      {isSearchOpen && (
+        <>
+          <SearchSidebar isOpen={isSearchOpen} onClose={() => setSearchOpen(false)} />
+          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSearchOpen(false)} />
+        </>
+      )}
+
+      {/* ✅ Product Info */}
       <div className="p-6 pb-32 max-w-6xl mx-auto">
         <button
           onClick={() => navigate(-1)}
@@ -177,28 +184,26 @@ const ProductDetailsPage = () => {
               ))}
             </div>
           </div>
+
           <div className="space-y-4">
             {/* Breadcrumb */}
             <p className="text-sm text-gray-500">
               <Link to="/" className="hover:underline text-blue-600">Home</Link>
               {product.breadcrumb?.map((crumb: string, i: number) => (
-                <>
+                <span key={i}>
                   {' > '}
                   <Link
-                    key={i}
                     to={`/categories/${encodeURIComponent(crumb.toLowerCase())}`}
                     className="hover:underline text-blue-600"
                   >
                     {crumb}
                   </Link>
-                </>
+                </span>
               ))}
               {' > '}<span className="text-gray-800 font-medium">{product.name}</span>
             </p>
 
-            <p className="text-gray-600">
-              <strong>Category:</strong> {product.category}
-            </p>
+            <p className="text-gray-600"><strong>Category:</strong> {product.category}</p>
 
             <p className="text-gray-700 text-lg">
               <strong>Stock:</strong>{' '}
@@ -209,7 +214,8 @@ const ProductDetailsPage = () => {
 
             <p className="text-gray-600 whitespace-pre-line">
               <strong>Description:</strong> <br />
-              {product.description}</p>
+              {product.description}
+            </p>
 
             <p className="text-2xl font-bold text-green-600">
               ₹{product.price.toLocaleString('en-IN')}
@@ -228,6 +234,7 @@ const ProductDetailsPage = () => {
           </div>
         </div>
 
+        {/* ✅ Related Products */}
         {related.length > 0 && (
           <div className="mt-12">
             <div className="flex items-center justify-between mb-4">
@@ -245,7 +252,7 @@ const ProductDetailsPage = () => {
               className="relative group"
               onMouseEnter={() => setAutoScroll(false)}
               onMouseLeave={() => setAutoScroll(true)}
-              {...swipeHandlers} // 👈 apply swipe handlers
+              {...swipeHandlers}
             >
               <div
                 id="related-scroll"
@@ -282,10 +289,16 @@ const ProductDetailsPage = () => {
           </div>
         )}
       </div>
+
+      {/* ✅ Footer */}
       <Footer />
 
+      {/* ✅ Bottom NavBar */}
       <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">
-        <BottomNavBar onAccountClick={openSignIn} />
+        <BottomNavBar
+          onSearchClick={() => setSearchOpen(true)}
+          onAccountClick={() => navigate("/account")}
+        />
       </div>
     </>
   );
