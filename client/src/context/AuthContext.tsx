@@ -14,6 +14,7 @@ interface AuthContextType {
   login: (credentials: { email: string; password: string }) => Promise<{ success: boolean; message?: string }>;
   register: (data: { name: string; email: string; password: string }) => Promise<any>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -21,10 +22,32 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
+  const refreshUser = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/auth/me`,
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
+      const latestUser = response.data.user;
+      if (latestUser) {
+        setUser(latestUser);
+        localStorage.setItem('user', JSON.stringify(latestUser));
+      }
+    } catch (error) {
+      console.error('Failed to refresh user:', error);
+      // Handle refresh failure, e.g., by logging out the user
+      logout();
+    }
+  };
+
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      refreshUser(); // Also refresh user data on initial load
     }
   }, []);
 
@@ -85,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
