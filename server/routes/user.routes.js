@@ -1,4 +1,6 @@
 const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth.js");
 const User = require("../models/User.model.js");
 
@@ -15,16 +17,14 @@ router.post("/login", async (req, res) => {
     if (!user)
       return res.status(401).json({ message: "Invalid email or password" });
 
-    const isMatch = await bcrypt.compare(password, user.password); // ✅ direct compare
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(401).json({ message: "Invalid email or password" });
 
-    // ✅ Create JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // ✅ Send cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -32,114 +32,85 @@ router.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
     });
 
-    res.json({ message: "Login successful", userId: user._id });
+    res.json({
+      message: "Login successful",
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+    });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login" });
   }
 });
 
-
+// ✅ Get Logged-in User
 router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .populate("wishlist")
       .populate("cart.product");
 
-    res.json({ user }); // ✅ Wrap inside a `user` key
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    res.json({ user });
   } catch (err) {
+    console.error("Me route error:", err);
     res.status(500).json({ message: "Error fetching user", error: err });
   }
 });
 
-
-// ✅ Add to cart
+// ✅ Add to Cart
 router.post("/cart", auth, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
-
-    if (!productId || typeof quantity !== "number") {
-      return res.status(400).json({ message: "Missing productId or quantity" });
-    }
-
     const user = await User.findById(req.user.id);
-    const existingItem = user.cart.find(
-      item => item.product.toString() === productId
+
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const productIndex = user.cart.findIndex(
+      (item) => item.product.toString() === productId
     );
 
-    if (existingItem) {
-      existingItem.quantity += quantity;
+    if (productIndex !== -1) {
+      user.cart[productIndex].quantity += quantity;
     } else {
       user.cart.push({ product: productId, quantity });
     }
 
     await user.save();
-    res.json(user.cart);
+    res.json({ cart: user.cart });
   } catch (err) {
-    res.status(500).json({ message: "Error adding to cart", error: err });
+    console.error("Cart error:", err);
+    res.status(500).json({ message: "Failed to update cart" });
   }
 });
 
-// ✅ Remove from cart
-router.delete("/cart/:id", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    user.cart = user.cart.filter(item => item.product.toString() !== req.params.id);
-    await user.save();
-    res.json(user.cart);
-  } catch (err) {
-    res.status(500).json({ message: "Error removing from cart", error: err });
-  }
-});
-
-// ✅ Add to wishlist
-// ✅ Toggle wishlist item
+// ✅ Wishlist Toggle
 router.post("/wishlist", auth, async (req, res) => {
   try {
     const { productId } = req.body;
-    if (!productId) {
-      return res.status(400).json({ message: "Missing productId" });
-    }
 
     const user = await User.findById(req.user.id);
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    const index = user.wishlist.findIndex(
-      (pid) => pid.toString() === productId
-    );
+    const alreadyInWishlist = user.wishlist.includes(productId);
 
-    if (index === -1) {
-      user.wishlist.push(productId); // ➕ Add
+    if (alreadyInWishlist) {
+      user.wishlist.pull(productId); // remove
     } else {
-      user.wishlist.splice(index, 1); // ❌ Remove
+      user.wishlist.push(productId); // add
     }
 
     await user.save();
-    res.status(200).json({ wishlist: user.wishlist });
-  } catch (err) {
-    console.error("Error adding/removing wishlist item:", err);
-    res
-      .status(500)
-      .json({ message: "Error toggling wishlist", error: err.message });
+    res.json({ wishlist: user.wishlist });
+  } catch (error) {
+    console.error("Wishlist error", error);
+    res.status(500).json({ message: "Server error updating wishlist" });
   }
 });
 
-
-// ✅ Remove from wishlist
-router.delete("/wishlist/:id", auth, async (req, res) => {
-  try {
-    const user = await User.findById(req.user.id);
-    user.wishlist = user.wishlist.filter(pid => pid.toString() !== req.params.id);
-    await user.save();
-    res.json(user.wishlist);
-  } catch (err) {
-    res.status(500).json({ message: "Error removing from wishlist", error: err });
-  }
-});
-
-// ✅ Place order
+// ✅ Place Order
 router.post("/order", auth, async (req, res) => {
   try {
     const { products, total } = req.body;
@@ -148,10 +119,14 @@ router.post("/order", auth, async (req, res) => {
     }
 
     const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
     user.orders.push({ products, total });
     await user.save();
+
     res.json(user.orders);
   } catch (err) {
+    console.error("Order error:", err);
     res.status(500).json({ message: "Error placing order", error: err });
   }
 });
