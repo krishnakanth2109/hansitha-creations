@@ -3,9 +3,11 @@ import Header from './Header';
 import Sidebar from './Sidebar';
 import SignInPanel from './SignInPanel';
 import BottomNavBar from './BottomNavBar';
+import SearchSidebar from '../components/SearchSidebar';
 
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
+    const [searchOpen, setSearchOpen] = useState(false);
     const [isSidebarOpen, setIsSidebarOpen] = useState(false);
     const [isSignInOpen, setIsSignInOpen] = useState(false);
 
@@ -32,7 +34,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
             <main>{children}</main>
             <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">
-                <BottomNavBar onAccountClick={openSignIn} />
+                <BottomNavBar
+        onAccountClick={() => {}}
+        onSearchClick={() => setSearchOpen(true)}
+      />
+      <SearchSidebar isOpen={searchOpen} onClose={() => setSearchOpen(false)} />
             </div>
 
         </div>

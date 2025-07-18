@@ -1,7 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
-import Header from '../components/Header';
 import Sidebar from '../components/Sidebar';
 import SignInPanel from '../components/SignInPanel';
 import BottomNavBar from '../components/BottomNavBar';
@@ -10,6 +9,7 @@ import { PromoSection } from '@/components/PromoSection';
 import { HeroSection } from '@/components/HeroSection';
 import FeaturedProducts from '@/pages/FeaturedProducts';
 import CategoryCircle from '@/components/CategoryCircle';
+import SearchSidebar from '@/components/SearchSidebar';
 import {
   disableBodyScroll,
   enableBodyScroll,
@@ -19,6 +19,7 @@ import {
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Home = () => {
+  const [showSearch, setShowSearch] = useState(false);
   const { addToCart } = useCart();
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
@@ -172,8 +173,12 @@ const Home = () => {
       )}
       {/* Bottom Navigation - mobile only */}
       <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">
-        <BottomNavBar onAccountClick={openSignIn} />
+        <BottomNavBar
+          onAccountClick={() => { }}
+          onSearchClick={() => setShowSearch(true)}
+        />
       </div>
+      <SearchSidebar isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </div>
   );
 };

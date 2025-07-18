@@ -1,5 +1,6 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
-import axios from 'axios';
+
+import axios, { AxiosError } from 'axios';
 
 interface User {
   _id: string;
@@ -28,23 +29,42 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, []);
 
   const login = async (credentials: { email: string; password: string }) => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
-        credentials,
-        { withCredentials: true }
-      );
-      const loggedInUser = response.data.user;
-      setUser(loggedInUser);
-      localStorage.setItem('user', JSON.stringify(loggedInUser));
-      return { success: true };
-    } catch (error: any) {
-      return {
-        success: false,
-        message: error.response?.data?.message || 'Login failed',
-      };
+  try {
+    // Basic validation (optional but helpful)
+    if (!credentials.email || !credentials.password) {
+      return { success: false, message: 'Email and password are required' };
     }
-  };
+
+    const response = await axios.post(
+      `${import.meta.env.VITE_API_URL}/api/auth/login`,
+      credentials,
+      {
+        withCredentials: true,
+        headers: { 'Content-Type': 'application/json' },
+      }
+    );
+
+    const loggedInUser = response.data.user;
+
+    if (!loggedInUser) {
+      return { success: false, message: 'Invalid login response' };
+    }
+
+    setUser(loggedInUser);
+    localStorage.setItem('user', JSON.stringify(loggedInUser));
+
+    return { success: true };
+  } catch (error: unknown) {
+    const err = error as AxiosError<any>;
+    console.error('Login Error:', err.response?.data || err.message);
+
+    return {
+      success: false,
+      message: err.response?.data?.message || 'Login failed. Please try again.',
+    };
+  }
+};
+
 
   const register = async (data: { name: string; email: string; password: string }) => {
     try {

@@ -5,29 +5,29 @@ import {
   StoreIcon,
   Heart,
   HeartIcon,
-  ShoppingCart,
-  ShoppingCartIcon,
+  Search,
+  SearchIcon,
   User,
   UserIcon,
 } from 'lucide-react';
-import { useCart } from '@/context/CartContext';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useWishlist } from '@/context/WishlistContext';
 import { useEffect } from 'react';
+import { useCart } from '@/context/CartContext';
+import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
 
 interface BottomNavBarProps {
   onAccountClick: () => void;
+  onSearchClick: () => void;
 }
 
-const BottomNavBar = ({ onAccountClick }: BottomNavBarProps) => {
+const BottomNavBar = ({ onAccountClick, onSearchClick }: BottomNavBarProps) => {
   const { cartItems } = useCart();
   const { wishlist } = useWishlist();
-  const { user } = useAuth(); // Updated: uses your current context
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistCount = wishlist.length;
 
   useEffect(() => {
@@ -60,12 +60,14 @@ const BottomNavBar = ({ onAccountClick }: BottomNavBarProps) => {
       activeIcon: HeartIcon,
     },
     {
-      label: 'Cart',
-      href: '/cart',
-      badge: cartCount,
-      onClick: () => navigate('/cart'),
-      icon: ShoppingCart,
-      activeIcon: ShoppingCartIcon,
+      label: 'Search',
+      href: '#',
+      badge: 0,
+      onClick: () => {
+        onSearchClick?.();
+      },
+      icon: Search,
+      activeIcon: SearchIcon,
     },
     {
       label: 'Account',
