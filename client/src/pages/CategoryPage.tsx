@@ -54,38 +54,25 @@ const CategoryPage: React.FC = () => {
       ) : filteredProducts.length === 0 ? (
         <p>No products found in this category.</p>
       ) : (
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-6 gap-6">
           {filteredProducts.map((product) => {
             const isWishlisted = wishlist.includes(product._id);
             return (
               <div
                 key={product._id}
                 onClick={() => handleProductClick(product)}
-                className="cursor-pointer relative group"
+                className="snap-start min-w-[220px] max-w-[220px] bg-white border rounded-lg shadow hover:shadow-md transition p-4 text-center cursor-pointer flex-shrink-0"
               >
-                {/* Wishlist Icon */}
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleWishlist(product._id);
-                  }}
-                  className="absolute top-2 right-2 z-10 bg-white p-1 rounded-full shadow-md transition-transform duration-150 active:scale-125"
-                  title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-                >
-                  {isWishlisted ? (
-                    <HeartIcon className="w-5 h-5 text-red-500 fill-red-500" />
-                  ) : (
-                    <Heart className="w-5 h-5 text-red-500" />
-                  )}
-                </button>
-
                 <img
                   src={product.image}
                   alt={product.name}
-                  className="object-cover w-[834px] h-[364px]"
+                  className="object-cover w-full h-48 rounded mb-2"
                 />
-                <h3 className="text-base font-semibold truncate mt-2">{product.name}</h3>
-                <p className="text-blue-600 font-bold text-sm mb-2">{formatPrice(product.price)}</p>
+                <h3 className="text-lg font-semibold truncate">{product.name}</h3>
+                <p className="text-sm text-gray-500 truncate">{product.category}</p>
+                <p className="text-blue-600 font-bold mt-1">
+                  {formatPrice(product.price)}
+                </p>
                 <button
                   onClick={(e) => {
                     e.stopPropagation();
@@ -98,7 +85,7 @@ const CategoryPage: React.FC = () => {
                     });
                     toast.success(`${product.name} added to cart!`);
                   }}
-                  className="w-full px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-full font-semibold transition active:scale-95"
+                  className="w-full px-3 py-1 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-full font-semibold transition active:scale-95 mt-4"
                 >
                   Add to Cart
                 </button>

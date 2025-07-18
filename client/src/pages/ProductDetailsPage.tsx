@@ -4,16 +4,12 @@ import { ProductContext } from '../context/ProductContext';
 import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
 
-import Sidebar from '../components/Sidebar';
 import SearchSidebar from '../components/SearchSidebar';
 import { Footer } from '../components/Footer';
 import BottomNavBar from '../components/BottomNavBar';
 import { useSwipeable } from 'react-swipeable';
 
-import {
-  disableBodyScroll,
-  clearAllBodyScrollLocks,
-} from 'body-scroll-lock';
+
 
 import axios from 'axios';
 
@@ -64,13 +60,6 @@ const ProductDetailsPage = () => {
     }, 4000);
     return () => clearInterval(interval);
   }, [autoScroll, product]);
-
-  useEffect(() => {
-    const target = isSidebarOpen ? sidebarRef.current : isSignInOpen ? signInRef.current : null;
-    if (target) disableBodyScroll(target);
-    else clearAllBodyScrollLocks();
-    return () => clearAllBodyScrollLocks();
-  }, [isSidebarOpen, isSignInOpen]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -146,18 +135,6 @@ const ProductDetailsPage = () => {
 
   return (
     <>
-      {/* ✅ Sidebar */}
-      {isSidebarOpen && (
-        <>
-          <Sidebar
-            ref={sidebarRef}
-            isOpen={isSidebarOpen}
-            onClose={closeSidebar}
-          />
-          <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={closeSidebar} />
-        </>
-      )}
-
       {/* ✅ Search Sidebar */}
       {isSearchOpen && (
         <>
@@ -167,7 +144,7 @@ const ProductDetailsPage = () => {
       )}
 
       {/* ✅ Product Info */}
-      <div className="p-6 pb-32 max-w-6xl mx-auto">
+      <div className="p-6 pb-32">
         <button
           onClick={() => navigate(-1)}
           className="text-blue-600 hover:underline mb-4"
@@ -177,57 +154,38 @@ const ProductDetailsPage = () => {
         {/* Breadcrumb */}
             <p className="text-sm text-gray-500">
               <Link to="/" className="hover:underline text-blue-600">Home</Link>
-              {product.breadcrumb?.map((crumb: string, i: number) => (
-                <span key={i}>
-                  {' > '}
-                  <Link
-                    to={`/categories/${encodeURIComponent(crumb.toLowerCase())}`}
-                    className="hover:underline text-blue-600"
-                  >
-                    {crumb}
-                  </Link>
-                </span>
-              ))}
+              {' > '}
+              <Link
+                to={`/fabrics/${encodeURIComponent(product.category.toLowerCase())}`}
+                className="hover:underline text-blue-600"
+              >
+                {product.category}
+              </Link>
               {' > '}<span className="text-gray-800 font-medium">{product.name}</span>
             </p>
 
-        <div className="bg-white rounded-xl shadow-md p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4 relative">
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
             <img
               src={selectedImage}
               alt={product.name}
-              className="object-cover w-96 h-auto rounded-lg"
+              className="w-full rounded-lg shadow-lg"
             />
-            {allImages.length > 1 && (
-              <>
-                <button
-                  onClick={handlePrevImage}
-                  className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
-                >
-                  &#10094;
-                </button>
-                <button
-                  onClick={handleNextImage}
-                  className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
-                >
-                  &#10095;
-                </button>
-              </>
-            )}
-
-            <div className="flex space-x-2 overflow-x-auto mt-4">
-              {allImages.filter(img => img !== selectedImage).map((img, idx) => (
+            <div className="flex justify-center mt-4 space-x-2">
+              {allImages.map((img, idx) => (
                 <img
                   key={idx}
                   src={img}
-                  alt={`Extra ${idx}`}
-                  className="w-24 h-24 object-cover rounded border cursor-pointer"
+                  alt={`Thumbnail ${idx}`}
+                  className={`w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${
+                    selectedImage === img ? 'border-blue-500' : 'border-transparent'
+                  }`}
                   onClick={() => setSelectedImage(img)}
                 />
               ))}
             </div>
           </div>
-          <div className="space-y-4">
+          <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
 
             <p className="text-gray-600"><strong>Category:</strong> {product.category}</p>

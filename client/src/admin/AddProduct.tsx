@@ -83,18 +83,21 @@ const AddProduct: React.FC = () => {
         extraImageUrls = await Promise.all(
           extraImageFiles.slice(0, 3).map((file) => uploadImageToCloudinary(file))
         );
+      } else if (editingId && extraImagesPreview.length > 0) {
+        extraImageUrls = extraImagesPreview;
       }
 
-      const productData = {
+      const productData: any = {
         name,
         price: Number(price),
         stock: Number(stock),
         featured,
         category,
         description,
-        ...(imageUrl && { image: imageUrl }),
-        ...(extraImageUrls.length > 0 && { extraImages: extraImageUrls }),
       };
+
+      if (imageUrl) productData.image = imageUrl;
+      if (extraImageUrls.length > 0) productData.extraImages = extraImageUrls;
 
       if (editingId) {
         const res = await fetch(`${API_URL}/api/products/${editingId}`, {
@@ -271,6 +274,10 @@ const AddProduct: React.FC = () => {
     });
   };
 
+  const handleRemoveExtraImage = (index: number) => {
+    setExtraImagesPreview((prev) => prev.filter((_, i) => i !== index));
+  };
+
   return (
     <div className="p-6 max-w-3xl mx-auto">
       <h2 className="text-2xl font-bold mb-4">{editingId ? 'Edit Product' : 'Add Product'}</h2>
@@ -311,7 +318,17 @@ const AddProduct: React.FC = () => {
         {extraImagesPreview.length > 0 && (
           <div className="mt-2 flex gap-2 flex-wrap">
             {extraImagesPreview.map((url, idx) => (
-              <img key={idx} src={url} alt={`extra-${idx}`} className="w-24 h-24 object-cover rounded border" />
+              <div key={idx} className="relative">
+                <img src={url} alt={`extra-${idx}`} className="w-24 h-24 object-cover rounded border" />
+                <button
+                  type="button"
+                  onClick={() => handleRemoveExtraImage(idx)}
+                  className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
+                  title="Remove"
+                >
+                  ×
+                </button>
+              </div>
             ))}
           </div>
         )}

@@ -8,12 +8,14 @@ import { useNavigate } from 'react-router-dom';
 interface SidebarProps {
   isOpen: boolean;
   onClose: () => void;
+  isCategoryPage?: boolean;
+  categories?: string[];
 }
 
 const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
-  ({ isOpen, onClose }, ref) => {
+  ({ isOpen, onClose, isCategoryPage = false, categories = [] }, ref) => {
     const navigate = useNavigate();
-    const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'fabrics'>('menu');
+    const [activeTab, setActiveTab] = useState<'menu' | 'categories' | 'fabrics'>(isCategoryPage ? 'categories' : 'menu');
 
     const menuItems = [
       { icon: Home, label: 'Home', href: '/' },
@@ -113,22 +115,37 @@ const Sidebar = forwardRef<HTMLDivElement, SidebarProps>(
 
           {activeTab === 'categories' && (
             <div className="p-4 space-y-2 animate-fadeInRight">
-              {mainCategories.map((item, index) => (
-                <button
-                  key={index}
-                  onClick={() => {
-                    if (item.type === 'fabrics') {
-                      setActiveTab('fabrics');
-                    } else {
-                      navigate(item.href!);
+              {isCategoryPage ? (
+                categories.map((category, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      navigate(`/fabrics/${category.toLowerCase()}`);
                       onClose();
-                    }
-                  }}
-                  className="w-full text-left p-3 rounded-lg hover:bg-gray-100 text-gray-800 hover:text-purple-600 font-medium"
-                >
-                  {item.label}
-                </button>
-              ))}
+                    }}
+                    className="w-full text-left p-3 rounded-lg hover:bg-gray-100 text-gray-800 hover:text-purple-600 font-medium"
+                  >
+                    {category}
+                  </button>
+                ))
+              ) : (
+                mainCategories.map((item, index) => (
+                  <button
+                    key={index}
+                    onClick={() => {
+                      if (item.type === 'fabrics') {
+                        setActiveTab('fabrics');
+                      } else {
+                        navigate(item.href!);
+                        onClose();
+                      }
+                    }}
+                    className="w-full text-left p-3 rounded-lg hover:bg-gray-100 text-gray-800 hover:text-purple-600 font-medium"
+                  >
+                    {item.label}
+                  </button>
+                ))
+              )}
             </div>
           )}
 
