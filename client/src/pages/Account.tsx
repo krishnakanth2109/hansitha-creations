@@ -17,9 +17,8 @@ export default function Account() {
     if (!user) navigate("/login");
   }, [user, navigate]);
 
-  if (user === null) {
-    return <p className="text-center mt-10">Loading...</p>;
-  }
+  if (user === null) return <p className="text-center mt-10">Authenticating...</p>;
+
 
   const handleActionClick = (action: string) => {
     setActiveSection(action);

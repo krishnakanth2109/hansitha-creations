@@ -40,7 +40,7 @@ router.post("/register", async (req, res) => {
     res
       .cookie("token", token, {
         httpOnly: true,
-        sameSite: "Lax",
+        sameSite: "None",
         secure: process.env.NODE_ENV === "production",
       })
       .json({ id: user._id, name: user.name, email: user.email });
@@ -73,7 +73,7 @@ router.post("/login", async (req, res) => {
     res
       .cookie("token", token, {
         httpOnly: true,
-        sameSite: "Lax",
+        sameSite: "None",
         secure: process.env.NODE_ENV === "production",
       })
       .json({
@@ -92,7 +92,12 @@ router.post("/login", async (req, res) => {
 
 // ✅ Logout
 router.post("/logout", (req, res) => {
-  res.clearCookie("token").json({ message: "Logged out successfully" });
+  res.clearCookie("token", {
+    httpOnly: true,
+    sameSite: "None",
+    secure: true,
+  }).json({ message: "Logged out successfully" });
 });
+
 
 module.exports = router;
