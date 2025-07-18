@@ -59,8 +59,8 @@ const AppRoutes = () => {
       <Route path="/new-arrivals" element={<Layout><NewArrivalsPage /></Layout>} />
       <Route path="/ceo-collections" element={<Layout><CEOCollectionsPage /></Layout>} />
       <Route path="/product/:name" element={<Layout><ProductDetailsPage key={location.pathname} /></Layout>} />
-      <Route path="/login" element={<Login />} />
-      <Route path="/register" element={<Register />} />
+      <Route path="/login" element={<Layout><Login /></Layout>} />
+      <Route path="/register" element={<Layout><Register /></Layout>} />
       <Route path="/account" element={<Account />} />
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
