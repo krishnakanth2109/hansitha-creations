@@ -5,7 +5,6 @@ import { useCart } from '../context/CartContext';
 import { toast } from 'react-hot-toast';
 
 import Sidebar from '../components/Sidebar';
-import SignInPanel from '../components/SignInPanel';
 import SearchSidebar from '../components/SearchSidebar';
 import { Footer } from '../components/Footer';
 import BottomNavBar from '../components/BottomNavBar';
@@ -32,6 +31,7 @@ const ProductDetailsPage = () => {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isSearchOpen, setSearchOpen] = useState(false); // ✅ Added
   const [autoScroll, setAutoScroll] = useState(true);
+  const [selectedImage, setSelectedImage] = useState<string>('');
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const signInRef = useRef<HTMLDivElement>(null);
@@ -104,6 +104,12 @@ const ProductDetailsPage = () => {
     loadProduct();
   }, [name, location.state]);
 
+  useEffect(() => {
+    if (product?.image) {
+      setSelectedImage(product.image);
+    }
+  }, [product]);
+
   if (!product) {
     return <div className="p-6 text-center text-gray-500">Loading product...</div>;
   }
@@ -119,8 +125,23 @@ const ProductDetailsPage = () => {
       name: product.name,
       price: product.price,
       image: product.image,
+      quantity: 1,
     });
     toast.success(`${product.name} added to cart!`);
+  };
+
+  const allImages = product ? [...new Set([product.image, ...(product.extraImages || []).filter(img => img)])] : [];
+
+  const handlePrevImage = () => {
+    const currentIndex = allImages.indexOf(selectedImage);
+    const prevIndex = (currentIndex - 1 + allImages.length) % allImages.length;
+    setSelectedImage(allImages[prevIndex]);
+  };
+
+  const handleNextImage = () => {
+    const currentIndex = allImages.indexOf(selectedImage);
+    const nextIndex = (currentIndex + 1) % allImages.length;
+    setSelectedImage(allImages[nextIndex]);
   };
 
   return (
@@ -132,17 +153,8 @@ const ProductDetailsPage = () => {
             ref={sidebarRef}
             isOpen={isSidebarOpen}
             onClose={closeSidebar}
-            onLoginClick={openSignIn}
           />
           <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={closeSidebar} />
-        </>
-      )}
-
-      {/* ✅ Sign In Panel */}
-      {isSignInOpen && (
-        <>
-          <SignInPanel ref={signInRef} isOpen={isSignInOpen} onClose={closeSignIn} />
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={closeSignIn} />
         </>
       )}
 
@@ -162,31 +174,7 @@ const ProductDetailsPage = () => {
         >
           ← Back
         </button>
-
-        <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
-
-        <div className="bg-white rounded-xl shadow-md p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div className="space-y-4">
-            <img
-              src={product.image}
-              alt={product.name}
-              className="w-full h-80 object-cover rounded-lg"
-            />
-
-            <div className="flex space-x-2 overflow-x-auto">
-              {[product.image, ...(product.extraImages || [])].map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`Extra ${idx}`}
-                  className="w-24 h-24 object-cover rounded border"
-                />
-              ))}
-            </div>
-          </div>
-
-          <div className="space-y-4">
-            {/* Breadcrumb */}
+        {/* Breadcrumb */}
             <p className="text-sm text-gray-500">
               <Link to="/" className="hover:underline text-blue-600">Home</Link>
               {product.breadcrumb?.map((crumb: string, i: number) => (
@@ -202,6 +190,45 @@ const ProductDetailsPage = () => {
               ))}
               {' > '}<span className="text-gray-800 font-medium">{product.name}</span>
             </p>
+
+        <div className="bg-white rounded-xl shadow-md p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div className="space-y-4 relative">
+            <img
+              src={selectedImage}
+              alt={product.name}
+              className="object-cover w-96 h-auto rounded-lg"
+            />
+            {allImages.length > 1 && (
+              <>
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute top-1/2 left-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+                >
+                  &#10094;
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute top-1/2 right-2 transform -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full"
+                >
+                  &#10095;
+                </button>
+              </>
+            )}
+
+            <div className="flex space-x-2 overflow-x-auto mt-4">
+              {allImages.filter(img => img !== selectedImage).map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`Extra ${idx}`}
+                  className="w-24 h-24 object-cover rounded border cursor-pointer"
+                  onClick={() => setSelectedImage(img)}
+                />
+              ))}
+            </div>
+          </div>
+          <div className="space-y-4">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
 
             <p className="text-gray-600"><strong>Category:</strong> {product.category}</p>
 
@@ -275,7 +302,7 @@ const ProductDetailsPage = () => {
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="w-full h-40 object-cover rounded mb-2"
+                        className="object-cover w-[834px] h-[364px] rounded mb-2"
                       />
                       <h3 className="text-lg font-semibold truncate">{item.name}</h3>
                       <p className="text-sm text-gray-500 truncate">{item.category}</p>
