@@ -56,24 +56,39 @@ router.delete("/cart/:id", auth, async (req, res) => {
 });
 
 // ✅ Add to wishlist
+// ✅ Toggle wishlist item
 router.post("/wishlist", auth, async (req, res) => {
   try {
     const { productId } = req.body;
-    if (!productId) return res.status(400).json({ message: "Missing productId" });
-
-    const user = await User.findById(req.user.id);
-    const alreadyExists = user.wishlist.includes(productId);
-
-    if (!alreadyExists) {
-      user.wishlist.push(productId);
-      await user.save();
+    if (!productId) {
+      return res.status(400).json({ message: "Missing productId" });
     }
 
-    res.json(user.wishlist);
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    const index = user.wishlist.findIndex(
+      (pid) => pid.toString() === productId
+    );
+
+    if (index === -1) {
+      user.wishlist.push(productId); // ➕ Add
+    } else {
+      user.wishlist.splice(index, 1); // ❌ Remove
+    }
+
+    await user.save();
+    res.status(200).json({ wishlist: user.wishlist });
   } catch (err) {
-    res.status(500).json({ message: "Error adding to wishlist", error: err });
+    console.error("Error adding/removing wishlist item:", err);
+    res
+      .status(500)
+      .json({ message: "Error toggling wishlist", error: err.message });
   }
 });
+
 
 // ✅ Remove from wishlist
 router.delete("/wishlist/:id", auth, async (req, res) => {
