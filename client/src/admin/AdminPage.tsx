@@ -7,9 +7,11 @@ import { Menu, X } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import EditProductPage from './EditProductPage';
 import AdminCategoryPanel from './AdminCategoryPanel';
+import ProductManagementPage from './ProductManagementPage';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('add');
+  const [activeTab, setActiveTab] = useState('manage');
+  const [editingProductId, setEditingProductId] = useState<string | null>(null);
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
 
@@ -18,7 +20,21 @@ const AdminPage = () => {
       case 'add':
         return <AddProduct />;
       case 'edit':
-        return <EditProductPage />;
+        return (
+          <EditProductPage
+            productId={editingProductId}
+            onBack={() => setActiveTab('manage')}
+          />
+        );
+      case 'manage':
+        return (
+          <ProductManagementPage
+            onEdit={(id) => {
+              setEditingProductId(id);
+              setActiveTab('edit'); // Ensure it navigates to Edit tab
+            }}
+          />
+        );
       case 'carousel':
         return <CarouselManager />;
       case 'circle':
@@ -49,6 +65,7 @@ const AdminPage = () => {
       {[
         ['add', 'Add Products'],
         ['edit', 'Edit Products'],
+        ['manage', 'Manage Products'],
         ['carousel', 'Carousel Images'],
         ['circle', 'Category Circle'],
         ['orders', 'Orders Dashboard'],
@@ -58,6 +75,7 @@ const AdminPage = () => {
           key={key}
           onClick={() => {
             setActiveTab(key);
+            setEditingProductId(null); // reset editing ID
             setIsMobileSidebarOpen(false);
           }}
           className="block w-full text-left hover:bg-blue-700 p-2 rounded"
@@ -77,7 +95,7 @@ const AdminPage = () => {
         </div>
       )}
 
-      {/* Mobile Sidebar (Drawer) */}
+      {/* Mobile Sidebar */}
       {isMobileSidebarOpen && (
         <div className="fixed inset-0 bg-white z-50 p-6 sm:hidden">
           <nav className="space-y-4 text-black">
@@ -90,7 +108,6 @@ const AdminPage = () => {
       <div className="flex-1 bg-gray-50">
         {/* Top bar */}
         <div className="flex items-center justify-between p-4">
-          {/* Mobile toggle */}
           <button
             className="sm:hidden bg-blue-800 text-white p-2 rounded hover:bg-blue-700"
             onClick={() => setIsMobileSidebarOpen(true)}
@@ -98,7 +115,6 @@ const AdminPage = () => {
             <Menu />
           </button>
 
-          {/* Desktop toggle */}
           <button
             className="hidden sm:inline-flex bg-blue-800 text-white p-2 rounded hover:bg-blue-700"
             onClick={() => setIsDesktopSidebarVisible(!isDesktopSidebarVisible)}

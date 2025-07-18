@@ -38,6 +38,7 @@ import WishlistPage from './pages/WishlistPage';
 // Admin
 import AdminPage from "./admin/AdminPage";
 import AdminCategoryPanel from "./admin/AdminCategoryPanel";
+import EditProductPage from './admin/EditProductPage';
 
 const queryClient = new QueryClient();
 
@@ -69,7 +70,6 @@ const AppRoutes = () => {
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/fabrics/:categoryName" element={<AdminCategoryPanel />} />
-
       {/* SSO */}
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
 

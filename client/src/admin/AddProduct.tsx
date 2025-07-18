@@ -14,8 +14,8 @@ const categoryOptions = [
   'Georgette',
   'Tusser',
   'Handlooms',
-  'New Arrivals',
-  'CEO Collections',
+  'new-arrivals',
+  'ceo-collections',
 ];
 
 const AddProduct: React.FC = () => {

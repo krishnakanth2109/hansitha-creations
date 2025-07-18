@@ -1,98 +1,175 @@
-// src/pages/admin/EditProductPage.tsx
-import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
 import axios from 'axios';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Button } from '@/components/ui/button';
-import { Textarea } from '@/components/ui/textarea';
 import { toast } from 'react-hot-toast';
+import { useProductContext } from '../context/ProductContext';
+import { uploadImageToCloudinary } from '../components/cloudinary';
+import { productTypes, categoryOptions } from './ProductManagementPage';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
-const EditProductPage = () => {
-  const { id } = useParams();
-  const navigate = useNavigate();
+interface EditProductPageProps {
+  productId: string | null;
+  onBack: () => void;
+}
 
+const EditProductPage: React.FC<EditProductPageProps> = ({ productId, onBack }) => {
+  const { products, reloadProducts } = useProductContext();
   const [product, setProduct] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
+  const [newImageFile, setNewImageFile] = useState<File | null>(null);
+  const [newExtraImages, setNewExtraImages] = useState<File[]>([]);
 
   useEffect(() => {
-    const fetchProduct = async () => {
-      try {
-        const { data } = await axios.get(`${API_URL}/products/${id}`);
-        setProduct(data);
-      } catch (err) {
-        toast.error('Failed to fetch product');
-      } finally {
-        setLoading(false);
-      }
-    };
-    fetchProduct();
-  }, [id]);
+    const p = products.find(p => p._id === productId);
+    if (p) setProduct(p);
+  }, [productId, products]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
-    setProduct((prev: any) => ({ ...prev, [name]: value }));
+    setProduct({ ...product, [name]: value });
   };
 
-  const handleSave = async () => {
+  const handleImageUpload = async () => {
+    if (newImageFile) {
+      const url = await uploadImageToCloudinary(newImageFile);
+      setProduct({ ...product, image: url });
+      toast.success("Main image updated!");
+    }
+  };
+
+  const handleExtraImagesUpload = async () => {
+    const uploadedUrls = await Promise.all(
+      newExtraImages.map(file => uploadImageToCloudinary(file))
+    );
+    setProduct({ ...product, extraImages: [...(product.extraImages || []), ...uploadedUrls] });
+    toast.success("Extra images added!");
+  };
+
+  const handleExtraImageDelete = (index: number) => {
+    const updated = product.extraImages.filter((_: string, i: number) => i !== index);
+    setProduct({ ...product, extraImages: updated });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
-      await axios.put(`${API_URL}/products/${id}`, product);
+      await axios.put(`${API_URL}/api/products/${productId}`, product);
       toast.success('Product updated successfully');
-      navigate('/admin/products');
-    } catch (err) {
+      reloadProducts();
+      onBack();
+    } catch {
       toast.error('Failed to update product');
     }
   };
 
-  if (loading) return <p className="p-4">Loading...</p>;
-  if (!product) return <p className="p-4">Product not found</p>;
+  if (!product) return <div>Loading...</div>;
 
   return (
-    <div className="max-w-4xl mx-auto p-6 space-y-6">
-      <h1 className="text-2xl font-bold">Edit Product</h1>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div>
-          <Label>Name</Label>
-          <Input name="name" value={product.name} onChange={handleChange} />
-        </div>
-        <div>
-          <Label>Category</Label>
-          <Input name="category" value={product.category} onChange={handleChange} />
-        </div>
-        <div>
-          <Label>Price</Label>
-          <Input name="price" type="number" value={product.price} onChange={handleChange} />
-        </div>
-        <div>
-          <Label>Original Price</Label>
-          <Input name="originalPrice" type="number" value={product.originalPrice} onChange={handleChange} />
-        </div>
-        <div>
-          <Label>Discount</Label>
-          <Input name="discount" type="number" value={product.discount} onChange={handleChange} />
-        </div>
-        <div>
-          <Label>Rating</Label>
-          <Input name="rating" type="number" value={product.rating} onChange={handleChange} />
-        </div>
-        <div>
-          <Label>Reviews</Label>
-          <Input name="reviews" type="number" value={product.reviews} onChange={handleChange} />
-        </div>
+    <div className="p-6 bg-white rounded-lg shadow-md">
+      <div className="flex items-center mb-4">
+        <button onClick={onBack} className="text-blue-500 hover:underline">&larr; Back</button>
+        <h2 className="text-2xl font-bold ml-4">Edit Product</h2>
       </div>
 
-      <div>
-        <Label>Description</Label>
-        <Textarea name="description" value={product.description} onChange={handleChange} rows={5} />
-      </div>
+      <form onSubmit={handleSubmit}>
+        {['name', 'price', 'stock'].map(field => (
+          <div key={field} className="mb-4">
+            <label className="block text-gray-700 capitalize">{field}</label>
+            <input
+              type={field === 'price' || field === 'stock' ? 'number' : 'text'}
+              name={field}
+              value={product[field]}
+              onChange={handleChange}
+              className="w-full p-2 border rounded"
+            />
+          </div>
+        ))}
 
-      <div className="flex justify-between">
-        <Button onClick={() => navigate('/admin/products')} variant="outline">Cancel</Button>
-        <Button onClick={handleSave}>Save Changes</Button>
-      </div>
+        <div className="mb-4">
+          <label className="block text-gray-700">Category</label>
+          <select
+            name="category"
+            value={product.category}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            {categoryOptions.map((option, idx) => (
+              <option key={idx} value={option}>{option}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700">Product Type</label>
+          <select
+            name="type"
+            value={product.type || ''}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          >
+            <option value="">Select Type</option>
+            {productTypes.map((option, idx) => (
+              <option key={idx} value={option}>{option}</option>
+            ))}
+          </select>
+        </div>
+
+        <div className="mb-4">
+          <label className="block text-gray-700">Description</label>
+          <textarea
+            name="description"
+            value={product.description}
+            onChange={handleChange}
+            className="w-full p-2 border rounded"
+          />
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700">Current Image</label>
+          <img src={product.image} alt="Product" className="w-32 h-32 object-cover rounded my-2" />
+          <input type="file" onChange={(e) => setNewImageFile(e.target.files?.[0] || null)} />
+          <button
+            type="button"
+            onClick={handleImageUpload}
+            className="mt-2 bg-blue-500 text-white px-4 py-1 rounded"
+          >
+            Upload New Image
+          </button>
+        </div>
+
+        <div className="mb-6">
+          <label className="block text-gray-700 mb-1">Extra Images</label>
+          <div className="flex flex-wrap gap-2 mb-2">
+            {product.extraImages?.map((img: string, i: number) => (
+              <div key={i} className="relative">
+                <img src={img} alt={`extra-${i}`} className="w-20 h-20 rounded object-cover" />
+                <button
+                  type="button"
+                  onClick={() => handleExtraImageDelete(i)}
+                  className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full px-1.5"
+                >
+                  ❌
+                </button>
+              </div>
+            ))}
+          </div>
+          <input
+            type="file"
+            multiple
+            onChange={(e) => setNewExtraImages(Array.from(e.target.files || []))}
+          />
+          <button
+            type="button"
+            onClick={handleExtraImagesUpload}
+            className="mt-2 bg-green-500 text-white px-4 py-1 rounded"
+          >
+            Upload Extra Images
+          </button>
+        </div>
+
+        <button type="submit" className="bg-indigo-600 text-white px-6 py-2 rounded">
+          Update Product
+        </button>
+      </form>
     </div>
   );
 };
