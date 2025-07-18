@@ -1,14 +1,14 @@
+import { useEffect, useState } from "react";
+import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
-import { TooltipProvider } from "@/components/ui/tooltip";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
 
 import { CartProvider } from "./context/CartContext";
 import { ProductProvider } from "./context/ProductContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import { WishlistProvider } from "./context/WishlistContext";
-import WishlistPage from './pages/WishlistPage';
 
 import Layout from "./components/Layout";
 
@@ -33,6 +33,7 @@ import Register from './pages/Register';
 import Account from '@/pages/Account';
 import Orders from '@/pages/Orders';
 import Addresses from '@/pages/Addresses';
+import WishlistPage from './pages/WishlistPage';
 
 // Admin
 import AdminPage from "./admin/AdminPage";
@@ -45,7 +46,6 @@ const AppRoutes = () => {
 
   return (
     <Routes>
-      {/* Public Routes */}
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/shop" element={<Layout><Shop /></Layout>} />
       <Route path="/cart" element={<Layout><Cart /></Layout>} />
@@ -64,17 +64,17 @@ const AppRoutes = () => {
       <Route path="/account" element={<Account />} />
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
+      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminPage />} />
       <Route path="/fabrics/:categoryName" element={<AdminCategoryPanel />} />
 
-      {/* SSO Handler */}
+      {/* SSO */}
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
 
-      {/* 404 */}
+      {/* Not Found */}
       <Route path="*" element={<NotFound />} />
-      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
     </Routes>
   );
 };
@@ -88,9 +88,9 @@ const App = () => {
             <WishlistProvider>
               <BrowserRouter>
                 <CurrencyProvider>
-                  <Toaster />
-                  <Sonner />
-                  <AppRoutes />
+                    <Toaster />
+                    <Sonner />
+                    <AppRoutes />
                 </CurrencyProvider>
               </BrowserRouter>
             </WishlistProvider>
