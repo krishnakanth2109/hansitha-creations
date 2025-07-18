@@ -22,7 +22,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     return (
         <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
             <Header onMenuClick={openSidebar} />
-            <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} onLoginClick={openSignIn} />
+            <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
             <SignInPanel isOpen={isSignInOpen} onClose={closeSignIn} />
 
             {isSidebarOpen && (

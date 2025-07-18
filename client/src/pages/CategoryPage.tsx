@@ -94,6 +94,7 @@ const CategoryPage: React.FC = () => {
                       name: product.name,
                       price: product.price,
                       image: product.image,
+                      quantity: 1,
                     });
                     toast.success(`${product.name} added to cart!`);
                   }}
