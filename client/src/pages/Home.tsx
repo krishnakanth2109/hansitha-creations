@@ -16,6 +16,13 @@ import {
   clearAllBodyScrollLocks,
 } from 'body-scroll-lock';
 
+interface Product {
+  _id: string;
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+}
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Home = () => {
@@ -26,7 +33,7 @@ const Home = () => {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [cartCount, setCartCount] = useState(3); // Optional
 
-  const [featuredProducts, setFeaturedProducts] = useState<any[]>([]);
+  const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
   const [carouselSlides, setCarouselSlides] = useState([
     { image: '', heading: '', subtext: '' },
     { image: '', heading: '', subtext: '' },
@@ -120,12 +127,13 @@ const Home = () => {
   }, [carouselSlides.length]);
 
   // ✅ Add to cart
-  const handleAddToCart = (product: any) => {
+  const handleAddToCart = (product: Product) => {
     addToCart({
       id: product._id || product.id,
       name: product.name,
       price: product.price,
       image: product.image,
+      quantity: 1,
     });
   };
 
@@ -154,21 +162,8 @@ const Home = () => {
             ref={sidebarRef}
             isOpen={isSidebarOpen}
             onClose={closeSidebar}
-            onLoginClick={openSignIn}
           />
           <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={closeSidebar} />
-        </>
-      )}
-
-      {/* Sign In Panel with scroll lock */}
-      {isSignInOpen && (
-        <>
-          <SignInPanel
-            ref={signInRef}
-            isOpen={isSignInOpen}
-            onClose={closeSignIn}
-          />
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={closeSignIn} />
         </>
       )}
       {/* Bottom Navigation - mobile only */}

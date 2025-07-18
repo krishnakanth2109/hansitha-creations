@@ -1,96 +1,93 @@
-import React, {
-  createContext,
-  useContext,
-  useEffect,
-  useState,
-  ReactNode,
-} from "react";
-import axios from "axios";
+import React, { createContext, useContext, useState, useEffect, ReactNode } from "react";
 
-export type CartItem = {
-  product: string;
+export interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  image: string;
   quantity: number;
-};
+}
 
 interface CartContextType {
-  cart: CartItem[];
-  addToCart: (productId: string) => void;
-  removeFromCart: (productId: string) => void;
+  cartItems: CartItem[];
+  addToCart: (item: CartItem) => void;
+  removeFromCart: (id: string) => void;
+  updateQuantity: (id: string, quantity: number) => void;
+  getTotalPrice: () => number;
   clearCart: () => void;
-  updateQuantity: (productId: string, quantity: number) => void;
-  refreshCart: () => void;
 }
 
 const CartContext = createContext<CartContextType | undefined>(undefined);
 
 export const CartProvider = ({ children }: { children: ReactNode }) => {
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  const refreshCart = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/user/cart`, { withCredentials: true });
-      const data = response?.data;
-      if (!data || !data.cart) throw new Error("Cart is null or invalid");
-      setCart(data.cart);
-    } catch (err) {
-      console.error("Failed to load cart", err);
-      setCart([]); // fallback to empty
+  // Load cart from localStorage on first load
+  useEffect(() => {
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      setCartItems(JSON.parse(savedCart));
     }
+  }, []);
+
+  // Save cart to localStorage on change
+  useEffect(() => {
+    localStorage.setItem("cart", JSON.stringify(cartItems));
+  }, [cartItems]);
+
+  const addToCart = (item: CartItem) => {
+    setCartItems(prev => {
+      const existing = prev.find(i => i.id === item.id);
+      if (existing) {
+        return prev.map(i =>
+          i.id === item.id ? { ...i, quantity: i.quantity + 1 } : i
+        );
+      } else {
+        return [...prev, { ...item, quantity: 1 }];
+      }
+    });
   };
 
-  const addToCart = async (productId: string) => {
-    try {
-      await axios.post(
-        "/api/user/cart",
-        { productId, quantity: 1 },
-        { withCredentials: true }
+  const removeFromCart = (id: string) => {
+    setCartItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateQuantity = (id: string, quantity: number) => {
+    if (quantity <= 0) {
+      removeFromCart(id);
+    } else {
+      setCartItems(prev =>
+        prev.map(item => (item.id === id ? { ...item, quantity } : item))
       );
-      refreshCart();
-    } catch (err) {
-      console.error("Add to cart failed", err);
     }
   };
 
-  const removeFromCart = async (productId: string) => {
-    try {
-      await axios.delete(`/api/user/cart/${productId}`, {
-        withCredentials: true,
-      });
-      refreshCart();
-    } catch (err) {
-      console.error("Remove from cart failed", err);
-    }
-  };
+  const getTotalPrice = () =>
+    cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
-  const updateQuantity = async (productId: string, quantity: number) => {
-    try {
-      await axios.post(
-        "/api/user/cart",
-        { productId, quantity },
-        { withCredentials: true }
-      );
-      refreshCart();
-    } catch (err) {
-      console.error("Update quantity failed", err);
-    }
-  };
-
-  const clearCart = () => {
-    setCart([]);
-    // Optionally clear from backend one by one
-  };
+  const clearCart = () => setCartItems([]);
 
   return (
     <CartContext.Provider
-      value={{ cart, addToCart, removeFromCart, clearCart, updateQuantity, refreshCart }}
+      value={{
+        cartItems,
+        addToCart,
+        removeFromCart,
+        updateQuantity,
+        getTotalPrice,
+        clearCart,
+      }}
     >
       {children}
     </CartContext.Provider>
   );
 };
 
-export const useCart = (): CartContextType => {
-  const ctx = useContext(CartContext);
-  if (!ctx) throw new Error("useCart must be used within CartProvider");
-  return ctx;
+// Custom hook
+export const useCart = () => {
+  const context = useContext(CartContext);
+  if (!context) {
+    throw new Error("useCart must be used within a CartProvider");
+  }
+  return context;
 };

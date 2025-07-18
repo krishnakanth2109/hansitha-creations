@@ -6,6 +6,7 @@ import { ProfileHeader } from "@/components/ProfileHeader";
 import { QuickActions } from "@/components/QuickActions";
 import { RecentOrders } from "@/components/RecentOrders";
 import { SecuritySettings } from "@/components/SecuritySettings";
+import { Footer } from '@/components/Footer';
 
 export default function Account() {
   const [activeSection, setActiveSection] = useState<string>("default");
@@ -51,6 +52,7 @@ export default function Account() {
           <ProfileHeader user={user} onLogout={handleLogout} />
           {renderMainContent()}
         </main>
+        <Footer />
       </div>
     </Layout>
   );
