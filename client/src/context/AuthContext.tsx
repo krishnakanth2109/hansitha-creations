@@ -22,11 +22,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-    const storedUser = localStorage.getItem('user');
-    if (storedUser) {
-      setUser(JSON.parse(storedUser));
+  const fetchCurrentUser = async () => {
+    try {
+      const response = await axios.get(
+        `${import.meta.env.VITE_API_URL}/api/auth/me`,
+        { withCredentials: true }
+      );
+      setUser(response.data.user);
+      localStorage.setItem("user", JSON.stringify(response.data.user));
+    } catch (err) {
+      setUser(null);
+      localStorage.removeItem("user");
     }
-  }, []);
+  };
+
+  fetchCurrentUser();
+}, []);
+
 
   const login = async (credentials: { email: string; password: string }) => {
   try {
