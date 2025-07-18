@@ -9,11 +9,27 @@ interface User {
   // Add more fields if needed
 }
 
+const refreshUser = async () => {
+  try {
+    const response = await axios.get(
+      `${import.meta.env.VITE_API_URL}/api/auth/me`,
+      { withCredentials: true }
+    );
+    setUser(response.data.user);
+    localStorage.setItem('user', JSON.stringify(response.data.user));
+  } catch (err) {
+    setUser(null);
+    localStorage.removeItem('user');
+  }
+};
+
+
 interface AuthContextType {
   user: User | null;
   login: (credentials: { email: string; password: string }) => Promise<{ success: boolean; message?: string }>;
   register: (data: { name: string; email: string; password: string }) => Promise<any>;
   logout: () => void;
+  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -22,60 +38,60 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
 
   useEffect(() => {
-  const fetchCurrentUser = async () => {
-    try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/auth/me`,
-        { withCredentials: true }
-      );
-      setUser(response.data.user);
-      localStorage.setItem("user", JSON.stringify(response.data.user));
-    } catch (err) {
-      setUser(null);
-      localStorage.removeItem("user");
-    }
-  };
+    const fetchCurrentUser = async () => {
+      try {
+        const response = await axios.get(
+          `${import.meta.env.VITE_API_URL}/api/auth/me`,
+          { withCredentials: true }
+        );
+        setUser(response.data.user);
+        localStorage.setItem("user", JSON.stringify(response.data.user));
+      } catch (err) {
+        setUser(null);
+        localStorage.removeItem("user");
+      }
+    };
 
-  fetchCurrentUser();
-}, []);
+    fetchCurrentUser();
+  }, []);
 
 
   const login = async (credentials: { email: string; password: string }) => {
-  try {
-    // Basic validation (optional but helpful)
-    if (!credentials.email || !credentials.password) {
-      return { success: false, message: 'Email and password are required' };
-    }
-
-    const response = await axios.post(
-      `${import.meta.env.VITE_API_URL}/api/auth/login`,
-      credentials,
-      {
-        withCredentials: true,
-        headers: { 'Content-Type': 'application/json' },
+    try {
+      // Basic validation (optional but helpful)
+      if (!credentials.email || !credentials.password) {
+        return { success: false, message: 'Email and password are required' };
       }
-    );
 
-    const loggedInUser = response.data.user;
+      const response = await axios.post(
+        `${import.meta.env.VITE_API_URL}/api/auth/login`,
+        credentials,
+        {
+          withCredentials: true,
+          headers: { 'Content-Type': 'application/json' },
+        }
+      );
 
-    if (!loggedInUser) {
-      return { success: false, message: 'Invalid login response' };
+      const loggedInUser = response.data.user;
+
+      if (!loggedInUser) {
+        return { success: false, message: 'Invalid login response' };
+      }
+
+      setUser(loggedInUser);
+      localStorage.setItem('user', JSON.stringify(loggedInUser));
+
+      return { success: true };
+    } catch (error: unknown) {
+      const err = error as AxiosError<any>;
+      console.error('Login Error:', err.response?.data || err.message);
+
+      return {
+        success: false,
+        message: err.response?.data?.message || 'Login failed. Please try again.',
+      };
     }
-
-    setUser(loggedInUser);
-    localStorage.setItem('user', JSON.stringify(loggedInUser));
-
-    return { success: true };
-  } catch (error: unknown) {
-    const err = error as AxiosError<any>;
-    console.error('Login Error:', err.response?.data || err.message);
-
-    return {
-      success: false,
-      message: err.response?.data?.message || 'Login failed. Please try again.',
-    };
-  }
-};
+  };
 
 
   const register = async (data: { name: string; email: string; password: string }) => {
@@ -97,7 +113,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
@@ -110,3 +126,7 @@ export const useAuth = (): AuthContextType => {
   }
   return context;
 };
+
+function setUser(user: any) {
+  throw new Error('Function not implemented.');
+}

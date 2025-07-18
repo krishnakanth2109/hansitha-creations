@@ -19,7 +19,6 @@ export default function Account() {
 
   if (user === null) return <p className="text-center mt-10">Authenticating...</p>;
 
-
   const handleActionClick = (action: string) => {
     setActiveSection(action);
   };
@@ -49,16 +48,8 @@ export default function Account() {
     <Layout>
       <div className="min-h-screen bg-gradient-subtle">
         <main className="container mx-auto px-4 py-6 space-y-6 pb-20 md:pb-6">
-          <ProfileHeader user={{ name: user.name, email: user.email }} />
+          <ProfileHeader user={user} onLogout={handleLogout} />
           {renderMainContent()}
-          <div className="space-y-3 max-w-sm">
-            <button
-              onClick={handleLogout}
-              className="w-full text-center bg-red-100 hover:bg-red-200 text-red-800 font-medium px-4 py-2 rounded-md transition"
-            >
-              🚪 Logout
-            </button>
-          </div>
         </main>
       </div>
     </Layout>

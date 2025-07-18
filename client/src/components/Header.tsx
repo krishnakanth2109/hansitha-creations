@@ -2,7 +2,7 @@ import { Menu, ShoppingCart, Heart, Search, User } from 'lucide-react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useNavigate, Link } from 'react-router-dom';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import SearchSidebar from './SearchSidebar';
 
 interface HeaderProps {
@@ -10,13 +10,20 @@ interface HeaderProps {
 }
 
 const Header = ({ onMenuClick }: HeaderProps) => {
-  const { cartItems } = useCart();
-  const { wishlist } = useWishlist();
+  const { cart, refreshCart } = useCart();
+  const { wishlist, refreshWishlist } = useWishlist();
   const [searchOpen, setSearchOpen] = useState(false);
   const navigate = useNavigate();
+  const user = null; // Replace with real auth user later
 
-  const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
-  const wishlistCount = wishlist.length;
+  const cartCount = cart?.reduce((sum, item) => sum + item.quantity, 0) || 0;
+  const wishlistCount = wishlist?.length || 0;
+
+  // Optional: Refresh on mount
+  useEffect(() => {
+    refreshCart();
+    refreshWishlist();
+  }, []);
 
   return (
     <>
@@ -49,7 +56,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
 
           {/* Right: Icons */}
           <div className="flex items-center gap-4">
-            {/* Wishlist (desktop only) */}
+            {/* Wishlist */}
             <div className="relative hidden md:block">
               <button
                 onClick={() => navigate('/wishlist')}
@@ -64,7 +71,7 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               </button>
             </div>
 
-            {/* Cart (always visible) */}
+            {/* Cart */}
             <div className="relative">
               <button
                 onClick={() => navigate('/cart')}
@@ -79,10 +86,10 @@ const Header = ({ onMenuClick }: HeaderProps) => {
               </button>
             </div>
 
-            {/* Account (desktop only) */}
+            {/* Account */}
             <div className="relative hidden md:block">
               <button
-                onClick={() => navigate('/account')}
+                onClick={() => navigate(user ? '/account' : '/login')}
                 className="w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center"
               >
                 <User className="w-6 h-6 text-gray-700" />

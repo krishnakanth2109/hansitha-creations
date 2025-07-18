@@ -4,55 +4,104 @@ const User = require("../models/User.model.js");
 
 const router = express.Router();
 
-// Get current user
+// ✅ Get current user (secure)
 router.get("/me", auth, async (req, res) => {
-  const user = await User.findById(req.user.id);
-  res.json(user);
+  try {
+    const user = await User.findById(req.user.id)
+      .populate("wishlist")
+      .populate("cart.product");
+    res.json(user);
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching user", error: err });
+  }
 });
 
-// Add to cart
+// ✅ Add to cart
 router.post("/cart", auth, async (req, res) => {
-  const { productId, quantity } = req.body;
-  const user = await User.findById(req.user.id);
-  const existing = user.cart.find(item => item.productId.toString() === productId);
-  if (existing) existing.quantity += quantity;
-  else user.cart.push({ productId, quantity });
-  await user.save();
-  res.json(user.cart);
+  try {
+    const { productId, quantity } = req.body;
+
+    if (!productId || typeof quantity !== "number") {
+      return res.status(400).json({ message: "Missing productId or quantity" });
+    }
+
+    const user = await User.findById(req.user.id);
+    const existingItem = user.cart.find(
+      item => item.product.toString() === productId
+    );
+
+    if (existingItem) {
+      existingItem.quantity += quantity;
+    } else {
+      user.cart.push({ product: productId, quantity });
+    }
+
+    await user.save();
+    res.json(user.cart);
+  } catch (err) {
+    res.status(500).json({ message: "Error adding to cart", error: err });
+  }
 });
 
-// Remove from cart
+// ✅ Remove from cart
 router.delete("/cart/:id", auth, async (req, res) => {
-  const user = await User.findById(req.user.id);
-  user.cart = user.cart.filter(item => item.productId.toString() !== req.params.id);
-  await user.save();
-  res.json(user.cart);
+  try {
+    const user = await User.findById(req.user.id);
+    user.cart = user.cart.filter(item => item.product.toString() !== req.params.id);
+    await user.save();
+    res.json(user.cart);
+  } catch (err) {
+    res.status(500).json({ message: "Error removing from cart", error: err });
+  }
 });
 
-// Add to wishlist
+// ✅ Add to wishlist
 router.post("/wishlist", auth, async (req, res) => {
-  const { productId } = req.body;
-  const user = await User.findById(req.user.id);
-  if (!user.wishlist.includes(productId)) user.wishlist.push(productId);
-  await user.save();
-  res.json(user.wishlist);
+  try {
+    const { productId } = req.body;
+    if (!productId) return res.status(400).json({ message: "Missing productId" });
+
+    const user = await User.findById(req.user.id);
+    const alreadyExists = user.wishlist.includes(productId);
+
+    if (!alreadyExists) {
+      user.wishlist.push(productId);
+      await user.save();
+    }
+
+    res.json(user.wishlist);
+  } catch (err) {
+    res.status(500).json({ message: "Error adding to wishlist", error: err });
+  }
 });
 
-// Remove from wishlist
+// ✅ Remove from wishlist
 router.delete("/wishlist/:id", auth, async (req, res) => {
-  const user = await User.findById(req.user.id);
-  user.wishlist = user.wishlist.filter(pid => pid.toString() !== req.params.id);
-  await user.save();
-  res.json(user.wishlist);
+  try {
+    const user = await User.findById(req.user.id);
+    user.wishlist = user.wishlist.filter(pid => pid.toString() !== req.params.id);
+    await user.save();
+    res.json(user.wishlist);
+  } catch (err) {
+    res.status(500).json({ message: "Error removing from wishlist", error: err });
+  }
 });
 
-// Place an order
+// ✅ Place order
 router.post("/order", auth, async (req, res) => {
-  const { products, total } = req.body;
-  const user = await User.findById(req.user.id);
-  user.orders.push({ products, total });
-  await user.save();
-  res.json(user.orders);
+  try {
+    const { products, total } = req.body;
+    if (!products || typeof total !== "number") {
+      return res.status(400).json({ message: "Missing products or total" });
+    }
+
+    const user = await User.findById(req.user.id);
+    user.orders.push({ products, total });
+    await user.save();
+    res.json(user.orders);
+  } catch (err) {
+    res.status(500).json({ message: "Error placing order", error: err });
+  }
 });
 
 module.exports = router;
