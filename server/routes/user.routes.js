@@ -107,25 +107,27 @@ router.post("/order", auth, async (req, res) => {
   }
 });
 
-// ✅ Change password
+// /routes/user.js or /routes/users.js
 router.patch("/change-password", auth, async (req, res) => {
   try {
-    const { oldPassword, newPassword } = req.body;
+    const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const isMatch = await bcrypt.compare(oldPassword, user.password);
-    if (!isMatch) return res.status(401).json({ message: "Old password is incorrect" });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) {
+      return res.status(400).json({ success: false, message: "Incorrect current password" });
+    }
 
     const salt = await bcrypt.genSalt(10);
     user.password = await bcrypt.hash(newPassword, salt);
     await user.save();
 
-    res.json({ message: "Password updated successfully" });
+    res.status(200).json({ success: true, message: "Password changed successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Error updating password", error: err });
+    console.error(err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
+
 
 // ✅ Delete account
 router.delete("/delete-account", auth, async (req, res) => {

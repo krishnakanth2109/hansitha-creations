@@ -97,7 +97,7 @@ app.use('/api/categories', categoryRoutes);
 app.use('/api', checkoutRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
-app.use('/api/user', userRoutes);
+app.use('/api/users', userRoutes);
 
 // ✅ Carousel Schema + Routes
 const ImageSchema = new mongoose.Schema({
