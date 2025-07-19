@@ -13,29 +13,31 @@ const config: Config = {
       center: true,
       padding: "2rem",
       screens: {
-        sm: '640px',
-        md: '768px',
-        lg: '1024px', 
-        xl: '1280px',
+        sm: "640px",
+        md: "768px",
+        lg: "1024px",
+        xl: "1280px",
       },
     },
     extend: {
       colors: {
-        brandBlue: '#03B9F0',
-        brandPink: '#C5499A',
+        brand: {
+          blue: "#03B9F0",
+          pink: "#C5499A",
+        },
+        primary: {
+          DEFAULT: "#03B9F0",
+          foreground: "#ffffff",
+        },
+        secondary: {
+          DEFAULT: "#C5499A",
+          foreground: "#ffffff",
+        },
         border: "hsl(var(--border))",
         input: "hsl(var(--input))",
         ring: "hsl(var(--ring))",
         background: "hsl(var(--background))",
         foreground: "hsl(var(--foreground))",
-        primary: {
-          DEFAULT: "hsl(var(--primary))",
-          foreground: "hsl(var(--primary-foreground))",
-        },
-        secondary: {
-          DEFAULT: "hsl(var(--secondary))",
-          foreground: "hsl(var(--secondary-foreground))",
-        },
         destructive: {
           DEFAULT: "hsl(var(--destructive))",
           foreground: "hsl(var(--destructive-foreground))",
@@ -71,6 +73,9 @@ const config: Config = {
         lg: "var(--radius)",
         md: "calc(var(--radius) - 2px)",
         sm: "calc(var(--radius) - 4px)",
+      },
+      backgroundImage: {
+        "blue-pink": "linear-gradient(90deg, #03B9F0 0%, #C5499A 100%)",
       },
       keyframes: {
         "accordion-down": {
