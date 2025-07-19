@@ -110,19 +110,21 @@ router.post("/order", auth, async (req, res) => {
 router.patch("/change-password", auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
+
     const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ success: false, message: "Incorrect current password" });
     }
 
-    user.password = newPassword; // ✅ Let pre-save hook handle hashing
-    await user.save();
+    user.password = newPassword; // ✅ Let pre-save hook hash it
+    await user.save();           // ✅ Triggers pre-save hook
 
     res.status(200).json({ success: true, message: "Password changed successfully" });
   } catch (err) {
-    console.error(err);
+    console.error("Change Password error:", err);
     res.status(500).json({ success: false, message: "Server error" });
   }
 });
