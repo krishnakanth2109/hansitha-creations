@@ -41,7 +41,7 @@ router.post("/request-otp", async (req, res) => {
         </div>
         <h2 style="color: #333333;">OTP Verification</h2>
         <p style="font-size: 16px; color: #555555;">
-          Hello ${user.firstName} ${user.lastName},<br><br>
+          Hello ${user.name} ,<br><br>
           You recently requested to reset your password. Please use the OTP below to continue:
         </p>
         <div style="text-align: center; margin: 30px 0;">
@@ -50,7 +50,7 @@ router.post("/request-otp", async (req, res) => {
           </span>
         </div>
         <p style="font-size: 14px; color: #999999;">
-          This OTP is valid for <strong>10 minutes</strong>. If you didn’t request a password reset, you can safely ignore this email.
+          This OTP is valid for <strong>10 minutes</strong>. If you didn’t request a password reset, you can contact the support team immediately.
         </p>
         <hr style="border: none; border-top: 1px solid #eeeeee; margin: 30px 0;">
         <p style="font-size: 12px; color: #cccccc; text-align: center;">
