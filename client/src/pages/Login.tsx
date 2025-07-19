@@ -120,39 +120,7 @@ const Login = () => {
         >
           Forgot Password?
         </button>
-
       </div>
-
-      {/* Forgot Password Form */}
-      {showForgotForm && (
-        <div className="mt-6 border-t pt-4">
-          <div className="flex justify-between items-center mb-2">
-            <h3 className="text-sm font-medium text-gray-700">Reset Password</h3>
-            <button
-              onClick={() => setShowForgotForm(false)}
-              className="text-gray-400 hover:text-gray-600"
-            >
-              <X className="w-4 h-4" />
-            </button>
-          </div>
-          <form onSubmit={handleForgotPassword} className="space-y-3">
-            <input
-              type="email"
-              placeholder="Enter your email"
-              value={forgotEmail}
-              onChange={(e) => setForgotEmail(e.target.value)}
-              required
-              className="w-full py-2 px-3 border rounded-lg outline-none focus:ring-2 focus:ring-purple-500"
-            />
-            <button
-              type="submit"
-              className="w-full bg-purple-600 text-white py-2 rounded-lg hover:bg-purple-700"
-            >
-              Send Reset Link
-            </button>
-          </form>
-        </div>
-      )}
     </div>
   );
 };
