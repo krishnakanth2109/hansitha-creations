@@ -45,6 +45,12 @@ const Login = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    if (newPassword === formData.password) {
+      toast.error("Set a new password. Don't reuse the old one.");
+      return;
+    }
+
     try {
       const { data } = await axios.post(`${API_URL}/auth/verify-otp`, {
         email,
@@ -58,7 +64,7 @@ const Login = () => {
       toast.error(err?.response?.data?.message || "Invalid OTP or error");
     }
   };
-
+  
   const fadeVariants = {
     hidden: { opacity: 0, x: 50 },
     visible: { opacity: 1, x: 0 },
