@@ -34,6 +34,7 @@ import Account from '@/pages/Account';
 import Orders from '@/pages/Orders';
 import Addresses from '@/pages/Addresses';
 import WishlistPage from './pages/WishlistPage';
+import ResetPassword from './pages/ResetPassword';
 
 // Admin
 import AdminPage from "./admin/AdminPage";
@@ -66,6 +67,8 @@ const AppRoutes = () => {
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
       <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
+      <Route path="/reset-password/:token" element={<ResetPassword />} />
+
 
       {/* Admin Routes */}
       <Route path="/admin" element={<AdminPage />} />

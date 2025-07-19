@@ -33,27 +33,25 @@ const Login = () => {
     }
   };
 
-  const handleForgotPassword = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!forgotEmail) return toast.error('Please enter your email');
+  const handleForgotPassword = async () => {
+    const email = prompt("Enter your registered email:");
+    if (!email) return;
 
     try {
-      const res = await fetch(`${API_URL}/auth/forgot-password`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: forgotEmail }),
+      const response = await fetch(`${import.meta.env.VITE_API_URL}/auth/forgot-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
       });
 
-      const data = await res.json();
-      if (data.success) {
-        toast.success('Reset link sent to your email');
-        setShowForgotForm(false);
-        setForgotEmail('');
+      const data = await response.json();
+      if (response.ok) {
+        toast.success(data.message || "Check your email for the reset link");
       } else {
-        toast.error(data.message || 'Failed to send reset link');
+        toast.error(data.message || "Failed to send reset link");
       }
     } catch (err) {
-      toast.error('Something went wrong');
+      toast.error("Server error");
     }
   };
 

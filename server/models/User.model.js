@@ -28,8 +28,9 @@ const userSchema = new mongoose.Schema({
     },
   ],
 
-  resetToken: { type: String },
-  resetTokenExpire: { type: Date },
+  // ✅ Password Reset Fields
+  resetPasswordToken: { type: String },
+  resetPasswordExpire: { type: Date },
 });
 
 // ✅ Hash password before saving (only if modified)

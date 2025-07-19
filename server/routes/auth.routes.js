@@ -6,7 +6,7 @@ const sendEmail = require("../utils/sendEmail.js");
 
 const router = express.Router();
 
-// 🔐 Get Current Logged-In User
+// ✅ Get Current Logged-In User
 router.get("/me", async (req, res) => {
   try {
     const token = req.cookies.token;
@@ -22,11 +22,10 @@ router.get("/me", async (req, res) => {
   }
 });
 
-// 📝 Register
+// ✅ Register
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
-
     if (!email || !password || !name)
       return res.status(400).json({ message: "All fields are required" });
 
@@ -47,14 +46,13 @@ router.post("/register", async (req, res) => {
         secure: process.env.NODE_ENV === "production",
       })
       .json({ id: user._id, name: user.name, email: user.email });
-
   } catch (err) {
     console.error("🔴 Register error:", err);
     res.status(500).json({ message: "Server error during registration" });
   }
 });
 
-// 🔐 Login
+// ✅ Login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -86,19 +84,24 @@ router.post("/login", async (req, res) => {
           name: user.name,
         },
       });
-
   } catch (err) {
     console.error("🔴 Login error:", err);
     res.status(500).json({ message: "Server error during login" });
   }
 });
 
-// 🚪 Logout
+// ✅ Logout
 router.post("/logout", (req, res) => {
-  res.clearCookie("token").json({ message: "Logged out successfully" });
+  res
+    .clearCookie("token", {
+      httpOnly: true,
+      sameSite: "None",
+      secure: process.env.NODE_ENV === "production",
+    })
+    .json({ message: "Logged out successfully" });
 });
 
-// 🧠 Forgot Password
+// ✅ Forgot Password
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -122,7 +125,7 @@ router.post("/forgot-password", async (req, res) => {
       <a href="${resetLink}" style="color:#6B46C1;">${resetLink}</a>
       <p>If you didn't request this, please ignore this email.</p>
     `;
-
+    console.log("📧 Sending email to:", user.email);
     await sendEmail(user.email, "Reset Your Password", html);
 
     res.json({ success: true, message: "Reset link sent to your email" });
@@ -132,7 +135,7 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// 🔁 Reset Password
+// ✅ Reset Password
 router.post("/reset-password/:token", async (req, res) => {
   try {
     const { token } = req.params;
