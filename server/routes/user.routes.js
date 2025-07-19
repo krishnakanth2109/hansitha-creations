@@ -107,18 +107,17 @@ router.post("/order", auth, async (req, res) => {
   }
 });
 
-// /routes/user.js or /routes/users.js
 router.patch("/change-password", auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
     const user = await User.findById(req.user.id);
+
     const isMatch = await bcrypt.compare(currentPassword, user.password);
     if (!isMatch) {
       return res.status(400).json({ success: false, message: "Incorrect current password" });
     }
 
-    const salt = await bcrypt.genSalt(10);
-    user.password = await bcrypt.hash(newPassword, salt);
+    user.password = newPassword; // ✅ Let pre-save hook handle hashing
     await user.save();
 
     res.status(200).json({ success: true, message: "Password changed successfully" });
