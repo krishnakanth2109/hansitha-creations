@@ -34,14 +34,14 @@ router.post("/request-otp", async (req, res) => {
             to: email,
             subject: "🔐 Your OTP for Password Reset",
             html: `
-    <div style="font-family: Arial, sans-serif; background-color: #f4f4f7; padding: 40px 0;">
+    <div style="font-family: Arial, sans-serif; background-color: #ffffff; padding: 40px 0;">
       <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05);">
         <div style="text-align: center; margin-bottom: 30px;">
           <img src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png" alt="Hansitha Creations Logo" style="max-width: 200px;">
         </div>
         <h2 style="color: #333333;">OTP Verification</h2>
         <p style="font-size: 16px; color: #555555;">
-          Hello,<br><br>
+          Hello ${user.firstName} ${user.lastName},<br><br>
           You recently requested to reset your password. Please use the OTP below to continue:
         </p>
         <div style="text-align: center; margin: 30px 0;">
