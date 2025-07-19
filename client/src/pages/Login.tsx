@@ -21,7 +21,7 @@ const Login = () => {
     const result = await login(formData);
 
     if (result.success) {
-      navigate('/account');
+      navigate('/account',{ replace: true });
     } else {
       setError(result.message);
     }

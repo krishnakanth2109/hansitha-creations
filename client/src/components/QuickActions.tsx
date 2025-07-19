@@ -23,7 +23,7 @@ interface QuickActionsProps {
 
 export function QuickActions({ onActionClick, userName }: QuickActionsProps) {
   const handleHelpClick = () => {
-    const message = `Hi ${userName} I need help`;
+    const message = `Hi Hansitha Creations,\nThis is ${userName}. 👋\nI need help with something. Could you please assist me?\n\nThanks in advance! 🙏`;
     const whatsappUrl = `https://wa.me/918142504687?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, '_blank');
   };

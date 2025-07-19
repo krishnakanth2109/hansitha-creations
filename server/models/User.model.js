@@ -2,9 +2,9 @@ const mongoose = require("mongoose");
 const bcrypt = require("bcryptjs");
 
 const userSchema = new mongoose.Schema({
-  name: String,
-  email: String,
-  password: String,
+  name: { type: String, required: true },
+  email: { type: String, required: true, unique: true },
+  password: { type: String, required: true },
 
   cart: [
     {
@@ -20,10 +20,10 @@ const userSchema = new mongoose.Schema({
       products: [
         {
           product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
-          quantity: Number,
+          quantity: { type: Number, required: true },
         },
       ],
-      total: Number,
+      total: { type: Number, required: true },
       createdAt: { type: Date, default: Date.now },
     },
   ],
@@ -41,8 +41,9 @@ userSchema.pre("save", async function (next) {
     next(err);
   }
 });
-// ✅ Custom method to compare password
-userSchema.methods.comparePassword = function (candidatePassword) {
+
+// ✅ Method to compare candidate password
+userSchema.methods.comparePassword = async function (candidatePassword) {
   return bcrypt.compare(candidatePassword, this.password);
 };
 

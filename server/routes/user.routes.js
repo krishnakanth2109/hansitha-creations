@@ -1,4 +1,8 @@
+// routes/user.routes.js
+
 const express = require("express");
+const bcrypt = require("bcryptjs");
+const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth.js");
 const User = require("../models/User.model.js");
 
@@ -15,21 +19,19 @@ router.post("/login", async (req, res) => {
     if (!user)
       return res.status(401).json({ message: "Invalid email or password" });
 
-    const isMatch = await bcrypt.compare(password, user.password); // ✅ direct compare
+    const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch)
       return res.status(401).json({ message: "Invalid email or password" });
 
-    // ✅ Create JWT token
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "7d",
     });
 
-    // ✅ Send cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "Lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({ message: "Login successful", userId: user._id, email: user.email, name: user.name });
@@ -39,37 +41,28 @@ router.post("/login", async (req, res) => {
   }
 });
 
-
+// ✅ Get current user info
 router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .populate("wishlist")
       .populate("cart.product");
-
-    res.json({ user }); // ✅ Wrap inside a `user` key
+    res.json({ user });
   } catch (err) {
     res.status(500).json({ message: "Error fetching user", error: err });
   }
 });
 
-
-// routes/user.routes.js
+// ✅ Cart
 router.post("/cart", auth, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
     const user = await User.findById(req.user.id);
-
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const productIndex = user.cart.findIndex(
-      (item) => item.product.toString() === productId
-    );
-
-    if (productIndex !== -1) {
-      user.cart[productIndex].quantity += quantity;
-    } else {
-      user.cart.push({ product: productId, quantity });
-    }
+    const index = user.cart.findIndex((item) => item.product.toString() === productId);
+    if (index !== -1) user.cart[index].quantity += quantity;
+    else user.cart.push({ product: productId, quantity });
 
     await user.save();
     res.json({ cart: user.cart });
@@ -79,40 +72,31 @@ router.post("/cart", auth, async (req, res) => {
   }
 });
 
-
-// routes/user.routes.js (or wherever you handle wishlist logic)
+// ✅ Wishlist toggle
 router.post("/wishlist", auth, async (req, res) => {
   try {
     const { productId } = req.body;
-
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const alreadyInWishlist = user.wishlist.includes(productId);
-
-    if (alreadyInWishlist) {
-      user.wishlist.pull(productId); // remove
-    } else {
-      user.wishlist.push(productId); // add
-    }
+    const exists = user.wishlist.includes(productId);
+    if (exists) user.wishlist.pull(productId);
+    else user.wishlist.push(productId);
 
     await user.save();
-
     res.json({ wishlist: user.wishlist });
-  } catch (error) {
-    console.error("Wishlist error", error);
+  } catch (err) {
+    console.error("Wishlist error", err);
     res.status(500).json({ message: "Server error updating wishlist" });
   }
 });
-
 
 // ✅ Place order
 router.post("/order", auth, async (req, res) => {
   try {
     const { products, total } = req.body;
-    if (!products || typeof total !== "number") {
+    if (!products || typeof total !== "number")
       return res.status(400).json({ message: "Missing products or total" });
-    }
 
     const user = await User.findById(req.user.id);
     user.orders.push({ products, total });
@@ -120,6 +104,37 @@ router.post("/order", auth, async (req, res) => {
     res.json(user.orders);
   } catch (err) {
     res.status(500).json({ message: "Error placing order", error: err });
+  }
+});
+
+// ✅ Change password
+router.patch("/change-password", auth, async (req, res) => {
+  try {
+    const { oldPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const isMatch = await bcrypt.compare(oldPassword, user.password);
+    if (!isMatch) return res.status(401).json({ message: "Old password is incorrect" });
+
+    const salt = await bcrypt.genSalt(10);
+    user.password = await bcrypt.hash(newPassword, salt);
+    await user.save();
+
+    res.json({ message: "Password updated successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error updating password", error: err });
+  }
+});
+
+// ✅ Delete account
+router.delete("/delete-account", auth, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user.id);
+    res.clearCookie("token");
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting account", error: err });
   }
 });
 
