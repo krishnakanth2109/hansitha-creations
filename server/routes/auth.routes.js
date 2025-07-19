@@ -6,91 +6,87 @@ const sendEmail = require("../utils/sendEmail.js");
 
 const router = express.Router();
 
-// ✅ Get Current Logged-In User
+// 🔒 Helper to sign token and send as cookie
+const sendToken = (res, user) => {
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
+  res.cookie("token", token, {
+    httpOnly: true,
+    sameSite: "None",
+    secure: process.env.NODE_ENV === "production",
+    maxAge: 7 * 24 * 60 * 60 * 1000,
+  });
+
+  return {
+    id: user._id,
+    name: user.name,
+    email: user.email,
+  };
+};
+
+// ✅ GET /api/auth/me
 router.get("/me", async (req, res) => {
   try {
     const token = req.cookies.token;
-    if (!token) return res.status(401).json({ message: "Unauthorized" });
+    if (!token) return res.status(401).json({ success: false, message: "Unauthorized" });
 
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const user = await User.findById(decoded.id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
 
-    res.json({ user });
+    res.json({ success: true, user });
   } catch (error) {
-    res.status(401).json({ message: "Invalid token" });
+    console.error("🔴 Auth Me Error:", error);
+    res.status(401).json({ success: false, message: "Invalid token" });
   }
 });
 
-// ✅ Register
+// ✅ POST /api/auth/register
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
     if (!email || !password || !name)
-      return res.status(400).json({ message: "All fields are required" });
+      return res.status(400).json({ success: false, message: "All fields are required" });
 
     const existing = await User.findOne({ email });
     if (existing)
-      return res.status(400).json({ message: "Email already exists" });
+      return res.status(400).json({ success: false, message: "Email already exists" });
 
     const user = await User.create({ email, password, name });
-
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        sameSite: "None",
-        secure: process.env.NODE_ENV === "production",
-      })
-      .json({ id: user._id, name: user.name, email: user.email });
+    const publicUser = sendToken(res, user);
+    res.json({ success: true, user: publicUser });
   } catch (err) {
     console.error("🔴 Register error:", err);
-    res.status(500).json({ message: "Server error during registration" });
+    res.status(500).json({ success: false, message: "Server error during registration" });
   }
 });
 
-// ✅ Login
+// ✅ POST /api/auth/login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-      return res.status(400).json({ message: "Email and password required" });
+      return res.status(400).json({ success: false, message: "Email and password required" });
 
     const user = await User.findOne({ email });
     if (!user)
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
 
     const isMatch = await user.comparePassword(password);
     if (!isMatch)
-      return res.status(400).json({ message: "Invalid credentials" });
+      return res.status(400).json({ success: false, message: "Invalid credentials" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
-
-    res
-      .cookie("token", token, {
-        httpOnly: true,
-        sameSite: "None",
-        secure: process.env.NODE_ENV === "production",
-      })
-      .json({
-        user: {
-          id: user._id,
-          email: user.email,
-          name: user.name,
-        },
-      });
+    const publicUser = sendToken(res, user);
+    res.json({ success: true, user: publicUser });
   } catch (err) {
     console.error("🔴 Login error:", err);
-    res.status(500).json({ message: "Server error during login" });
+    res.status(500).json({ success: false, message: "Server error during login" });
   }
 });
 
-// ✅ Logout
+// ✅ POST /api/auth/logout
 router.post("/logout", (req, res) => {
   res
     .clearCookie("token", {
@@ -98,10 +94,10 @@ router.post("/logout", (req, res) => {
       sameSite: "None",
       secure: process.env.NODE_ENV === "production",
     })
-    .json({ message: "Logged out successfully" });
+    .json({ success: true, message: "Logged out successfully" });
 });
 
-// ✅ Forgot Password
+// ✅ POST /api/auth/forgot-password
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -125,6 +121,7 @@ router.post("/forgot-password", async (req, res) => {
       <a href="${resetLink}" style="color:#6B46C1;">${resetLink}</a>
       <p>If you didn't request this, please ignore this email.</p>
     `;
+
     console.log("📧 Sending email to:", user.email);
     await sendEmail(user.email, "Reset Your Password", html);
 
@@ -135,7 +132,7 @@ router.post("/forgot-password", async (req, res) => {
   }
 });
 
-// ✅ Reset Password
+// ✅ POST /api/auth/reset-password/:token
 router.post("/reset-password/:token", async (req, res) => {
   try {
     const { token } = req.params;

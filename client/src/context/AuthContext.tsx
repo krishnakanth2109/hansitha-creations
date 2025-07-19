@@ -25,7 +25,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
-  const [loading, setLoading] = useState(true); // << Add loading state
+  const [loading, setLoading] = useState(true);
 
   const refreshUser = async () => {
     try {
@@ -36,17 +36,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           headers: { 'Content-Type': 'application/json' },
         }
       );
+
+      console.log('Refresh user status:', response.status);
+
       const latestUser = response.data.user;
       if (latestUser) {
         setUser(latestUser);
         localStorage.setItem('user', JSON.stringify(latestUser));
       }
     } catch (error) {
-      console.warn('Failed to refresh user. Possibly logged out.');
+      console.warn('❌ Failed to refresh user (maybe not logged in):', error);
       setUser(null);
       localStorage.removeItem('user');
     } finally {
-      setLoading(false); // << Important to update loading even if refresh fails
+      setLoading(false);
     }
   };
 
@@ -55,6 +58,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     if (storedUser) {
       setUser(JSON.parse(storedUser));
     }
+
+    // ✅ Await refreshUser to finish before proceeding
     refreshUser();
   }, []);
 
