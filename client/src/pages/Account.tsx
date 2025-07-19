@@ -10,15 +10,18 @@ import { Footer } from '@/components/Footer';
 
 export default function Account() {
   const [activeSection, setActiveSection] = useState<string>("default");
-  const { user, logout } = useAuth();
+  const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
-    if (user === null) return; // still loading
-    if (!user) navigate("/login");
-  }, [user, navigate]);
+    if (!loading && !user) {
+      navigate("/login");
+    }
+  }, [user, loading, navigate]);
 
-  if (user === null) return <p className="text-center mt-10">Authenticating...</p>;
+  if (loading) return <p className="text-center mt-10">Authenticating...</p>;
+  if (!user) return null; 
+
 
   const handleActionClick = (action: string) => {
     setActiveSection(action);
