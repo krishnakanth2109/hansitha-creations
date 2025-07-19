@@ -45,7 +45,7 @@ const Login = () => {
 
   const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (newPassword === formData.password) {
       toast.error("Set a new password. Don't reuse the old one.");
       return;
@@ -142,8 +142,8 @@ const Login = () => {
               Sign In
             </button>
 
-            <div className="text-center text-sm mt-4 text-gray-500">
-              <button onClick={() => setStage('forgot')} type="button" className="hover:underline">
+            <div className="text-center text-sm mt-4 text-purple-600 hover:underline font-medium">
+              <button onClick={() => setStage('forgot')} type="button">
                 Forgot Password?
               </button>
             </div>
@@ -174,7 +174,7 @@ const Login = () => {
             </button>
             <button
               type="button"
-              className="text-sm text-gray-500 mt-2 hover:underline"
+              className="text-sm mt-2 text-purple-600 hover:underline font-medium"
               onClick={() => setStage('login')}
             >
               Back to Login
