@@ -22,9 +22,13 @@
     "mongodb": "^6.17.0",
     "mongoose": "^8.16.4",
     "multer": "^2.0.1",
+    "nodemailer": "^7.0.5",
     "razorpay": "^2.9.6",
     "resend": "^4.6.0",
     "streamifier": "^0.1.1"
   },
-  "keywords": []
+  "keywords": [],
+  "devDependencies": {
+    "@types/nodemailer": "^6.4.17"
+  }
 }

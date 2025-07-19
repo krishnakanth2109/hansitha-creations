@@ -88,9 +88,19 @@ const App = () => {
             <WishlistProvider>
               <BrowserRouter>
                 <CurrencyProvider>
-                    <Toaster />
-                    <Sonner />
-                    <AppRoutes />
+                  {/* Toast components configured for bottom-right */}
+                  <Toaster />
+                  <Sonner
+                    // For Sonner toast
+                    position="bottom-right"
+                    expand={true}
+                    richColors={true}
+                    closeButton={true}
+                    duration={3000}
+                    className="sonner-toast"
+                  />
+                  
+                  <AppRoutes />
                 </CurrencyProvider>
               </BrowserRouter>
             </WishlistProvider>

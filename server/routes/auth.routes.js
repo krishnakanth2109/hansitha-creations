@@ -1,9 +1,12 @@
 const express = require("express");
 const jwt = require("jsonwebtoken");
+const crypto = require("crypto");
 const User = require("../models/User.model.js");
+const sendEmail = require("../utils/sendEmail.js");
 
 const router = express.Router();
 
+// 🔐 Get Current Logged-In User
 router.get("/me", async (req, res) => {
   try {
     const token = req.cookies.token;
@@ -19,7 +22,7 @@ router.get("/me", async (req, res) => {
   }
 });
 
-// ✅ Register
+// 📝 Register
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -51,7 +54,7 @@ router.post("/register", async (req, res) => {
   }
 });
 
-// ✅ Login
+// 🔐 Login
 router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
@@ -90,9 +93,69 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Logout
+// 🚪 Logout
 router.post("/logout", (req, res) => {
   res.clearCookie("token").json({ message: "Logged out successfully" });
+});
+
+// 🧠 Forgot Password
+router.post("/forgot-password", async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (!email)
+      return res.status(400).json({ success: false, message: "Email is required" });
+
+    const user = await User.findOne({ email });
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    const token = crypto.randomBytes(32).toString("hex");
+    user.resetToken = token;
+    user.resetTokenExpire = Date.now() + 15 * 60 * 1000;
+    await user.save();
+
+    const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
+    const html = `
+      <p>Hello ${user.name || "User"},</p>
+      <p>You requested a password reset.</p>
+      <p>Click the link below to reset your password (valid for 15 minutes):</p>
+      <a href="${resetLink}" style="color:#6B46C1;">${resetLink}</a>
+      <p>If you didn't request this, please ignore this email.</p>
+    `;
+
+    await sendEmail(user.email, "Reset Your Password", html);
+
+    res.json({ success: true, message: "Reset link sent to your email" });
+  } catch (err) {
+    console.error("🔴 Forgot Password error:", err);
+    res.status(500).json({ success: false, message: "Failed to send reset link" });
+  }
+});
+
+// 🔁 Reset Password
+router.post("/reset-password/:token", async (req, res) => {
+  try {
+    const { token } = req.params;
+    const { password } = req.body;
+
+    const user = await User.findOne({
+      resetToken: token,
+      resetTokenExpire: { $gt: Date.now() },
+    });
+
+    if (!user)
+      return res.status(400).json({ success: false, message: "Invalid or expired token" });
+
+    user.password = password;
+    user.resetToken = undefined;
+    user.resetTokenExpire = undefined;
+    await user.save();
+
+    res.json({ success: true, message: "Password has been reset" });
+  } catch (err) {
+    console.error("🔴 Reset Password error:", err);
+    res.status(500).json({ success: false, message: "Failed to reset password" });
+  }
 });
 
 module.exports = router;
