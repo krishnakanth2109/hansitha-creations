@@ -116,10 +116,11 @@ const Login = () => {
         </p>
         <button
           className="mt-3 text-sm text-gray-500 hover:text-gray-700"
-          onClick={() => setShowForgotForm(true)}
+          onClick={() => navigate("/forgot-password")}
         >
           Forgot Password?
         </button>
+
       </div>
 
       {/* Forgot Password Form */}
