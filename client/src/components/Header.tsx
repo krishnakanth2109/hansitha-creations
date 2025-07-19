@@ -4,6 +4,7 @@ import { useWishlist } from '@/context/WishlistContext';
 import { useNavigate, Link } from 'react-router-dom';
 import { useState } from 'react';
 import SearchSidebar from './SearchSidebar';
+import { useAuth } from '@/context/AuthContext'; // ✅ import real auth context
 
 interface HeaderProps {
   onMenuClick: () => void;
@@ -13,8 +14,8 @@ const Header = ({ onMenuClick }: HeaderProps) => {
   const { cartItems } = useCart();
   const { wishlist } = useWishlist();
   const [searchOpen, setSearchOpen] = useState(false);
+  const { user} = useAuth(); // ✅ get real user & loading state
   const navigate = useNavigate();
-  const user = null;
 
   const cartCount = cartItems.reduce((sum, item) => sum + item.quantity, 0);
   const wishlistCount = wishlist.length;
@@ -81,14 +82,14 @@ const Header = ({ onMenuClick }: HeaderProps) => {
             </div>
 
             {/* Account (desktop only) */}
-            <div className="relative hidden md:block">
-              <button
-                onClick={() => navigate(user ? '/account' : '/login')}
-                className="w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center"
-              >
-                <User className="w-6 h-6 text-gray-700" />
-              </button>
-            </div>
+              <div className="relative hidden md:block">
+                <button
+                  onClick={() => navigate(user ? '/account' : '/login')}
+                  className="w-10 h-10 rounded-lg hover:bg-gray-100 flex items-center justify-center"
+                >
+                  <User className="w-6 h-6 text-gray-700" />
+                </button>
+              </div>
           </div>
         </div>
       </header>
