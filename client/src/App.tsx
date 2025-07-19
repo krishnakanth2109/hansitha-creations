@@ -34,12 +34,12 @@ import Account from '@/pages/Account';
 import Orders from '@/pages/Orders';
 import Addresses from '@/pages/Addresses';
 import WishlistPage from './pages/WishlistPage';
-import ResetPassword from './pages/ResetPassword';
+import ForgotPassword from './pages/ForgetPassword';
+import VerifyOtp from './pages/VerifyOtp';
 
 // Admin
 import AdminPage from "./admin/AdminPage";
 import AdminCategoryPanel from "./admin/AdminCategoryPanel";
-import EditProductPage from './admin/EditProductPage';
 
 const queryClient = new QueryClient();
 
@@ -67,7 +67,8 @@ const AppRoutes = () => {
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
       <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
-      <Route path="/reset-password/:token" element={<ResetPassword />} />
+      <Route path="/forgot-password" element={<ForgotPassword />} />
+      <Route path="/verify-otp" element={<VerifyOtp />} />
 
 
       {/* Admin Routes */}
@@ -102,7 +103,7 @@ const App = () => {
                     duration={3000}
                     className="sonner-toast"
                   />
-                  
+
                   <AppRoutes />
                 </CurrencyProvider>
               </BrowserRouter>

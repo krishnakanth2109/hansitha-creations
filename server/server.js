@@ -13,6 +13,7 @@ const userRoutes = require("./routes/user.routes.js");
 const categoryRoutes = require("./routes/categories");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const productRoutes = require("./routes/productRoutes");
+const otpRoutes = require("./routes/otpRoutes");
 
 dotenv.config();
 
@@ -98,6 +99,8 @@ app.use('/api', checkoutRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use("/auth", otpRoutes);
+
 
 // ✅ Carousel Schema + Routes
 const ImageSchema = new mongoose.Schema({
