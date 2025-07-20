@@ -1,45 +1,64 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
-  Menu, X, Plus, LayoutList, Image, Circle, ShoppingCart, User,
+  Menu,
+  X,
+  Plus,
+  LayoutList,
+  Image,
+  Circle,
+  ShoppingCart,
+  User,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { io as socketIOClient } from 'socket.io-client';
 
 const AdminLayout = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
   const [orderNotificationCount, setOrderNotificationCount] = useState(0);
-  const [animateBell, setAnimateBell] = useState(false);
 
-  const audioRef = useRef<HTMLAudioElement | null>(null);
   const navigate = useNavigate();
   const location = useLocation();
 
   useEffect(() => {
-    const socket = new WebSocket("wss://hansitha-web-storefront.onrender.com"); // Replace with your WebSocket URL
-
-    socket.onmessage = (event) => {
-      const data = JSON.parse(event.data);
-      if (data.type === 'NEW_ORDER') {
-        setOrderNotificationCount(prev => prev + 1);
-        triggerNotification();
+    // Fetch initial order count
+    const fetchOrderCount = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders/count`, {
+          withCredentials: true,
+        });
+        setOrderNotificationCount(res.data.count);
+      } catch (err) {
+        console.error('Failed to fetch order count', err);
       }
     };
 
-    return () => socket.close();
+    fetchOrderCount();
+
+    // Setup WebSocket
+    const socket = socketIOClient(import.meta.env.VITE_API_URL, {
+      withCredentials: true,
+    });
+
+    socket.on('newOrder', () => {
+      setOrderNotificationCount((prev) => prev + 1);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
-  const triggerNotification = () => {
-    if (audioRef.current) {
-      audioRef.current.currentTime = 0;
-      audioRef.current.play();
-    }
-
-    setAnimateBell(true);
-    setTimeout(() => setAnimateBell(false), 1000);
+  type TabItem = {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    path: string;
   };
 
-  const tabs = [
+  const tabs: TabItem[] = [
     {
       key: 'add',
       label: 'Add Products',
@@ -69,7 +88,7 @@ const AdminLayout = () => {
       label: 'Orders Dashboard',
       icon: (
         <div className="relative mr-2">
-          <ShoppingCart className={`w-5 h-5 transition-transform ${animateBell ? 'animate-bounce text-red-500' : ''}`} />
+          <ShoppingCart className="w-4 h-4" />
           {orderNotificationCount > 0 && (
             <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
               {orderNotificationCount}
@@ -107,7 +126,6 @@ const AdminLayout = () => {
             onClick={() => {
               navigate(tab.path);
               setIsMobileSidebarOpen(false);
-              if (tab.key === 'orders') setOrderNotificationCount(0);
             }}
             className={`flex items-center w-full text-left px-4 py-2 rounded-md transition-colors ${
               isActive
@@ -124,9 +142,6 @@ const AdminLayout = () => {
 
   return (
     <div className="flex min-h-screen bg-gray-100 text-gray-900">
-      {/* Notification sound */}
-      <audio ref={audioRef} src="/notification.mp3" preload="auto" />
-
       {/* Desktop Sidebar */}
       {isDesktopSidebarVisible && (
         <aside className="hidden sm:flex flex-col w-64 bg-blue-800 p-6 shadow-lg">
