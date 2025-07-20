@@ -101,7 +101,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use("/auth", otpRoutes);
-app.use('/api/orders', orderRoutes);
+app.use('/api/admin/orders', orderRoutes);
 
 
 // ✅ Carousel Schema + Routes
