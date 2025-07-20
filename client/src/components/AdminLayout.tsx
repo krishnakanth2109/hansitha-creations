@@ -16,7 +16,7 @@ const AdminLayout = () => {
   const location = useLocation();
 
   useEffect(() => {
-    const socket = new WebSocket("wss://yourserver.com/socket"); // Replace with your WebSocket URL
+    const socket = new WebSocket("wss://hansitha-web-storefront.onrender.com"); // Replace with your WebSocket URL
 
     socket.onmessage = (event) => {
       const data = JSON.parse(event.data);
