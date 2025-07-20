@@ -28,7 +28,7 @@ const OrdersDashboard = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await axios.get(`${API_URL}/orders`, { withCredentials: true });
+        const res = await axios.get(`${API_URL}/api/orders`, { withCredentials: true });
         setOrders(res.data.orders);
       } catch (err: any) {
         setError(err.response?.data?.message || 'Failed to fetch orders');

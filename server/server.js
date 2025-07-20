@@ -1,3 +1,4 @@
+// Core Dependencies
 const express = require("express");
 const cors = require("cors");
 const multer = require("multer");
@@ -7,7 +8,63 @@ const dotenv = require("dotenv");
 const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
+const http = require("http");
+const { Server } = require("socket.io");
 
+// Env Setup
+dotenv.config();
+const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: ['http://localhost:8080', 'https://hansithacreations.netlify.app'],
+    credentials: true,
+  },
+});
+app.set("io", io); // expose io to routes
+
+// Middleware
+app.use(cors({
+  origin: ['http://localhost:8080', 'https://hansithacreations.netlify.app'],
+  credentials: true
+}));
+app.use(express.json());
+app.use(cookieParser());
+
+// Cloudinary Config
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_KEY,
+  api_secret: process.env.CLOUD_SECRET,
+});
+
+// Multer Config
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Razorpay Config
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID,
+  key_secret: process.env.RAZORPAY_KEY_SECRET,
+});
+
+// Database Connection
+mongoose.connect(process.env.MONGO_URI, {
+  useNewUrlParser: true,
+  useUnifiedTopology: true,
+  dbName: 'web-store'
+}).then(() => {
+  console.log("✅ MongoDB connected");
+}).catch(err => {
+  console.error("❌ MongoDB connection error:", err);
+});
+
+// WebSocket
+io.on("connection", (socket) => {
+  console.log("🔌 Admin connected:", socket.id);
+});
+
+// Routes
 const authRoutes = require("./routes/auth.routes.js");
 const userRoutes = require("./routes/user.routes.js");
 const categoryRoutes = require("./routes/categories");
@@ -16,36 +73,17 @@ const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
 const orderRoutes = require('./routes/orderRoutes');
 
-dotenv.config();
+app.get('/', (req, res) => res.send('API is working'));
 
-const app = express();
+app.use('/api/categories', categoryRoutes);
+app.use('/api', checkoutRoutes);
+app.use('/api/products', productRoutes);
+app.use('/api/auth', authRoutes);
+app.use('/api/users', userRoutes);
+app.use("/auth", otpRoutes);
+app.use('/api/orders', orderRoutes); // includes io.emit logic
 
-// ✅ Middleware (order matters!)
-app.use(cors({
-  origin: ['http://localhost:8080', 'https://hansithacreations.netlify.app'],
-  credentials: true
-}));
-app.use(express.json()); // ✅ THIS FIXES req.body being undefined!
-app.use(cookieParser());
-
-// ✅ Cloudinary Config
-cloudinary.config({
-  cloud_name: process.env.CLOUD_NAME,
-  api_key: process.env.CLOUD_KEY,
-  api_secret: process.env.CLOUD_SECRET,
-});
-
-// ✅ Multer setup
-const storage = multer.memoryStorage();
-const upload = multer({ storage });
-
-// ✅ Razorpay setup
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-// ✅ Razorpay Create Order
+// Razorpay Create Order
 app.post('/api/payment/orders', async (req, res) => {
   try {
     const { amount } = req.body;
@@ -61,14 +99,9 @@ app.post('/api/payment/orders', async (req, res) => {
   }
 });
 
-// ✅ Razorpay Verify
-app.post('/api/payment/verify', async (req, res) => {
-  const {
-    razorpay_order_id,
-    razorpay_payment_id,
-    razorpay_signature,
-  } = req.body;
-
+// Razorpay Payment Verification
+app.post('/api/payment/verify', (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
   const generated_signature = crypto
     .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -76,35 +109,11 @@ app.post('/api/payment/verify', async (req, res) => {
 
   if (generated_signature === razorpay_signature) {
     return res.status(200).json({ success: true });
-  } else {
-    return res.status(400).json({ success: false, message: "Invalid signature" });
   }
+  return res.status(400).json({ success: false, message: "Invalid signature" });
 });
 
-// ✅ MongoDB Connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  dbName: 'web-store'
-}).then(() => {
-  console.log("✅ MongoDB connected");
-}).catch(err => {
-  console.error("❌ MongoDB connection error:", err);
-});
-
-// ✅ API Routes
-app.get('/', (req, res) => res.send('API is working'));
-
-app.use('/api/categories', categoryRoutes);
-app.use('/api', checkoutRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
-app.use("/auth", otpRoutes);
-app.use('/api/orders', orderRoutes);
-
-
-// ✅ Carousel Schema + Routes
+// Carousel Schema & Uploads
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
   imageUrl: { type: String, default: "" },
@@ -169,7 +178,7 @@ app.get("/api/carousel-images", async (req, res) => {
   }
 });
 
-// ✅ Newsletter
+// Newsletter
 const NewsletterSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   subscribedAt: { type: Date, default: Date.now },
@@ -195,24 +204,6 @@ app.post("/api/newsletter", async (req, res) => {
   }
 });
 
-const http = require("http");
-const { Server } = require("socket.io");
-
-const server = http.createServer(app);
-
-const io = new Server(server, {
-  cors: {
-    origin: ['http://localhost:8080', 'https://hansithacreations.netlify.app'],
-    credentials: true,
-  },
-});
-
-io.on("connection", (socket) => {
-  console.log("🔌 Admin connected:", socket.id);
-});
-
-app.set("io", io); // make io available to routes/controllers
-
+// Start Server
 const PORT = process.env.PORT || 5000;
 server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
-
