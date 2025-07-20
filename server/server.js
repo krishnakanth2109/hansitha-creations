@@ -14,6 +14,7 @@ const categoryRoutes = require("./routes/categories");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
+const orderRoutes = require('./routes/orderRoutes');
 
 dotenv.config();
 
@@ -100,6 +101,7 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use("/auth", otpRoutes);
+app.use('/api/orders', orderRoutes);
 
 
 // ✅ Carousel Schema + Routes

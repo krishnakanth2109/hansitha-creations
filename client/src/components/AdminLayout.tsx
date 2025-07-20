@@ -42,13 +42,13 @@ const AdminLayout = () => {
     },
     {
       key: 'carousel',
-      label: 'Carousel Images',
+      label: 'Banner Images',
       icon: <Image className="w-4 h-4 mr-2" />,
       path: '/admin/carousel',
     },
     {
       key: 'circle',
-      label: 'Category Circle',
+      label: 'Circle Category',
       icon: <Circle className="w-4 h-4 mr-2" />,
       path: '/admin/circle',
     },
