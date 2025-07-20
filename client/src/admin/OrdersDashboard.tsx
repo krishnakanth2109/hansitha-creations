@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import { io } from 'socket.io-client';
+import toast from 'react-hot-toast';
 
 interface CartItem {
   id: string;
@@ -21,21 +23,36 @@ const OrdersList = () => {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetchOrders = async () => {
-      try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`, {
-          withCredentials: true,
-        });
-        setOrders(response.data);
-      } catch (error) {
-        console.error('Failed to fetch orders', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  const API_URL = import.meta.env.VITE_API_URL;
 
+  const fetchOrders = async () => {
+    try {
+      const response = await axios.get(`${API_URL}/api/orders`, {
+        withCredentials: true,
+      });
+      setOrders(response.data);
+    } catch (error) {
+      console.error('Failed to fetch orders', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     fetchOrders();
+
+    const socket = io(API_URL, {
+      withCredentials: true,
+    });
+
+    socket.on('newOrder', () => {
+      toast.success('🛒 New order received!');
+      fetchOrders(); // Refresh orders only
+    });
+
+    return () => {
+      socket.disconnect();
+    };
   }, []);
 
   return (
@@ -52,7 +69,7 @@ const OrdersList = () => {
             <p><strong>ID:</strong> {order._id}</p>
             <p><strong>Email:</strong> {order.email}</p>
             <p><strong>Address:</strong> {order.address}</p>
-            
+
             <div>
               <strong>Cart Items:</strong>
               <ul className="pl-4 mt-2 space-y-2">
