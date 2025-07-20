@@ -24,7 +24,7 @@ const OrdersList = () => {
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const response = await axios.get(`${import.meta.env.VITE_API_URL}/orders`, {
+        const response = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders`, {
           withCredentials: true,
         });
         setOrders(response.data);
