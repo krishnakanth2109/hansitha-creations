@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Outlet, useNavigate, useLocation } from 'react-router-dom';
 import {
   Menu,
@@ -11,14 +11,45 @@ import {
   User,
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import axios from 'axios';
+import { io as socketIOClient } from 'socket.io-client';
 
 const AdminLayout = () => {
   const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
   const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
+  const [orderNotificationCount, setOrderNotificationCount] = useState(0);
+
   const navigate = useNavigate();
   const location = useLocation();
 
-  const orderNotificationCount = 5;
+  useEffect(() => {
+    // Fetch initial order count
+    const fetchOrderCount = async () => {
+      try {
+        const res = await axios.get(`${import.meta.env.VITE_API_URL}/api/orders/count`, {
+          withCredentials: true,
+        });
+        setOrderNotificationCount(res.data.count);
+      } catch (err) {
+        console.error('Failed to fetch order count', err);
+      }
+    };
+
+    fetchOrderCount();
+
+    // Setup WebSocket
+    const socket = socketIOClient(import.meta.env.VITE_API_URL, {
+      withCredentials: true,
+    });
+
+    socket.on('newOrder', () => {
+      setOrderNotificationCount((prev) => prev + 1);
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
 
   type TabItem = {
     key: string;
