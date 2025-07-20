@@ -1,37 +1,63 @@
 import React, { useState } from 'react';
+import {
+  Menu,
+  X,
+  Plus,
+  LayoutList,
+  Image,
+  Circle,
+  ShoppingCart,
+  User,
+} from 'lucide-react';
+import { Link } from 'react-router-dom';
+
 import AddProduct from './AddProduct';
 import CarouselManager from './CarouselManager';
 import OrdersDashboard from './OrdersDashboard';
 import AdminProfile from './AdminProfile';
-import { Menu, X } from 'lucide-react';
-import { Link } from 'react-router-dom';
-import EditProductPage from './EditProductPage';
 import AdminCategoryPanel from './AdminCategoryPanel';
 import ProductManagementPage from './ProductManagementPage';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('manage');
+  const [activeTab, setActiveTab] = useState('add'); // default to Add Product
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false);
-  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(true);
+  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // sidebar closed by default on mobile
+  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(false); // sidebar closed by default on desktop
+
+  const orderNotificationCount = 5;
+
+  type TabItem = [key: string, label: string, icon: React.ReactNode];
+
+  const tabs: TabItem[] = [
+    ['add', 'Add Products', <Plus className="w-4 h-4 mr-2" />],
+    ['manage', 'Manage Products', <LayoutList className="w-4 h-4 mr-2" />],
+    ['carousel', 'Carousel Images', <Image className="w-4 h-4 mr-2" />],
+    ['circle', 'Category Circle', <Circle className="w-4 h-4 mr-2" />],
+    [
+      'orders',
+      'Orders Dashboard',
+      <div className="relative mr-2">
+        <ShoppingCart className="w-4 h-4" />
+        {orderNotificationCount > 0 && (
+          <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
+            {orderNotificationCount}
+          </span>
+        )}
+      </div>,
+    ],
+    ['profile', 'Admin Profile', <User className="w-4 h-4 mr-2" />],
+  ];
 
   const renderContent = () => {
     switch (activeTab) {
       case 'add':
         return <AddProduct />;
-      case 'edit':
-        return (
-          <EditProductPage
-            productId={editingProductId}
-            onBack={() => setActiveTab('manage')}
-          />
-        );
       case 'manage':
         return (
           <ProductManagementPage
             onEdit={(id) => {
               setEditingProductId(id);
-              setActiveTab('edit'); // Ensure it navigates to Edit tab
+              setActiveTab('edit');
             }}
           />
         );
@@ -48,83 +74,90 @@ const AdminPage = () => {
     }
   };
 
-  const SidebarLinks = () => (
-    <>
+  const SidebarLinks = ({ isMobile = false }: { isMobile?: boolean }) => (
+    <div className="space-y-2">
       <div className="flex items-center justify-between mb-6">
-        <Link to="/admin" className="text-2xl font-bold hover:text-pink-400">
+        <Link to="/admin" className="text-2xl font-bold text-white">
           Admin Panel
         </Link>
-        <button
-          onClick={() => setIsMobileSidebarOpen(false)}
-          className="text-2xl text-blue-800"
-        >
-          <X />
-        </button>
+        {isMobile && (
+          <button onClick={() => setIsMobileSidebarOpen(false)}>
+            <X className="text-white w-6 h-6" />
+          </button>
+        )}
       </div>
-
-      {[
-        ['add', 'Add Products'],
-        ['edit', 'Edit Products'],
-        ['manage', 'Manage Products'],
-        ['carousel', 'Carousel Images'],
-        ['circle', 'Category Circle'],
-        ['orders', 'Orders Dashboard'],
-        ['profile', 'Admin Profile'],
-      ].map(([key, label]) => (
+      {tabs.map(([key, label, icon]) => (
         <button
           key={key}
           onClick={() => {
-            setActiveTab(key);
-            setEditingProductId(null); // reset editing ID
+            setActiveTab(key as string);
+            setEditingProductId(null);
             setIsMobileSidebarOpen(false);
           }}
-          className="block w-full text-left hover:bg-blue-700 p-2 rounded"
+          className={`flex items-center w-full text-left px-4 py-2 rounded-md transition-colors ${
+            activeTab === key
+              ? 'bg-white text-blue-800 font-semibold'
+              : 'text-white hover:bg-blue-600'
+          }`}
         >
-          {label}
+          {icon} {label}
         </button>
       ))}
-    </>
+    </div>
   );
 
   return (
-    <div className="flex min-h-screen">
-      {/* Desktop Sidebar */}
-      {isDesktopSidebarVisible && (
-        <div className="hidden sm:block w-64 bg-blue-800 text-white p-6">
-          <SidebarLinks />
-        </div>
-      )}
-
-      {/* Mobile Sidebar */}
-      {isMobileSidebarOpen && (
-        <div className="fixed inset-0 bg-white z-50 p-6 sm:hidden">
-          <nav className="space-y-4 text-black">
+    <div>
+      <div className="flex min-h-screen bg-gray-100 text-gray-900">
+        {/* Desktop Sidebar (initially hidden) */}
+        {isDesktopSidebarVisible && (
+          <aside className="hidden sm:flex flex-col w-64 bg-blue-800 p-6 shadow-lg">
             <SidebarLinks />
-          </nav>
-        </div>
-      )}
+          </aside>
+        )}
 
-      {/* Main Content */}
-      <div className="flex-1 bg-gray-50">
-        {/* Top bar */}
-        <div className="flex items-center justify-between p-4">
-          <button
-            className="sm:hidden bg-blue-800 text-white p-2 rounded hover:bg-blue-700"
-            onClick={() => setIsMobileSidebarOpen(true)}
-          >
-            <Menu />
-          </button>
+        {/* Mobile Sidebar Backdrop */}
+        {isMobileSidebarOpen && (
+          <div
+            className="fixed inset-0 bg-black bg-opacity-30 z-40 sm:hidden"
+            onClick={() => setIsMobileSidebarOpen(false)}
+          />
+        )}
 
-          <button
-            className="hidden sm:inline-flex bg-blue-800 text-white p-2 rounded hover:bg-blue-700"
-            onClick={() => setIsDesktopSidebarVisible(!isDesktopSidebarVisible)}
-          >
-            {isDesktopSidebarVisible ? <X /> : <Menu />}
-          </button>
+        {/* Mobile Sidebar Slide-in */}
+        <div
+          className={`fixed inset-y-0 left-0 z-50 w-64 bg-blue-800 p-6 sm:hidden transform transition-transform duration-300 ${
+            isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+          }`}
+        >
+          <SidebarLinks isMobile />
         </div>
 
-        {/* Page Content */}
-        <div className="p-4 sm:p-8 pt-0">{renderContent()}</div>
+        {/* Main Content */}
+        <div className="flex-1 flex flex-col overflow-x-hidden">
+          {/* Top bar */}
+          <header className="sticky top-0 z-40 flex items-center justify-between bg-white border-b px-4 py-3 shadow-sm">
+            <div className="flex items-center gap-2">
+              <button
+                className="sm:hidden text-blue-800"
+                onClick={() => setIsMobileSidebarOpen(true)}
+              >
+                <Menu />
+              </button>
+              <button
+                className="hidden sm:inline-flex items-center text-blue-800"
+                onClick={() => setIsDesktopSidebarVisible(!isDesktopSidebarVisible)}
+              >
+                {isDesktopSidebarVisible ? <X /> : <Menu />}
+              </button>
+            </div>
+          </header>
+
+          {/* Page Content */}
+          <main className="p-4 sm:p-6 flex-1">
+            <div key={activeTab}>{renderContent()}</div>
+          </main>
+        </div>
       </div>
     </div>
   );

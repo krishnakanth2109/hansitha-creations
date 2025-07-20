@@ -37,8 +37,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       );
 
-      console.log('Refresh user status:', response.status);
-
       const latestUser = response.data.user;
       if (latestUser) {
         setUser(latestUser);
@@ -48,19 +46,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn('❌ Failed to refresh user (maybe not logged in):', error);
       setUser(null);
       localStorage.removeItem('user');
-    } finally {
-      setLoading(false);
     }
   };
 
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
+
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-    }
+      setLoading(false); // ✅ Show UI immediately if local user exists
 
-    // ✅ Await refreshUser to finish before proceeding
-    refreshUser();
+      // Then refresh from DB in background
+      refreshUser();
+    } else {
+      // No user in localStorage, must fetch
+      refreshUser().finally(() => setLoading(false));
+    }
   }, []);
 
   const login = async (credentials: { email: string; password: string }) => {
@@ -85,7 +86,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       setUser(loggedInUser);
       localStorage.setItem('user', JSON.stringify(loggedInUser));
-
       return { success: true };
     } catch (error: unknown) {
       const err = error as AxiosError<any>;

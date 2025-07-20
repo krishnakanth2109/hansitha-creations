@@ -13,14 +13,14 @@ export default function Account() {
   const { user, loading, logout } = useAuth();
   const navigate = useNavigate();
 
-  // Redirect to login if no user after loading is complete
+  // Wait for loading to complete before checking user
   useEffect(() => {
-    if (!loading && !user) {
+    if (!loading && user === null) {
       navigate("/login", { replace: true });
     }
-  }, [user, loading, navigate]);
+  }, [loading, user, navigate]);
 
-  // Still loading authentication
+  // Show loading indicator during initial auth check
   if (loading) {
     return (
       <div className="min-h-screen flex items-center justify-center">
@@ -29,7 +29,7 @@ export default function Account() {
     );
   }
 
-  // User is not logged in, but redirect will handle it
+  // This can happen briefly if loading just completed but user is still null
   if (!user) return null;
 
   const handleActionClick = (action: string) => {

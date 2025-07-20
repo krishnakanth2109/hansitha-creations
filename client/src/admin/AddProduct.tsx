@@ -1,7 +1,7 @@
-import React, { useState, useContext, useEffect, useRef } from 'react';
+import React, { useState, useContext } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { ProductContext } from '../context/ProductContext';
 import { uploadImageToCloudinary } from '../components/cloudinary';
-import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -19,7 +19,8 @@ const categoryOptions = [
 ];
 
 const AddProduct: React.FC = () => {
-  const { products, setProducts } = useContext(ProductContext);
+  const { setProducts } = useContext(ProductContext);
+  const navigate = useNavigate();
 
   const [name, setName] = useState('');
   const [price, setPrice] = useState('');
@@ -31,104 +32,61 @@ const AddProduct: React.FC = () => {
   const [extraImageFiles, setExtraImageFiles] = useState<File[]>([]);
   const [extraImagesPreview, setExtraImagesPreview] = useState<string[]>([]);
   const [uploading, setUploading] = useState(false);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const fileInputRef = useRef<HTMLInputElement | null>(null);
-
-  const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [selectAll, setSelectAll] = useState(false);
-
-  useEffect(() => {
-    const fetchProducts = async () => {
-      try {
-        const res = await fetch(`${API_URL}/api/products`);
-        if (!res.ok) throw new Error('Network response was not ok');
-        const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        toast.error('Failed to fetch products');
-        console.error('Fetch error:', err);
-      }
-    };
-    fetchProducts();
-  }, [setProducts]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
     try {
       setUploading(true);
-      let imageUrl = '';
-      let extraImageUrls: string[] = [];
 
-      if (!editingId && !imageFile) {
+      if (!imageFile) {
         toast.error('Please upload an image');
         return;
       }
-
       if (!category) {
         toast.error('Please select a category');
         return;
       }
-
       if (!description.trim()) {
         toast.error('Please enter a product description');
         return;
       }
 
-      if (imageFile) {
-        imageUrl = await uploadImageToCloudinary(imageFile);
-      }
+      const imageUrl = await uploadImageToCloudinary(imageFile);
+      const extraImageUrls =
+        extraImageFiles.length > 0
+          ? await Promise.all(
+              extraImageFiles.slice(0, 3).map((file) => uploadImageToCloudinary(file))
+            )
+          : [];
 
-      if (extraImageFiles.length > 0) {
-        extraImageUrls = await Promise.all(
-          extraImageFiles.slice(0, 3).map((file) => uploadImageToCloudinary(file))
-        );
-      } else if (editingId && extraImagesPreview.length > 0) {
-        extraImageUrls = extraImagesPreview;
-      }
-
-      const productData: any = {
+      const productData = {
         name,
         price: Number(price),
         stock: Number(stock),
         featured,
         category,
         description,
+        image: imageUrl,
+        extraImages: extraImageUrls,
       };
 
-      if (imageUrl) productData.image = imageUrl;
-      if (extraImageUrls.length > 0) productData.extraImages = extraImageUrls;
+      const res = await fetch(`${API_URL}/api/products`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(productData),
+      });
 
-      if (editingId) {
-        const res = await fetch(`${API_URL}/api/products/${editingId}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData),
-        });
+      if (!res.ok) throw new Error('Add failed');
+      const savedProduct = await res.json();
 
-        if (!res.ok) throw new Error('Update failed');
-        const updated = await res.json();
-
-        setProducts((prev: any) =>
-          prev.map((p: any) => (p._id === editingId ? updated : p))
-        );
-        toast.success('Product updated!');
-        setEditingId(null);
-      } else {
-        const res = await fetch(`${API_URL}/api/products`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(productData),
-        });
-
-        if (!res.ok) throw new Error('Add failed');
-        const savedProduct = await res.json();
-
-        setProducts((prev: any) => [...prev, savedProduct]);
-        toast.success('Product added!');
-      }
-
+      setProducts((prev: any) => [...prev, savedProduct]);
+      toast.success('Product added!');
       resetForm();
+
+      setTimeout(() => {
+        navigate('/admin/admin?page=1');
+      }, 1000);
     } catch (err) {
       console.error(err);
       toast.error('Something went wrong. Please try again.');
@@ -147,131 +105,6 @@ const AddProduct: React.FC = () => {
     setImageFile(null);
     setExtraImageFiles([]);
     setExtraImagesPreview([]);
-    setEditingId(null);
-  };
-
-  const handleEdit = (product: any) => {
-    setEditingId(product._id);
-    setName(product.name);
-    setPrice(product.price.toString());
-    setStock(product.stock?.toString() || '');
-    setFeatured(product.featured);
-    setCategory(product.category || '');
-    setDescription(product.description || '');
-    setImageFile(null);
-    setExtraImageFiles([]);
-    setExtraImagesPreview(product.extraImages || []);
-  };
-
-  const handleDelete = async (id: string) => {
-    if (!window.confirm('Are you sure you want to delete this product?')) return;
-
-    try {
-      const res = await fetch(`${API_URL}/api/products/${id}`, {
-        method: 'DELETE',
-      });
-
-      if (!res.ok) throw new Error('Delete failed');
-
-      setProducts((prev: any) => prev.filter((p: any) => p._id !== id));
-      toast.success('Product deleted!');
-    } catch (err) {
-      console.error(err);
-      toast.error('Failed to delete product.');
-    }
-  };
-
-  const toggleSelect = (id: string) => {
-    setSelectedIds((prev) =>
-      prev.includes(id) ? prev.filter((pid) => pid !== id) : [...prev, id]
-    );
-  };
-
-  const toggleSelectAll = () => {
-    if (selectAll) {
-      setSelectedIds([]);
-      setSelectAll(false);
-    } else {
-      const allIds = products.map((p: any) => p._id);
-      setSelectedIds(allIds);
-      setSelectAll(true);
-    }
-  };
-
-  const handleBulkDelete = async () => {
-    if (selectedIds.length === 0) return toast.error('No products selected.');
-    if (!window.confirm(`Delete ${selectedIds.length} product(s)?`)) return;
-
-    try {
-      let deletedCount = 0;
-
-      for (const id of selectedIds) {
-        const res = await fetch(`${API_URL}/api/products/${id}`, {
-          method: 'DELETE',
-        });
-
-        if (!res.ok) continue;
-        deletedCount++;
-      }
-
-      setProducts((prev: any) => prev.filter((p: any) => !selectedIds.includes(p._id)));
-      toast.success(`Deleted ${deletedCount} product(s).`);
-      setSelectedIds([]);
-      setSelectAll(false);
-    } catch (err) {
-      toast.error('Bulk delete failed.');
-      console.error(err);
-    }
-  };
-
-  const handleCSVUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    Papa.parse(file, {
-      header: true,
-      skipEmptyLines: true,
-      complete: async function (results) {
-        const products = results.data as any[];
-        let successCount = 0;
-        let errorCount = 0;
-
-        for (const product of products) {
-          if (!product.name || !product.price || !product.stock || !product.category) {
-            errorCount++;
-            continue;
-          }
-
-          try {
-            const productData = {
-              name: product.name,
-              price: Number(product.price),
-              stock: Number(product.stock),
-              category: product.category,
-              description: product.description || '',
-              featured: product.featured === 'true',
-              image: product.imageUrl || '',
-            };
-
-            const res = await fetch(`${API_URL}/api/products`, {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify(productData),
-            });
-
-            if (!res.ok) throw new Error('Upload failed');
-            const saved = await res.json();
-            setProducts((prev: any) => [...prev, saved]);
-            successCount++;
-          } catch {
-            errorCount++;
-          }
-        }
-
-        toast.success(`${successCount} added, ${errorCount} failed.`);
-        if (fileInputRef.current) fileInputRef.current.value = '';
-      },
-    });
   };
 
   const handleRemoveExtraImage = (index: number) => {
@@ -279,115 +112,168 @@ const AddProduct: React.FC = () => {
   };
 
   return (
-    <div className="p-6 max-w-3xl mx-auto">
-      <h2 className="text-2xl font-bold mb-4">{editingId ? 'Edit Product' : 'Add Product'}</h2>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <input type="text" placeholder="Name" value={name} onChange={(e) => setName(e.target.value)} required className="w-full border p-2 rounded" />
-        <input type="number" placeholder="Price" value={price} onChange={(e) => setPrice(e.target.value)} required className="w-full border p-2 rounded" />
-        <input type="number" placeholder="Stock" value={stock} onChange={(e) => setStock(e.target.value)} required className="w-full border p-2 rounded" />
-        <select value={category} onChange={(e) => setCategory(e.target.value)} required className="w-full border p-2 rounded">
-          <option value="">Select Category</option>
-          {categoryOptions.map((cat) => (
-            <option key={cat} value={cat}>{cat}</option>
-          ))}
-        </select>
-        <textarea placeholder="Description" value={description} onChange={(e) => setDescription(e.target.value)} required className="w-full border p-2 rounded min-h-[100px]" />
-        <label className="flex items-center gap-2">
-          <input type="checkbox" checked={featured} onChange={(e) => setFeatured(e.target.checked)} />
-          Featured Product
-        </label>
-        <input type="file" accept="image/*" onChange={(e) => setImageFile(e.target.files?.[0] || null)} className="w-full" />
-        {imageFile && (
-          <div className="mt-4">
-            <p className="text-sm mb-2">Main Image Preview:</p>
-            <img src={URL.createObjectURL(imageFile)} alt="Preview" className="w-48 h-48 object-cover rounded border" />
-          </div>
-        )}
-        <label className="block font-medium">Extra Images (Max 3)</label>
-        <input
-          type="file"
-          multiple
-          accept="image/*"
-          onChange={(e) => {
-            const files = Array.from(e.target.files || []).slice(0, 3);
-            setExtraImageFiles(files);
-            setExtraImagesPreview(files.map((file) => URL.createObjectURL(file)));
-          }}
-          className="w-full"
-        />
-        {extraImagesPreview.length > 0 && (
-          <div className="mt-2 flex gap-2 flex-wrap">
-            {extraImagesPreview.map((url, idx) => (
-              <div key={idx} className="relative">
-                <img src={url} alt={`extra-${idx}`} className="w-24 h-24 object-cover rounded border" />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveExtraImage(idx)}
-                  className="absolute top-0 right-0 bg-red-600 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs"
-                  title="Remove"
-                >
-                  ×
-                </button>
-              </div>
-            ))}
-          </div>
-        )}
-        <button type="submit" disabled={uploading} className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
-          {uploading ? 'Uploading...' : editingId ? 'Update Product' : 'Add Product'}
+    <div className="p-4 sm:p-6 bg-white rounded-lg shadow-md max-w-screen-xl mx-auto">
+      {/* Tabs at the Top */}
+      <div className="flex gap-4 border-b pb-3 mb-6">
+        <button
+          onClick={() => navigate('/admin')}
+          className="text-blue-600 border-b-2 border-blue-600 font-semibold"
+        >
+          Add Product
         </button>
-      </form>
-
-      {/* CSV Upload */}
-      <div className="my-10 border-t pt-6">
-        <h3 className="text-xl font-semibold mb-4">Bulk Upload via CSV</h3>
-        <input ref={fileInputRef} type="file" accept=".csv" onChange={handleCSVUpload} className="block mt-2" />
+        <button
+          onClick={() => navigate('/admin/manage')}
+          className="text-gray-500 hover:text-blue-600"
+        >
+          Manage Products
+        </button>
       </div>
 
-      {/* Product List */}
-      <div className="mt-10">
-        <div className="flex justify-between items-center mb-4">
-          <div className="flex items-center gap-2">
-            <input type="checkbox" checked={selectAll} onChange={toggleSelectAll} />
-            <label className="text-xl font-semibold">Existing Products</label>
+      <h2 className="text-2xl font-bold mb-6">Add Product</h2>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+          <div>
+            <label className="block font-medium mb-1">Product Name</label>
+            <input
+              type="text"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholder="e.g. Banarasi Silk Saree"
+            />
           </div>
-          {selectedIds.length > 0 && (
-            <button className="bg-red-600 text-white px-4 py-1 rounded hover:bg-red-700" onClick={handleBulkDelete}>
-              Delete Selected ({selectedIds.length})
-            </button>
+          <div>
+            <label className="block font-medium mb-1">Price (₹)</label>
+            <input
+              type="number"
+              value={price}
+              onChange={(e) => setPrice(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholder="e.g. 1299"
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">Stock</label>
+            <input
+              type="number"
+              value={stock}
+              onChange={(e) => setStock(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2"
+              placeholder="e.g. 10"
+            />
+          </div>
+          <div>
+            <label className="block font-medium mb-1">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              required
+              className="w-full border border-gray-300 rounded px-3 py-2 bg-white"
+            >
+              <option value="">Select a category</option>
+              {categoryOptions.map((cat) => (
+                <option key={cat} value={cat}>
+                  {cat}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Description</label>
+          <textarea
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
+            required
+            rows={4}
+            className="w-full border border-gray-300 rounded px-3 py-2"
+            placeholder="Write product details here..."
+          />
+        </div>
+
+        <div className="flex items-center gap-2">
+          <input
+            type="checkbox"
+            checked={featured}
+            onChange={(e) => setFeatured(e.target.checked)}
+            id="featured"
+            className="accent-blue-600"
+          />
+          <label htmlFor="featured" className="text-sm font-medium">
+            Mark as Featured Product
+          </label>
+        </div>
+
+        <div>
+          <label className="block font-medium mb-1">Main Product Image</label>
+          <input
+            type="file"
+            accept="image/*"
+            onChange={(e) => setImageFile(e.target.files?.[0] || null)}
+            className="w-full text-sm"
+          />
+          {imageFile && (
+            <div className="mt-4">
+              <img
+                src={URL.createObjectURL(imageFile)}
+                alt="Main preview"
+                className="w-40 h-40 object-cover rounded border"
+              />
+            </div>
           )}
         </div>
 
-        {products.map((product: any) => (
-          <div key={product._id} className="border p-4 rounded mb-4 flex items-start gap-4">
-            <input
-              type="checkbox"
-              checked={selectedIds.includes(product._id)}
-              onChange={() => toggleSelect(product._id)}
-              className="mt-2"
-            />
-            <img src={product.image} alt={product.name} className="w-20 h-20 object-cover rounded" />
-            <div className="flex-1">
-              <h4 className="font-bold">{product.name}</h4>
-              <p>₹{product.price.toLocaleString('en-IN')}</p>
-              <p>Stock: {product.stock}</p>
-              <p>Category: {product.category}</p>
-              <p>{product.featured ? '🌟 Featured' : ''}</p>
-              <p>Description: {product.description}</p>
-              {product.extraImages?.length > 0 && (
-                <div className="mt-2 flex gap-2">
-                  {product.extraImages.map((img: string, idx: number) => (
-                    <img key={idx} src={img} className="w-16 h-16 object-cover rounded" />
-                  ))}
+        <div>
+          <label className="block font-medium mb-1">Extra Images (Max 3)</label>
+          <input
+            type="file"
+            multiple
+            accept="image/*"
+            onChange={(e) => {
+              const files = Array.from(e.target.files || []).slice(0, 3);
+              setExtraImageFiles(files);
+              setExtraImagesPreview(files.map((file) => URL.createObjectURL(file)));
+            }}
+            className="w-full text-sm"
+          />
+          {extraImagesPreview.length > 0 && (
+            <div className="mt-4 flex gap-3 flex-wrap">
+              {extraImagesPreview.map((url, idx) => (
+                <div key={idx} className="relative group">
+                  <img
+                    src={url}
+                    className="w-24 h-24 object-cover rounded border"
+                    alt={`extra-${idx}`}
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveExtraImage(idx)}
+                    className="absolute -top-2 -right-2 bg-red-600 text-white text-xs rounded-full w-5 h-5 flex items-center justify-center"
+                    title="Remove"
+                  >
+                    ×
+                  </button>
                 </div>
-              )}
-              <div className="mt-2 flex gap-2">
-                <button className="bg-yellow-500 text-white px-3 py-1 rounded" onClick={() => handleEdit(product)}>Edit</button>
-                <button className="bg-red-600 text-white px-3 py-1 rounded" onClick={() => handleDelete(product._id)}>Delete</button>
-              </div>
+              ))}
             </div>
-          </div>
-        ))}
-      </div>
+          )}
+        </div>
+
+        <div className="pt-4">
+          <button
+            type="submit"
+            disabled={uploading}
+            className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+          >
+            {uploading ? 'Uploading...' : 'Add Product'}
+          </button>
+        </div>
+      </form>
     </div>
   );
 };

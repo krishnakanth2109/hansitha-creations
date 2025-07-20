@@ -2,7 +2,6 @@ import React, { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
 import { useCart } from '../context/CartContext';
 import Sidebar from '../components/Sidebar';
-import SignInPanel from '../components/SignInPanel';
 import BottomNavBar from '../components/BottomNavBar';
 import { Footer } from '@/components/Footer';
 import { PromoSection } from '@/components/PromoSection';

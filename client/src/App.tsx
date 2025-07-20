@@ -1,5 +1,12 @@
+// App.tsx
 import { useEffect, useState } from "react";
-import { BrowserRouter, Routes, Route, useLocation } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  useLocation,
+  Navigate,
+} from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
@@ -10,16 +17,18 @@ import { ProductProvider } from "./context/ProductContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import { WishlistProvider } from "./context/WishlistContext";
 
+// Layouts
 import Layout from "./components/Layout";
+import AdminLayout from "./components/AdminLayout";
 
-// Pages
+// Public Pages
 import Home from "./pages/Home";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
-import AboutPage from './pages/About';
-import ContactPage from './pages/Contact';
-import NewArrivalsPage from './pages/NewArrivals';
-import CEOCollectionsPage from './pages/CEOCollections';
+import AboutPage from "./pages/About";
+import ContactPage from "./pages/Contact";
+import NewArrivalsPage from "./pages/NewArrivals";
+import CEOCollectionsPage from "./pages/CEOCollections";
 import OrderConfirmation from "./pages/OrderConfirmation";
 import NotFound from "./pages/NotFound";
 import SSORedirectHandler from "./pages/SSORedirectHandler";
@@ -28,16 +37,20 @@ import FeaturedProducts from "./pages/FeaturedProducts";
 import CategoryPage from "./pages/CategoryPage";
 import ProductDetailsPage from "./pages/ProductDetailsPage";
 import Checkout from "./pages/Checkout";
-import Login from './pages/Login';
-import Register from './pages/Register';
-import Account from '@/pages/Account';
-import Orders from '@/pages/Orders';
-import Addresses from '@/pages/Addresses';
-import WishlistPage from './pages/WishlistPage';
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Account from "./pages/Account";
+import Orders from "./pages/Orders";
+import Addresses from "./pages/Addresses";
+import WishlistPage from "./pages/WishlistPage";
 
-// Admin
-import AdminPage from "./admin/AdminPage";
+// Admin Pages
+import AddProduct from "./admin/AddProduct";
+import CarouselManager from "./admin/CarouselManager";
+import OrdersDashboard from "./admin/OrdersDashboard";
+import AdminProfile from "./admin/AdminProfile";
 import AdminCategoryPanel from "./admin/AdminCategoryPanel";
+import ProductManagementPage from "./admin/ProductManagementPage";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +59,7 @@ const AppRoutes = () => {
 
   return (
     <Routes>
+      {/* Public Routes */}
       <Route path="/" element={<Layout><Home /></Layout>} />
       <Route path="/shop" element={<Layout><Shop /></Layout>} />
       <Route path="/cart" element={<Layout><Cart /></Layout>} />
@@ -61,19 +75,34 @@ const AppRoutes = () => {
       <Route path="/product/:name" element={<Layout><ProductDetailsPage key={location.pathname} /></Layout>} />
       <Route path="/login" element={<Layout><Login /></Layout>} />
       <Route path="/register" element={<Layout><Register /></Layout>} />
+      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
       <Route path="/account" element={<Account />} />
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
-      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
-
-
-      {/* Admin Routes */}
-      <Route path="/admin" element={<AdminPage />} />
-      <Route path="/fabrics/:categoryName" element={<AdminCategoryPanel />} />
-      {/* SSO */}
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
 
-      {/* Not Found */}
+      {/* Admin Layout + Nested Routes */}
+      <Route path="/admin" element={<AdminLayout />}>
+        <Route index element={<Navigate to="add" replace />} />
+        <Route path="add" element={<AddProduct />} />
+        <Route
+          path="manage"
+          element={
+            <ProductManagementPage
+              onEdit={(productId: string) => {
+                // Optional: Implement edit logic or redirect
+                console.log("Edit Product ID:", productId);
+              }}
+            />
+          }
+        />
+        <Route path="carousel" element={<CarouselManager />} />
+        <Route path="circle" element={<AdminCategoryPanel />} />
+        <Route path="orders" element={<OrdersDashboard />} />
+        <Route path="profile" element={<AdminProfile />} />
+      </Route>
+
+      {/* 404 */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -88,10 +117,9 @@ const App = () => {
             <WishlistProvider>
               <BrowserRouter>
                 <CurrencyProvider>
-                  {/* Toast components configured for bottom-right */}
+                  {/* Toasts */}
                   <Toaster />
                   <Sonner
-                    // For Sonner toast
                     position="bottom-right"
                     expand={true}
                     richColors={true}
@@ -99,7 +127,6 @@ const App = () => {
                     duration={3000}
                     className="sonner-toast"
                   />
-
                   <AppRoutes />
                 </CurrencyProvider>
               </BrowserRouter>
