@@ -244,10 +244,7 @@ const App = () => {
                     position="bottom-right"
                     toastOptions={{
                       style: {
-                        marginBottom: "4rem", 
-                        borderRadius: "8px",
-                        background: "#fff",
-                        color: "#000",
+                        marginBottom: window.innerWidth < 768 ? "5rem" : "1rem",
                       },
                     }}
                   />
