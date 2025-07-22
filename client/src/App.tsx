@@ -9,7 +9,8 @@ import {
 } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "@/components/ui/toaster";
+import { Toaster } from "react-hot-toast";
+
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { CartProvider } from "./context/CartContext";
@@ -43,7 +44,7 @@ import Account from "./pages/Account";
 import Orders from "./pages/Orders";
 import Addresses from "./pages/Addresses";
 import WishlistPage from "./pages/WishlistPage";
-import PrivacyPolicy from './pages/privacy-policy';
+import PrivacyPolicy from "./pages/privacy-policy";
 
 // Admin Pages
 import AddProduct from "./admin/AddProduct";
@@ -61,27 +62,146 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route path="/" element={<Layout><Home /></Layout>} />
-      <Route path="/shop" element={<Layout><Shop /></Layout>} />
-      <Route path="/cart" element={<Layout><Cart /></Layout>} />
-      <Route path="/order-confirmation" element={<Layout><OrderConfirmation /></Layout>} />
-      <Route path="/search" element={<Layout><SearchResults /></Layout>} />
-      <Route path="/featured" element={<Layout><FeaturedProducts /></Layout>} />
-      <Route path="/fabrics/:category" element={<Layout><CategoryPage /></Layout>} />
-      <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-      <Route path="/about" element={<Layout><AboutPage /></Layout>} />
-      <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
-      <Route path="/new-arrivals" element={<Layout><NewArrivalsPage /></Layout>} />
-      <Route path="/ceo-collections" element={<Layout><CEOCollectionsPage /></Layout>} />
-      <Route path="/product/:name" element={<Layout><ProductDetailsPage key={location.pathname} /></Layout>} />
-      <Route path="/login" element={<Layout><Login /></Layout>} />
-      <Route path="/register" element={<Layout><Register /></Layout>} />
-      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
+      <Route
+        path="/"
+        element={
+          <Layout>
+            <Home />
+          </Layout>
+        }
+      />
+      <Route
+        path="/shop"
+        element={
+          <Layout>
+            <Shop />
+          </Layout>
+        }
+      />
+      <Route
+        path="/cart"
+        element={
+          <Layout>
+            <Cart />
+          </Layout>
+        }
+      />
+      <Route
+        path="/order-confirmation"
+        element={
+          <Layout>
+            <OrderConfirmation />
+          </Layout>
+        }
+      />
+      <Route
+        path="/search"
+        element={
+          <Layout>
+            <SearchResults />
+          </Layout>
+        }
+      />
+      <Route
+        path="/featured"
+        element={
+          <Layout>
+            <FeaturedProducts />
+          </Layout>
+        }
+      />
+      <Route
+        path="/fabrics/:category"
+        element={
+          <Layout>
+            <CategoryPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/checkout"
+        element={
+          <Layout>
+            <Checkout />
+          </Layout>
+        }
+      />
+      <Route
+        path="/about"
+        element={
+          <Layout>
+            <AboutPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/contact"
+        element={
+          <Layout>
+            <ContactPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/new-arrivals"
+        element={
+          <Layout>
+            <NewArrivalsPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/ceo-collections"
+        element={
+          <Layout>
+            <CEOCollectionsPage />
+          </Layout>
+        }
+      />
+      <Route
+        path="/product/:name"
+        element={
+          <Layout>
+            <ProductDetailsPage key={location.pathname} />
+          </Layout>
+        }
+      />
+      <Route
+        path="/login"
+        element={
+          <Layout>
+            <Login />
+          </Layout>
+        }
+      />
+      <Route
+        path="/register"
+        element={
+          <Layout>
+            <Register />
+          </Layout>
+        }
+      />
+      <Route
+        path="/wishlist"
+        element={
+          <Layout>
+            <WishlistPage />
+          </Layout>
+        }
+      />
       <Route path="/account" element={<Account />} />
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
-      <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
+      <Route
+        path="/privacy-policy"
+        element={
+          <Layout>
+            <PrivacyPolicy />
+          </Layout>
+        }
+      />
 
       {/* Admin Layout + Nested Routes */}
       <Route path="/admin" element={<AdminLayout />}>
@@ -120,7 +240,17 @@ const App = () => {
               <BrowserRouter>
                 <CurrencyProvider>
                   {/* Toasts */}
-                  <Toaster />
+                  <Toaster
+                    position="bottom-right"
+                    toastOptions={{
+                      style: {
+                        marginBottom: "5rem", // 👈 Adjust based on your BottomNav height
+                        borderRadius: "8px",
+                        background: "#fff",
+                        color: "#000",
+                      },
+                    }}
+                  />
                   <Sonner
                     position="bottom-right"
                     expand={true}
