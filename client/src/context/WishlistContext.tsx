@@ -1,26 +1,36 @@
-// src/context/WishlistContext.tsx
-import { createContext, useContext, useState, useEffect } from 'react';
+import {
+  createContext,
+  useContext,
+  useState,
+  useEffect,
+  ReactNode,
+} from 'react';
 import { toggleWishlist as toggleWishlistAPI, fetchWishlist } from '@/api/wishlist';
-import { useAuth } from './AuthContext'; // Make sure you have access to user state
+import { useAuth } from './AuthContext';
 
-const WishlistContext = createContext<any>(null);
+type WishlistContextType = {
+  wishlist: string[];
+  toggleWishlist: (productId: string) => Promise<void>;
+};
 
-export const WishlistProvider = ({ children }: { children: React.ReactNode }) => {
+const WishlistContext = createContext<WishlistContextType | null>(null);
+
+export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const { user } = useAuth(); // This will change on login/logout
+  const { user } = useAuth();
 
-  // 🔁 Re-fetch wishlist when user logs in
+  // 🔁 Fetch wishlist when user logs in
   useEffect(() => {
     const loadWishlist = async () => {
       if (user) {
         try {
-          const data = await fetchWishlist();
+          const data = await fetchWishlist(); // should return string[]
           setWishlist(data);
         } catch (error) {
-          console.error('Failed to fetch wishlist', error);
+          console.error('❌ Failed to fetch wishlist', error);
         }
       } else {
-        setWishlist([]); // Clear when user logs out
+        setWishlist([]); // Clear on logout
       }
     };
 
@@ -29,10 +39,10 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
 
   const toggleWishlist = async (productId: string) => {
     try {
-      const updated = await toggleWishlistAPI(productId);
-      setWishlist(updated);
+      const updatedWishlist = await toggleWishlistAPI(productId);
+      setWishlist(updatedWishlist);
     } catch (error) {
-      console.error('Toggle failed', error);
+      console.error('❌ Wishlist toggle failed:', error);
     }
   };
 
@@ -43,4 +53,10 @@ export const WishlistProvider = ({ children }: { children: React.ReactNode }) =>
   );
 };
 
-export const useWishlist = () => useContext(WishlistContext);
+export const useWishlist = () => {
+  const context = useContext(WishlistContext);
+  if (!context) {
+    throw new Error('useWishlist must be used within a WishlistProvider');
+  }
+  return context;
+};

@@ -1,13 +1,34 @@
-// routes/wishlist.js
 const express = require("express");
 const router = express.Router();
 const auth = require("../middleware/auth");
-const Wishlist = require("../models/Wishlist"); // Adjust path if needed
+const Wishlist = require("../models/Wishlist");
 
+// 🟢 GET /api/wishlist - Fetch current user's wishlist
+router.get("/", auth, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    const wishlist = await Wishlist.findOne({ user: userId });
+
+    if (!wishlist) {
+      return res.json({ wishlist: [] }); // return empty if not found
+    }
+
+    res.json({ wishlist: wishlist.products });
+  } catch (err) {
+    console.error("Fetch wishlist failed:", err);
+    res.status(500).json({ error: "Internal server error" });
+  }
+});
+
+// 🔁 POST /api/wishlist/toggle - Toggle product in wishlist
 router.post("/toggle", auth, async (req, res) => {
   try {
-    const userId = req.user.id;
+    const userId = req.user._id;
     const { productId } = req.body;
+
+    if (!productId) {
+      return res.status(400).json({ error: "Product ID is required" });
+    }
 
     let wishlist = await Wishlist.findOne({ user: userId });
 
