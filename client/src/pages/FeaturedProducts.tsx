@@ -4,11 +4,14 @@ import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Heart, HeartIcon } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useWishlist } from '@/context/WishlistContext';
+import { useAuth } from '@/context/AuthContext'; // ✅ Import auth context
+import { toast } from 'react-hot-toast';
 
 const FeaturedProducts: React.FC = () => {
   const { products, loading } = useContext(ProductContext);
   const { formatPrice } = useCurrency();
   const { wishlist, toggleWishlist } = useWishlist();
+  const { user } = useAuth(); // ✅ Get user from auth context
 
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -72,6 +75,10 @@ const FeaturedProducts: React.FC = () => {
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
+                        if (!user) {
+                          toast.error('Please log in to add to wishlist');
+                          return;
+                        }
                         toggleWishlist(product._id);
                       }}
                       className="absolute top-2 right-2 z-10 bg-white p-1 rounded-full shadow-md transition-transform duration-150 active:scale-125"

@@ -155,13 +155,13 @@ const ProductDetailsPage = () => {
                 {/* Mobile-only buttons */}
                 <button
                   onClick={handlePrevImage}
-                  className="absolute top-40 left-8 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
+                  className="absolute top-40 left-6 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
                 >
                   ‹
                 </button>
                 <button
                   onClick={handleNextImage}
-                  className="absolute top-40 right-8 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
+                  className="absolute top-40 right-6 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
                 >
                   ›
                 </button>

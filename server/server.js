@@ -72,6 +72,7 @@ const checkoutRoutes = require("./routes/checkoutRoutes");
 const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
 const orderRoutes = require('./routes/orderRoutes');
+const wishlistRoutes = require('./routes/wishList.js');
 
 app.get('/', (req, res) => res.send('API is working'));
 
@@ -81,7 +82,8 @@ app.use('/api/products', productRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use("/auth", otpRoutes);
-app.use('/api/orders', orderRoutes); // includes io.emit logic
+app.use('/api/orders', orderRoutes);
+app.use('/api/wishlist', wishlistRoutes);
 
 // Razorpay Create Order
 app.post('/api/payment/orders', async (req, res) => {
