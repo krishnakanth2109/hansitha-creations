@@ -65,7 +65,7 @@ io.on("connection", (socket) => {
 });
 
 // Routes
-const authRoutes = require("./routes/auth.routes.js");
+const authRoutes = require("./routes/auth.js");
 const userRoutes = require("./routes/user.routes.js");
 const categoryRoutes = require("./routes/categories");
 const checkoutRoutes = require("./routes/checkoutRoutes");

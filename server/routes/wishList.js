@@ -1,34 +1,32 @@
-const express = require ('express');
-const authMiddleware = require ('../middleware/auth.js');
-const User = require ('../models/User.model.js');
-
+// routes/wishlist.js
+const express = require("express");
 const router = express.Router();
+const auth = require("../middleware/auth");
+const Wishlist = require("../models/Wishlist"); // Adjust path if needed
 
-// Toggle wishlist product
-router.post('/toggle', authMiddleware, async (req, res) => {
-  const userId = req.user.id;
-  const { productId } = req.body;
-
-  if (!productId) {
-    return res.status(400).json({ message: 'Product ID is required.' });
-  }
-
+router.post("/toggle", auth, async (req, res) => {
   try {
-    const user = await User.findById(userId);
+    const userId = req.user.id;
+    const { productId } = req.body;
 
-    const index = user.wishlist.indexOf(productId);
+    let wishlist = await Wishlist.findOne({ user: userId });
 
-    if (index > -1) {
-      user.wishlist.splice(index, 1); // Remove if exists
+    if (!wishlist) {
+      wishlist = new Wishlist({ user: userId, products: [productId] });
     } else {
-      user.wishlist.push(productId); // Add if not exists
+      const index = wishlist.products.indexOf(productId);
+      if (index === -1) {
+        wishlist.products.push(productId);
+      } else {
+        wishlist.products.splice(index, 1);
+      }
     }
 
-    await user.save();
-    res.json({ wishlist: user.wishlist, message: 'Wishlist updated.' });
-  } catch (error) {
-    console.error('Wishlist toggle error:', error);
-    res.status(500).json({ message: 'Something went wrong.' });
+    await wishlist.save();
+    res.json({ wishlist: wishlist.products });
+  } catch (err) {
+    console.error("Toggle wishlist failed:", err);
+    res.status(500).json({ error: "Internal server error" });
   }
 });
 
