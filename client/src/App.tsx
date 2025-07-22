@@ -244,7 +244,7 @@ const App = () => {
                     position="bottom-right"
                     toastOptions={{
                       style: {
-                        marginBottom: "5rem", // 👈 Adjust based on your BottomNav height
+                        marginBottom: "4rem", 
                         borderRadius: "8px",
                         background: "#fff",
                         color: "#000",
