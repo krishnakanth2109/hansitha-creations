@@ -43,6 +43,7 @@ import Account from "./pages/Account";
 import Orders from "./pages/Orders";
 import Addresses from "./pages/Addresses";
 import WishlistPage from "./pages/WishlistPage";
+import PrivacyPolicy from './pages/privacy-policy';
 
 // Admin Pages
 import AddProduct from "./admin/AddProduct";
@@ -80,6 +81,7 @@ const AppRoutes = () => {
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
+      <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
 
       {/* Admin Layout + Nested Routes */}
       <Route path="/admin" element={<AdminLayout />}>
