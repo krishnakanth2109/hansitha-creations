@@ -20,8 +20,8 @@ export interface Product {
   stock: number;
   featured?: boolean;
   description?: string;
-  extraImages?: string[];    // ✅ add this
-  published?: boolean; 
+  extraImages?: string[];
+  published?: boolean;
 }
 
 interface ProductContextType {
@@ -29,6 +29,7 @@ interface ProductContextType {
   setProducts: Dispatch<SetStateAction<Product[]>>;
   loading: boolean;
   reloadProducts: () => void;
+  updateLocalProductStock: (productId: string, newStock: number) => void; // ✅ added
 }
 
 interface ProductProviderProps {
@@ -43,6 +44,7 @@ export const ProductContext = createContext<ProductContextType>({
   setProducts: () => {},
   loading: false,
   reloadProducts: () => {},
+  updateLocalProductStock: () => {}, // ✅ added default
 });
 
 // Custom Hook
@@ -84,8 +86,19 @@ export const ProductProvider: React.FC<ProductProviderProps> = ({ children }) =>
     fetchProducts();
   }, []);
 
+  // ✅ Local stock update function
+  const updateLocalProductStock = (productId: string, newStock: number) => {
+    setProducts((prev) =>
+      prev.map((product) =>
+        product._id === productId ? { ...product, stock: newStock } : product
+      )
+    );
+  };
+
   return (
-    <ProductContext.Provider value={{ products, setProducts, loading, reloadProducts: fetchProducts }}>
+    <ProductContext.Provider
+      value={{ products, setProducts, loading, reloadProducts: fetchProducts, updateLocalProductStock }}
+    >
       {children}
     </ProductContext.Provider>
   );

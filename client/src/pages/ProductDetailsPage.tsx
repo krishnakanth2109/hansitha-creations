@@ -1,15 +1,15 @@
-import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { useContext, useEffect, useRef, useState } from 'react';
-import { ProductContext } from '../context/ProductContext';
-import { useCart } from '../context/CartContext';
-import { toast } from 'react-hot-toast';
+import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useContext, useEffect, useRef, useState } from "react";
+import { ProductContext } from "../context/ProductContext";
+import { useCart } from "../context/CartContext";
+import { toast } from "react-hot-toast";
 
-import SearchSidebar from '../components/SearchSidebar';
-import { Footer } from '../components/Footer';
-import BottomNavBar from '../components/BottomNavBar';
-import { useSwipeable } from 'react-swipeable';
+import SearchSidebar from "../components/SearchSidebar";
+import { Footer } from "../components/Footer";
+import BottomNavBar from "../components/BottomNavBar";
+import { useSwipeable } from "react-swipeable";
 
-import axios from 'axios';
+import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -25,7 +25,7 @@ const ProductDetailsPage = () => {
   const [isSignInOpen, setIsSignInOpen] = useState(false);
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
-  const [selectedImage, setSelectedImage] = useState<string>('');
+  const [selectedImage, setSelectedImage] = useState<string>("");
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const signInRef = useRef<HTMLDivElement>(null);
@@ -39,13 +39,19 @@ const ProductDetailsPage = () => {
   const closeSignIn = () => setIsSignInOpen(false);
 
   const swipeHandlers = useSwipeable({
-    onSwipedLeft: () => document.getElementById('related-scroll')?.scrollBy({ left: 250, behavior: 'smooth' }),
-    onSwipedRight: () => document.getElementById('related-scroll')?.scrollBy({ left: -250, behavior: 'smooth' }),
+    onSwipedLeft: () =>
+      document
+        .getElementById("related-scroll")
+        ?.scrollBy({ left: 250, behavior: "smooth" }),
+    onSwipedRight: () =>
+      document
+        .getElementById("related-scroll")
+        ?.scrollBy({ left: -250, behavior: "smooth" }),
     trackMouse: true,
   });
 
   useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
 
     const loadProduct = async () => {
       if (location.state?.product) {
@@ -58,18 +64,20 @@ const ProductDetailsPage = () => {
 
       try {
         const decodedName = decodeURIComponent(name);
-        const res = await axios.get(`${API_URL}/api/products?name=${decodedName}`);
+        const res = await axios.get(
+          `${API_URL}/api/products?name=${decodedName}`
+        );
 
         if (res.data && res.data.length > 0) {
           setProduct(res.data[0]);
         } else {
-          toast.error('Product not found.');
-          navigate('/');
+          toast.error("Product not found.");
+          navigate("/");
         }
       } catch (err) {
-        console.error('Error loading product:', err);
-        toast.error('Error loading product.');
-        navigate('/');
+        console.error("Error loading product:", err);
+        toast.error("Error loading product.");
+        navigate("/");
       }
     };
 
@@ -82,7 +90,14 @@ const ProductDetailsPage = () => {
     }
   }, [product]);
 
-  const allImages = product ? [...new Set([product.image, ...(product.extraImages || []).filter(Boolean)])] : [];
+  const allImages = product
+    ? [
+        ...new Set([
+          product.image,
+          ...(product.extraImages || []).filter(Boolean),
+        ]),
+      ]
+    : [];
 
   const handlePrevImage = () => {
     const currentIndex = allImages.indexOf(selectedImage);
@@ -107,7 +122,9 @@ const ProductDetailsPage = () => {
   }, [autoScroll, allImages, selectedImage]);
 
   if (!product) {
-    return <div className="p-6 text-center text-gray-500">Loading product...</div>;
+    return (
+      <div className="p-6 text-center text-gray-500">Loading product...</div>
+    );
   }
 
   const related = products.filter(
@@ -131,116 +148,137 @@ const ProductDetailsPage = () => {
       {/* ✅ Search Sidebar */}
       {isSearchOpen && (
         <>
-          <SearchSidebar isOpen={isSearchOpen} onClose={() => setSearchOpen(false)} />
-          <div className="fixed inset-0 bg-black/50 z-40" onClick={() => setSearchOpen(false)} />
+          <SearchSidebar
+            isOpen={isSearchOpen}
+            onClose={() => setSearchOpen(false)}
+          />
+          <div
+            className="fixed inset-0 bg-black/50 z-40"
+            onClick={() => setSearchOpen(false)}
+          />
         </>
       )}
 
       {/* ✅ Product Info */}
       <div className="p-6 pb-4">
         <div className="bg-white rounded-xl shadow-lg p-4 max-w-full">
-        <div className="grid md:grid-cols-2 gap-8">
-          <div className="relative w-full">
-            <img
-              src={selectedImage}
-              alt={product.name}
-              className="w-160 h-80 mx-auto object-cover rounded-lg shadow-lg transition duration-300"
-              onMouseEnter={() => setAutoScroll(false)}
-              onMouseLeave={() => setAutoScroll(true)}
-            />
+          <div className="grid md:grid-cols-2 gap-8">
+            <div className="relative w-full">
+              <img
+                src={selectedImage}
+                alt={product.name}
+                className="w-160 h-80 mx-auto object-cover rounded-lg shadow-lg transition duration-300"
+                onMouseEnter={() => setAutoScroll(false)}
+                onMouseLeave={() => setAutoScroll(true)}
+              />
 
-            {/* Prev/Next Buttons */}
-            {allImages.length > 1 && (
-              <>
-                {/* Mobile-only buttons */}
-                <button
-                  onClick={handlePrevImage}
-                  className="absolute top-40 left-6 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
-                >
-                  ‹
-                </button>
-                <button
-                  onClick={handleNextImage}
-                  className="absolute top-40 right-6 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
-                >
-                  ›
-                </button>
+              {/* Prev/Next Buttons */}
+              {allImages.length > 1 && (
+                <>
+                  {/* Mobile-only buttons */}
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute top-40 left-6 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute top-40 right-6 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
+                  >
+                    ›
+                  </button>
 
-                {/* Desktop-only buttons (unchanged) */}
-                <button
-                  onClick={handlePrevImage}
-                  className="absolute top-40 left-64 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 hidden md:block"
-                >
-                  ‹
-                </button>
-                <button
-                  onClick={handleNextImage}
-                  className="absolute top-40 right-64 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 hidden md:block"
-                >
-                  ›
-                </button>
-              </>
-            )}
+                  {/* Desktop-only buttons (unchanged) */}
+                  <button
+                    onClick={handlePrevImage}
+                    className="absolute top-40 left-64 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 hidden md:block"
+                  >
+                    ‹
+                  </button>
+                  <button
+                    onClick={handleNextImage}
+                    className="absolute top-40 right-64 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 hidden md:block"
+                  >
+                    ›
+                  </button>
+                </>
+              )}
 
-            <div className="flex justify-center mt-4 space-x-2">
-              {allImages.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`Thumbnail ${idx}`}
-                  className={`w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${selectedImage === img ? 'border-blue-500' : 'border-transparent'
+              <div className="flex justify-center mt-4 space-x-2">
+                {allImages.map((img, idx) => (
+                  <img
+                    key={idx}
+                    src={img}
+                    alt={`Thumbnail ${idx}`}
+                    className={`w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${
+                      selectedImage === img
+                        ? "border-blue-500"
+                        : "border-transparent"
                     }`}
-                  onClick={() => setSelectedImage(img)}
-                />
-              ))}
+                    onClick={() => setSelectedImage(img)}
+                  />
+                ))}
+              </div>
+            </div>
+
+            <div>
+              {/* Breadcrumb */}
+              <p className="text-sm text-gray-500">
+                <Link to="/" className="hover:underline text-blue-600">
+                  Home
+                </Link>
+                {" > "}
+                <Link
+                  to={`/fabrics/${encodeURIComponent(
+                    product.category.toLowerCase()
+                  )}`}
+                  className="hover:underline text-blue-600"
+                >
+                  {product.category}
+                </Link>
+                {" > "}
+                <span className="text-gray-800 font-medium">
+                  {product.name}
+                </span>
+              </p>
+              <h1 className="text-3xl font-bold text-gray-800 mb-2">
+                {product.name}
+              </h1>
+
+              <p className="text-gray-600">
+                <strong>Category:</strong> {product.category}
+              </p>
+
+              <p className="text-gray-700 text-lg">
+                <strong>Stock:</strong>{" "}
+                <span className={product.stock === 0 ? "text-red-600" : ""}>
+                  {product.stock === 0 ? "Out of Stock" : product.stock}
+                </span>
+              </p>
+
+              <p className="text-gray-600 whitespace-pre-line">
+                <strong>Description:</strong> <br />
+                {product.description}
+              </p>
+
+              <p className="text-2xl font-bold text-green-600">
+                ₹{product.price.toLocaleString("en-IN")}
+              </p>
+
+              <button
+                onClick={handleAddToCart}
+                disabled={product.stock === 0}
+                className={`px-4 py-2 rounded-lg font-semibold transition duration-200 ${
+                  product.stock === 0
+                    ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                    : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                }`}
+              >
+                {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+              </button>
             </div>
           </div>
-
-          <div>
-            {/* Breadcrumb */}
-            <p className="text-sm text-gray-500">
-              <Link to="/" className="hover:underline text-blue-600">Home</Link>
-              {' > '}
-              <Link
-                to={`/fabrics/${encodeURIComponent(product.category.toLowerCase())}`}
-                className="hover:underline text-blue-600"
-              >
-                {product.category}
-              </Link>
-              {' > '}<span className="text-gray-800 font-medium">{product.name}</span>
-            </p>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
-
-            <p className="text-gray-600"><strong>Category:</strong> {product.category}</p>
-
-            <p className="text-gray-700 text-lg">
-              <strong>Stock:</strong>{' '}
-              <span className={product.stock === 0 ? 'text-red-600' : ''}>
-                {product.stock === 0 ? 'Out of Stock' : product.stock}
-              </span>
-            </p>
-
-            <p className="text-gray-600 whitespace-pre-line">
-              <strong>Description:</strong> <br />
-              {product.description}
-            </p>
-
-            <p className="text-2xl font-bold text-green-600">
-              ₹{product.price.toLocaleString('en-IN')}
-            </p>
-
-            <button
-              onClick={handleAddToCart}
-              disabled={product.stock === 0}
-              className={`px-4 py-2 rounded-lg font-semibold transition duration-200 ${product.stock === 0
-                ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                }`}
-            >
-              {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-            </button>
-          </div>
-        </div>
         </div>
 
         {/* ✅ Related Products */}
@@ -249,7 +287,13 @@ const ProductDetailsPage = () => {
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Related Products</h2>
               <button
-                onClick={() => navigate(`/fabrics/${encodeURIComponent(product.category.toLowerCase())}`)}
+                onClick={() =>
+                  navigate(
+                    `/fabrics/${encodeURIComponent(
+                      product.category.toLowerCase()
+                    )}`
+                  )
+                }
                 className="text-blue-600 hover:underline text-sm"
               >
                 View All
@@ -286,10 +330,14 @@ const ProductDetailsPage = () => {
                         alt={item.name}
                         className="object-cover w-160 h-80 rounded mb-2"
                       />
-                      <h3 className="text-lg font-semibold truncate">{item.name}</h3>
-                      <p className="text-sm text-gray-500 truncate">{item.category}</p>
+                      <h3 className="text-lg font-semibold truncate">
+                        {item.name}
+                      </h3>
+                      <p className="text-sm text-gray-500 truncate">
+                        {item.category}
+                      </p>
                       <p className="text-blue-600 font-bold mt-1">
-                        ₹{item.price.toLocaleString('en-IN')}
+                        ₹{item.price.toLocaleString("en-IN")}
                       </p>
                     </div>
                   ))}
