@@ -199,7 +199,7 @@ const Shop: React.FC = () => {
           {/* Product Cards */}
           <section className="lg:pl-0">
             <h2 className="text-2xl font-bold mb-4 hidden lg:block">🛍️ Products</h2>
-            {paginatedProducts.length === 0 ? (
+            {paginatedProducts?.length === 0 ? (
               <p>No products match your filters.</p>
             ) : (
               <>

@@ -18,7 +18,7 @@ const WishlistPage: React.FC = () => {
         return <p className="text-center py-10 text-lg">Loading wishlist...</p>;
     }
 
-    if (wishlist.length === 0 || wishlistProducts.length === 0) {
+    if (wishlist.length === 0 || wishlistProducts?.length === 0) {
         return (
             <div className="min-h-[60vh] flex items-center justify-center">
                 <p className="text-lg text-gray-500">Your wishlist is empty 💔</p>
