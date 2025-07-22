@@ -9,8 +9,6 @@ import { Footer } from '../components/Footer';
 import BottomNavBar from '../components/BottomNavBar';
 import { useSwipeable } from 'react-swipeable';
 
-
-
 import axios from 'axios';
 
 const API_URL = import.meta.env.VITE_API_URL;
@@ -25,7 +23,7 @@ const ProductDetailsPage = () => {
   const [product, setProduct] = useState<any>(null);
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [isSearchOpen, setSearchOpen] = useState(false); // ✅ Added
+  const [isSearchOpen, setSearchOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [selectedImage, setSelectedImage] = useState<string>('');
 
@@ -45,21 +43,6 @@ const ProductDetailsPage = () => {
     onSwipedRight: () => document.getElementById('related-scroll')?.scrollBy({ left: -250, behavior: 'smooth' }),
     trackMouse: true,
   });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      if (!autoScroll) return;
-      const el = document.getElementById('related-scroll');
-      if (el) {
-        if (el.scrollLeft + el.clientWidth >= el.scrollWidth) {
-          el.scrollTo({ left: 0, behavior: 'smooth' });
-        } else {
-          el.scrollBy({ left: 220, behavior: 'smooth' });
-        }
-      }
-    }, 4000);
-    return () => clearInterval(interval);
-  }, [autoScroll, product]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -99,6 +82,30 @@ const ProductDetailsPage = () => {
     }
   }, [product]);
 
+  const allImages = product ? [...new Set([product.image, ...(product.extraImages || []).filter(Boolean)])] : [];
+
+  const handlePrevImage = () => {
+    const currentIndex = allImages.indexOf(selectedImage);
+    const prevIndex = (currentIndex - 1 + allImages.length) % allImages.length;
+    setSelectedImage(allImages[prevIndex]);
+  };
+
+  const handleNextImage = () => {
+    const currentIndex = allImages.indexOf(selectedImage);
+    const nextIndex = (currentIndex + 1) % allImages.length;
+    setSelectedImage(allImages[nextIndex]);
+  };
+
+  useEffect(() => {
+    if (!autoScroll || allImages.length <= 1) return;
+
+    const interval = setInterval(() => {
+      handleNextImage();
+    }, 2000);
+
+    return () => clearInterval(interval);
+  }, [autoScroll, allImages, selectedImage]);
+
   if (!product) {
     return <div className="p-6 text-center text-gray-500">Loading product...</div>;
   }
@@ -119,20 +126,6 @@ const ProductDetailsPage = () => {
     toast.success(`${product.name} added to cart!`);
   };
 
-  const allImages = product ? [...new Set([product.image, ...(product.extraImages || []).filter(img => img)])] : [];
-
-  const handlePrevImage = () => {
-    const currentIndex = allImages.indexOf(selectedImage);
-    const prevIndex = (currentIndex - 1 + allImages.length) % allImages.length;
-    setSelectedImage(allImages[prevIndex]);
-  };
-
-  const handleNextImage = () => {
-    const currentIndex = allImages.indexOf(selectedImage);
-    const nextIndex = (currentIndex + 1) % allImages.length;
-    setSelectedImage(allImages[nextIndex]);
-  };
-
   return (
     <>
       {/* ✅ Search Sidebar */}
@@ -144,14 +137,67 @@ const ProductDetailsPage = () => {
       )}
 
       {/* ✅ Product Info */}
-      <div className="p-6 pb-32">
-        <button
-          onClick={() => navigate(-1)}
-          className="text-blue-600 hover:underline mb-4"
-        >
-          ← Back
-        </button>
-        {/* Breadcrumb */}
+      <div className="p-6 pb-4">
+        <div className="bg-white rounded-xl shadow-lg p-4 max-w-full">
+        <div className="grid md:grid-cols-2 gap-8">
+          <div className="relative w-full">
+            <img
+              src={selectedImage}
+              alt={product.name}
+              className="w-160 h-80 mx-auto object-cover rounded-lg shadow-lg transition duration-300"
+              onMouseEnter={() => setAutoScroll(false)}
+              onMouseLeave={() => setAutoScroll(true)}
+            />
+
+            {/* Prev/Next Buttons */}
+            {allImages.length > 1 && (
+              <>
+                {/* Mobile-only buttons */}
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute top-40 left-8 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute top-40 right-8 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 md:hidden"
+                >
+                  ›
+                </button>
+
+                {/* Desktop-only buttons (unchanged) */}
+                <button
+                  onClick={handlePrevImage}
+                  className="absolute top-40 left-64 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 hidden md:block"
+                >
+                  ‹
+                </button>
+                <button
+                  onClick={handleNextImage}
+                  className="absolute top-40 right-64 transform -translate-y-1/2 bg-black/50 text-white p-2 rounded-full hover:bg-black z-10 hidden md:block"
+                >
+                  ›
+                </button>
+              </>
+            )}
+
+            <div className="flex justify-center mt-4 space-x-2">
+              {allImages.map((img, idx) => (
+                <img
+                  key={idx}
+                  src={img}
+                  alt={`Thumbnail ${idx}`}
+                  className={`w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${selectedImage === img ? 'border-blue-500' : 'border-transparent'
+                    }`}
+                  onClick={() => setSelectedImage(img)}
+                />
+              ))}
+            </div>
+          </div>
+
+          <div>
+            {/* Breadcrumb */}
             <p className="text-sm text-gray-500">
               <Link to="/" className="hover:underline text-blue-600">Home</Link>
               {' > '}
@@ -163,29 +209,6 @@ const ProductDetailsPage = () => {
               </Link>
               {' > '}<span className="text-gray-800 font-medium">{product.name}</span>
             </p>
-
-        <div className="grid md:grid-cols-2 gap-8">
-          <div>
-            <img
-              src={selectedImage}
-              alt={product.name}
-              className="w-full rounded-lg shadow-lg"
-            />
-            <div className="flex justify-center mt-4 space-x-2">
-              {allImages.map((img, idx) => (
-                <img
-                  key={idx}
-                  src={img}
-                  alt={`Thumbnail ${idx}`}
-                  className={`w-20 h-20 object-cover rounded-md cursor-pointer border-2 ${
-                    selectedImage === img ? 'border-blue-500' : 'border-transparent'
-                  }`}
-                  onClick={() => setSelectedImage(img)}
-                />
-              ))}
-            </div>
-          </div>
-          <div>
             <h1 className="text-3xl font-bold text-gray-800 mb-2">{product.name}</h1>
 
             <p className="text-gray-600"><strong>Category:</strong> {product.category}</p>
@@ -218,10 +241,11 @@ const ProductDetailsPage = () => {
             </button>
           </div>
         </div>
+        </div>
 
         {/* ✅ Related Products */}
         {related.length > 0 && (
-          <div className="mt-12">
+          <div className="mt-6">
             <div className="flex items-center justify-between mb-4">
               <h2 className="text-2xl font-bold">Related Products</h2>
               <button
@@ -260,7 +284,7 @@ const ProductDetailsPage = () => {
                       <img
                         src={item.image}
                         alt={item.name}
-                        className="object-cover w-[834px] h-[364px] rounded mb-2"
+                        className="object-cover w-160 h-80 rounded mb-2"
                       />
                       <h3 className="text-lg font-semibold truncate">{item.name}</h3>
                       <p className="text-sm text-gray-500 truncate">{item.category}</p>

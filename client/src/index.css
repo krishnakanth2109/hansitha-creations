@@ -25,6 +25,7 @@
 /* Base Design System */
 @layer base {
   :root {
+    --bottom-nav-height: 5rem;
     --background: 0 0% 100%;
     --foreground: 222.2 84% 4.9%;
 

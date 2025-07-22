@@ -11,7 +11,7 @@ import {
   UserIcon,
 } from 'lucide-react';
 import { useNavigate, useLocation } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useCart } from '@/context/CartContext';
 import { useWishlist } from '@/context/WishlistContext';
 import { useAuth } from '@/context/AuthContext';
@@ -28,11 +28,21 @@ const BottomNavBar = ({ onAccountClick, onSearchClick }: BottomNavBarProps) => {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const navRef = useRef<HTMLDivElement>(null);
+
   const wishlistCount = wishlist.length;
 
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [location.pathname]);
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (nav) {
+      const height = nav.offsetHeight;
+      document.documentElement.style.setProperty('--bottom-nav-height', `${height}px`);
+    }
+  }, []);
 
   const navItems = [
     {
@@ -83,7 +93,10 @@ const BottomNavBar = ({ onAccountClick, onSearchClick }: BottomNavBarProps) => {
   ];
 
   return (
-    <nav className="bg-white border-t border-gray-200 shadow-md w-full fixed bottom-0 z-50 md:rounded-none md:static md:shadow-none">
+    <nav
+      ref={navRef}
+      className="bg-white border-t border-gray-200 shadow-md w-full fixed bottom-0 z-50 md:rounded-none md:static md:shadow-none"
+    >
       <div className="flex items-center justify-around h-16 max-w-md mx-auto sm:rounded-2xl sm:mb-4 sm:mx-4 sm:shadow-xl sm:bg-white sm:border sm:border-gray-200 sm:overflow-hidden">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.href;

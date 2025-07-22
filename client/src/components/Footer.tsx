@@ -1,17 +1,20 @@
 import React, { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { CurrencySelector } from './CurrencySelector';
 import {
     Facebook,
     Instagram,
-    Twitter,
     MessageCircleMore,
-    Youtube
+    Youtube,
+    ChevronDown,
+    ChevronUp,
 } from 'lucide-react';
 import axios from 'axios';
 
 export const Footer = () => {
     const [email, setEmail] = useState('');
     const [message, setMessage] = useState('');
+    const [openDropdown, setOpenDropdown] = useState<string | null>(null);
 
     const handleSubscribe = async () => {
         if (!email) {
@@ -27,20 +30,24 @@ export const Footer = () => {
         }
     };
 
+    const toggleDropdown = (key: string) => {
+        setOpenDropdown((prev) => (prev === key ? null : key));
+    };
+
     return (
-        <footer className="bg-gray-900 text-white pt-16 pb-8">
+        <footer className="bg-gray-900 text-white pt-8 pb-8">
             <div className="container mx-auto px-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8 mb-12">
                     {/* Company Info */}
-                    <div>
-                        <div className="flex items-center space-x-3 mb-4">
+                    <div className="flex flex-col items-center text-center md:items-start md:text-left">
+                        <div className="mb-4">
                             <img
                                 src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png"
                                 alt="FashionHub Logo"
-                                className="h-16 w-auto ml-10"
+                                className="h-16 w-auto"
                             />
                         </div>
-                        <p className="text-gray-400 mb-4">
+                        <p className="text-gray-400 mb-4 max-w-xs">
                             Your premier destination for women's fashion. Discover the latest trends in dresses, sarees, and accessories.
                         </p>
                         <div className="flex space-x-3">
@@ -79,63 +86,102 @@ export const Footer = () => {
                         </div>
                     </div>
 
-                    {/* Products */}
+                    {/* Products Dropdown */}
                     <div>
-                        <h4 className="font-semibold mb-4">Products</h4>
-                        <ul className="space-y-2 text-gray-400">
-                            {['Dresses', 'Sarees', 'Accessories', 'Footwear', 'Bags', 'Jewelry'].map((item) => (
+                        <button
+                            onClick={() => toggleDropdown('products')}
+                            className="w-full flex items-center justify-between md:cursor-default font-semibold mb-4 md:mb-0"
+                        >
+                            Products
+                            <span className="md:hidden">
+                                {openDropdown === 'products' ? <ChevronUp /> : <ChevronDown />}
+                            </span>
+                        </button>
+                        <ul className={`space-y-2 text-gray-400 transition-all duration-300 ${openDropdown === 'products' ? 'block' : 'hidden'} md:block`}>
+                            {['Cotton', 'Silk', 'Crape', 'Kota', 'Georgette', 'Tusser', 'Handlooms'].map((item) => (
                                 <li key={item}>
-                                    <a href="#" className="hover:text-pink-400 transition-colors">{item}</a>
+                                    <Link
+                                        to={`/fabrics/${item.toLowerCase()}`}
+                                        className="hover:text-pink-400 transition-colors capitalize"
+                                    >
+                                        {item}
+                                    </Link>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    {/* Company */}
+                    {/* Our Company Dropdown */}
                     <div>
-                        <h4 className="font-semibold mb-4">Our Company</h4>
-                        <ul className="space-y-2 text-gray-400">
+                        <button
+                            onClick={() => toggleDropdown('company')}
+                            className="w-full flex items-center justify-between md:cursor-default font-semibold mb-4 md:mb-0"
+                        >
+                            Our Company
+                            <span className="md:hidden">
+                                {openDropdown === 'company' ? <ChevronUp /> : <ChevronDown />}
+                            </span>
+                        </button>
+                        <ul className={`space-y-2 text-gray-400 transition-all duration-300 ${openDropdown === 'company' ? 'block' : 'hidden'} md:block`}>
                             {['About Us', 'Careers', 'Press', 'Blog', 'Affiliate Program', 'Partnership'].map((item) => (
                                 <li key={item}>
-                                    <a href="#" className="hover:text-pink-400 transition-colors">{item}</a>
+                                    <a href="#" className="hover:text-pink-400 transition-colors">
+                                        {item}
+                                    </a>
                                 </li>
                             ))}
                         </ul>
                     </div>
 
-                    {/* Newsletter */}
+                    {/* Newsletter Dropdown */}
                     <div>
-                        <h4 className="font-semibold mb-4">Subscribe to Newsletter</h4>
-                        <p className="text-gray-400 mb-4">Get the latest updates on new products and upcoming sales</p>
-                        <div className="flex">
-                            <input
-                                type="email"
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                placeholder="Enter your email"
-                                className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
-                            />
-                            <button
-                                onClick={handleSubscribe}
-                                className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-r-lg hover:from-pink-600 hover:to-purple-700 transition-colors"
-                            >
-                                Subscribe
-                            </button>
+                        <button
+                            onClick={() => toggleDropdown('newsletter')}
+                            className="w-full flex items-center justify-between md:cursor-default font-semibold mb-4 md:mb-0"
+                        >
+                            Subscribe to Newsletter
+                            <span className="md:hidden">
+                                {openDropdown === 'newsletter' ? <ChevronUp /> : <ChevronDown />}
+                            </span>
+                        </button>
+
+                        <div className={`${openDropdown === 'newsletter' ? 'block' : 'hidden'} md:block`}>
+                            <p className="text-gray-400 mb-4">Get the latest updates on new products and upcoming sales</p>
+                            <div className="flex">
+                                <input
+                                    type="email"
+                                    value={email}
+                                    onChange={(e) => setEmail(e.target.value)}
+                                    placeholder="Enter your email"
+                                    className="flex-1 px-4 py-2 bg-gray-800 border border-gray-700 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-pink-500"
+                                />
+                                <button
+                                    onClick={handleSubscribe}
+                                    className="px-4 py-2 bg-gradient-to-r from-pink-500 to-purple-600 rounded-r-lg hover:from-pink-600 hover:to-purple-700 transition-colors"
+                                >
+                                    Subscribe
+                                </button>
+                            </div>
+                            {message && (
+                                <p className="text-sm mt-2 text-pink-400">{message}</p>
+                            )}
                         </div>
-                        {message && (
-                            <p className="text-sm mt-2 text-pink-400">{message}</p>
-                        )}
-                        {/* Currency Selector embedded below newsletter */}
-                        <div className="mt-6">
+                        <div className="flex flex-col items-center text-center">
+                        <div className="mt-6 items-center">
                             <h5 className="font-semibold mb-2">Select Your Currency</h5>
                             <CurrencySelector />
                         </div>
-
+                        </div>
                     </div>
                 </div>
 
                 {/* Bottom bar */}
-                <div className="border-t border-gray-800 pt-8 flex flex-col md:flex-row justify-between items-center">
+                <div
+                    className="border-t border-gray-800 pt-8 md:pb-0 flex flex-col md:flex-row justify-between items-center"
+                    style={{
+                        paddingBottom: 'var(--bottom-nav-height, 5rem)', // fallback if JS doesn't run
+                    }}
+                >
                     <p className="text-gray-400 text-sm">
                         © 2025 Hansitha Creations. All rights reserved.
                     </p>

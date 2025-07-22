@@ -19,19 +19,14 @@ const Shop: React.FC = () => {
   const [maxPrice, setMaxPrice] = useState<number>(10000);
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
   const [showFilterMobile, setShowFilterMobile] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => {
-    if (typeof window !== 'undefined') {
-      return window.innerWidth < 1024;
-    }
-    return false;
-  });
+  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
   const [wishlist, setWishlist] = useState<string[]>([]);
+  const [currentPage, setCurrentPage] = useState(1);
+  const PRODUCTS_PER_PAGE = 10;
 
   const toggleWishlist = (productId: string) => {
     setWishlist((prev) =>
-      prev.includes(productId)
-        ? prev.filter((id) => id !== productId)
-        : [...prev, productId]
+      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
     );
   };
 
@@ -41,6 +36,26 @@ const Shop: React.FC = () => {
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'ArrowRight') {
+        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
+      } else if (e.key === 'ArrowLeft') {
+        setCurrentPage((prev) => Math.max(prev - 1, 1));
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [selectedCategory, minPrice, maxPrice, sortOrder]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }, [currentPage]);
 
   if (loading) return <p className="p-4 text-center">Loading products...</p>;
 
@@ -59,6 +74,9 @@ const Shop: React.FC = () => {
       if (sortOrder === 'desc') return b.price - a.price;
       return 0;
     });
+
+  const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
+  const paginatedProducts = filtered.slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE);
 
   const handleProductClick = (product: any) => {
     navigate(`/product/${product.name}`, { state: { product } });
@@ -88,7 +106,7 @@ const Shop: React.FC = () => {
               {
                 'fixed inset-0 transform translate-x-0 z-40': showFilterMobile && isMobile,
                 'fixed inset-0 transform -translate-x-full z-40': !showFilterMobile && isMobile,
-                'lg:sticky top-[100px] block': true
+                'lg:sticky top-[100px] block': true,
               }
             )}
             style={{ maxHeight: 'calc(100vh - 140px)' }}
@@ -101,7 +119,6 @@ const Shop: React.FC = () => {
             </div>
 
             <div className="space-y-6">
-              {/* Category Filter */}
               <div>
                 <h3 className="font-semibold mb-2">Category</h3>
                 <div className="space-y-1">
@@ -136,7 +153,6 @@ const Shop: React.FC = () => {
                 </div>
               </div>
 
-              {/* Price Filter */}
               <div>
                 <h3 className="font-semibold mb-2">Price</h3>
                 <div className="flex items-center gap-2">
@@ -157,7 +173,6 @@ const Shop: React.FC = () => {
                 </div>
               </div>
 
-              {/* Sort Filter */}
               <div>
                 <h3 className="font-semibold mb-2">Sort By</h3>
                 <select
@@ -184,72 +199,91 @@ const Shop: React.FC = () => {
           {/* Product Cards */}
           <section className="lg:pl-0">
             <h2 className="text-2xl font-bold mb-4 hidden lg:block">🛍️ Products</h2>
-            {filtered.length === 0 ? (
+            {paginatedProducts.length === 0 ? (
               <p>No products match your filters.</p>
             ) : (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-6">
-                {filtered.map((product) => {
-                  const isOutOfStock = product.stock === 0;
-                  const isWishlisted = wishlist.includes(product._id);
+              <>
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-6">
+                  {paginatedProducts.map((product) => {
+                    const isOutOfStock = product.stock === 0;
+                    const isWishlisted = wishlist.includes(product._id);
 
-                  return (
-                    <div
-                      key={product._id}
-                      onClick={() => handleProductClick(product)}
-                      className="w-full max-w-[220px] mx-auto cursor-pointer group"
-                    >
-                      <div className="relative">
-                        <img
-                          src={product.image}
-                          alt={product.name}
-                          className={`w-full h-[280px] object-cover rounded ${product.stock === 0 ? 'grayscale opacity-40' : ''}`}
-                        />
+                    return (
+                      <div
+                        key={product._id}
+                        onClick={() => handleProductClick(product)}
+                        className="w-full max-w-[220px] mx-auto cursor-pointer group"
+                      >
+                        <div className="relative">
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className={`w-full h-[280px] object-cover rounded ${isOutOfStock ? 'grayscale opacity-40' : ''}`}
+                          />
 
-                        {/* Heart Icon */}
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleWishlist(product._id);
+                            }}
+                            className="absolute top-2 right-2 z-10 bg-white p-1 rounded-full shadow-md transition-transform duration-150 active:scale-110"
+                            title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
+                          >
+                            {isWishlisted ? (
+                              <HeartIcon className="w-5 h-5 text-red-500 fill-red-500" />
+                            ) : (
+                              <Heart className="w-5 h-5 text-red-500" />
+                            )}
+                          </button>
+                        </div>
+
+                        <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
+                        <p className="text-blue-600 font-bold text-base text-center">{formatPrice(product.price)}</p>
+
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
-                            toggleWishlist(product._id);
+                            if (isOutOfStock) return;
+                            addToCart({
+                              id: product._id,
+                              name: product.name,
+                              price: product.price,
+                              image: product.image,
+                              quantity: 1,
+                            });
+                            toast.success(`${product.name} added to cart!`);
                           }}
-                          className="absolute top-2 right-2 z-10 bg-white p-1 rounded-full shadow-md transition-transform duration-150 active:scale-110"
-                          title={wishlist.includes(product._id) ? 'Remove from wishlist' : 'Add to wishlist'}
+                          disabled={isOutOfStock}
+                          className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${
+                            isOutOfStock
+                              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                              : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
+                          }`}
                         >
-                          {wishlist.includes(product._id) ? (
-                            <HeartIcon className="w-5 h-5 text-red-500 fill-red-500" />
-                          ) : (
-                            <Heart className="w-5 h-5 text-red-500" />
-                          )}
+                          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
                         </button>
                       </div>
+                    );
+                  })}
+                </div>
 
-                      <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
-
-                      <p className="text-blue-600 font-bold text-base text-center">{formatPrice(product.price)}</p>
-
-                      <button
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          if (product.stock === 0) return;
-                          addToCart({
-                            id: product._id,
-                            name: product.name,
-                            price: product.price,
-                            image: product.image,
-                          });
-                          toast.success(`${product.name} added to cart!`);
-                        }}
-                        disabled={product.stock === 0}
-                        className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${product.stock === 0
-                          ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                          : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                          }`}
-                      >
-                        {product.stock === 0 ? 'Out of Stock' : 'Add to Cart'}
-                      </button>
-                    </div>
-                  );
-                })}
-              </div>
+                {/* Page Buttons */}
+                <div className="flex flex-wrap justify-center items-center gap-2 mt-8">
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
+                    <button
+                      key={pageNum}
+                      onClick={() => setCurrentPage(pageNum)}
+                      className={`px-3 py-1 rounded border ${
+                        currentPage === pageNum
+                          ? 'bg-blue-600 text-white'
+                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
+                      }`}
+                    >
+                      {pageNum}
+                    </button>
+                  ))}
+                </div>
+              </>
             )}
           </section>
         </div>
