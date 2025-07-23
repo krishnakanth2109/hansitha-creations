@@ -15,6 +15,9 @@ import {
   clearAllBodyScrollLocks,
 } from 'body-scroll-lock';
 
+const API_URL = import.meta.env.VITE_API_URL;
+
+// Types
 interface Product {
   _id: string;
   id: string;
@@ -22,18 +25,20 @@ interface Product {
   price: number;
   image: string;
 }
-const API_URL = import.meta.env.VITE_API_URL;
+
+interface CarouselSlide {
+  image: string;
+  heading: string;
+  subtext: string;
+}
 
 const Home = () => {
   const [showSearch, setShowSearch] = useState(false);
-  const { addToCart } = useCart();
-
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isSignInOpen, setIsSignInOpen] = useState(false);
-  const [cartCount, setCartCount] = useState(3); // Optional
 
   const [featuredProducts, setFeaturedProducts] = useState<Product[]>([]);
-  const [carouselSlides, setCarouselSlides] = useState([
+  const [carouselSlides, setCarouselSlides] = useState<CarouselSlide[]>([
     { image: '', heading: '', subtext: '' },
     { image: '', heading: '', subtext: '' },
     { image: '', heading: '', subtext: '' },
@@ -42,22 +47,22 @@ const Home = () => {
 
   const sidebarRef = useRef<HTMLDivElement>(null);
   const signInRef = useRef<HTMLDivElement>(null);
+  const { addToCart } = useCart();
 
+  // Open/close handlers
   const openSidebar = () => setIsSidebarOpen(true);
   const closeSidebar = () => setIsSidebarOpen(false);
+
   const openSignIn = () => {
     setIsSignInOpen(true);
     setIsSidebarOpen(false);
   };
+
   const closeSignIn = () => setIsSignInOpen(false);
 
-  // ✅ Scroll Lock when sidebar or sign-in is open
+  // Scroll lock logic
   useEffect(() => {
-    const target = isSidebarOpen
-      ? sidebarRef.current
-      : isSignInOpen
-        ? signInRef.current
-        : null;
+    const target = isSidebarOpen ? sidebarRef.current : isSignInOpen ? signInRef.current : null;
 
     if (target) {
       disableBodyScroll(target);
@@ -65,12 +70,10 @@ const Home = () => {
       clearAllBodyScrollLocks();
     }
 
-    return () => {
-      clearAllBodyScrollLocks();
-    };
+    return () => clearAllBodyScrollLocks();
   }, [isSidebarOpen, isSignInOpen]);
 
-  // ✅ Fetch featured products
+  // Fetch featured products
   useEffect(() => {
     const fetchProducts = async () => {
       try {
@@ -83,12 +86,12 @@ const Home = () => {
     fetchProducts();
   }, []);
 
-  // ✅ Fetch carousel images
+  // Fetch carousel images
   useEffect(() => {
     const fetchCarouselImages = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/carousel-images`);
-        const mapping = {
+        const mapping: Record<string, CarouselSlide> = {
           carousel1: { image: '', heading: '', subtext: '' },
           carousel2: { image: '', heading: '', subtext: '' },
           carousel3: { image: '', heading: '', subtext: '' },
@@ -104,11 +107,7 @@ const Home = () => {
           }
         });
 
-        setCarouselSlides([
-          mapping.carousel1,
-          mapping.carousel2,
-          mapping.carousel3,
-        ]);
+        setCarouselSlides([mapping.carousel1, mapping.carousel2, mapping.carousel3]);
       } catch (err) {
         console.error('Failed to load carousel images', err);
       }
@@ -117,7 +116,7 @@ const Home = () => {
     fetchCarouselImages();
   }, []);
 
-  // ✅ Carousel auto-slide
+  // Carousel auto-slide
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % carouselSlides.length);
@@ -125,7 +124,7 @@ const Home = () => {
     return () => clearInterval(interval);
   }, [carouselSlides.length]);
 
-  // ✅ Add to cart
+  // Add to cart
   const handleAddToCart = (product: Product) => {
     addToCart({
       id: product._id || product.id,
@@ -137,10 +136,11 @@ const Home = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
-      {/* Page Content */}
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 relative">
+      {/* Hero Section */}
       <HeroSection />
 
+      {/* Category Section */}
       <div className="px-4 sm:px-6 lg:px-8 py-10 bg-white">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-brandBlue mb-8 text-center">
@@ -150,29 +150,36 @@ const Home = () => {
         </div>
       </div>
 
-      <FeaturedProducts />
+      {/* Featured Products */}
+      <FeaturedProducts products={featuredProducts} />
+
+      {/* Promotions */}
       <PromoSection />
+
+      {/* Footer */}
       <Footer />
 
-      {/* Sidebar with scroll lock */}
+      {/* Sidebar */}
       {isSidebarOpen && (
         <>
-          <Sidebar
-            ref={sidebarRef}
-            isOpen={isSidebarOpen}
-            onClose={closeSidebar}
+          <Sidebar ref={sidebarRef} isOpen={isSidebarOpen} onClose={closeSidebar} />
+          <div
+            className="fixed inset-0 bg-black/50 z-40 lg:hidden"
+            onClick={closeSidebar}
           />
-          <div className="fixed inset-0 bg-black/50 z-40 lg:hidden" onClick={closeSidebar} />
         </>
       )}
-      {/* Bottom Navigation - mobile only */}
-      <div className="fixed bottom-0 left-0 right-0 z-0 block lg:hidden">
+
+      {/* Search Panel */}
+      <SearchSidebar isOpen={showSearch} onClose={() => setShowSearch(false)} />
+
+      {/* Bottom Nav (Mobile) */}
+      <div className="fixed bottom-0 left-0 right-0 z-40 block lg:hidden">
         <BottomNavBar
-          onAccountClick={() => { }}
+          onAccountClick={() => {}}
           onSearchClick={() => setShowSearch(true)}
         />
       </div>
-      <SearchSidebar isOpen={showSearch} onClose={() => setShowSearch(false)} />
     </div>
   );
 };

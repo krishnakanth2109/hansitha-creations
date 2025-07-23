@@ -1,18 +1,28 @@
-import React, { useContext, useRef } from 'react';
-import { ProductContext } from '../context/ProductContext';
+import React, { useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ChevronLeft, ChevronRight, Heart, HeartIcon } from 'lucide-react';
 import { useCurrency } from '@/context/CurrencyContext';
 import { useWishlist } from '@/context/WishlistContext';
-import { useAuth } from '@/context/AuthContext'; // ✅ Import auth context
+import { useAuth } from '@/context/AuthContext';
 import { toast } from 'react-hot-toast';
 
-const FeaturedProducts: React.FC = () => {
-  const { products, loading } = useContext(ProductContext);
+interface Product {
+  _id: string;
+  id: string;
+  name: string;
+  price: number;
+  image: string;
+  featured?: boolean;
+}
+
+interface FeaturedProductsProps {
+  products: Product[];
+}
+
+const FeaturedProducts: React.FC<FeaturedProductsProps> = ({ products }) => {
   const { formatPrice } = useCurrency();
   const { wishlist, toggleWishlist } = useWishlist();
-  const { user } = useAuth(); // ✅ Get user from auth context
-
+  const { user } = useAuth();
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -20,7 +30,7 @@ const FeaturedProducts: React.FC = () => {
     ? products.filter((product) => product.featured)
     : [];
 
-  const handleProductClick = (product: any) => {
+  const handleProductClick = (product: Product) => {
     navigate(`/product/${product.name}`, { state: { product } });
   };
 
@@ -32,7 +42,7 @@ const FeaturedProducts: React.FC = () => {
     }
   };
 
-  if (loading) return <p className="p-4 text-center">Loading featured products...</p>;
+  if (!products?.length) return <p className="p-4 text-center">Loading featured products...</p>;
 
   return (
     <div className="relative p-4 sm:p-6 bg-white">
@@ -42,7 +52,7 @@ const FeaturedProducts: React.FC = () => {
         <p className="text-center">No featured products found.</p>
       ) : (
         <div className="relative">
-          {/* Left Scroll Button - Hidden on mobile */}
+          {/* Left Scroll Button */}
           <button
             onClick={() => scroll('left')}
             className="hidden md:flex absolute -left-6 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"
@@ -50,14 +60,13 @@ const FeaturedProducts: React.FC = () => {
             <ChevronLeft className="w-6 h-6" />
           </button>
 
-          {/* Product List */}
+          {/* Products */}
           <div
             ref={scrollRef}
             className="flex overflow-x-auto gap-4 no-scrollbar scroll-smooth px-4 sm:px-8"
           >
             {featured.map((product) => {
               const isWishlisted = wishlist.includes(product._id);
-
               return (
                 <div
                   key={product._id}
@@ -71,7 +80,7 @@ const FeaturedProducts: React.FC = () => {
                       className="object-cover w-[834px] h-[364px]"
                     />
 
-                    {/* Wishlist Button */}
+                    {/* Wishlist Icon */}
                     <button
                       onClick={(e) => {
                         e.stopPropagation();
@@ -103,7 +112,7 @@ const FeaturedProducts: React.FC = () => {
             })}
           </div>
 
-          {/* Right Scroll Button - Hidden on mobile */}
+          {/* Right Scroll Button */}
           <button
             onClick={() => scroll('right')}
             className="hidden md:flex absolute -right-6 top-1/2 -translate-y-1/2 z-10 bg-white shadow-md rounded-full p-2 hover:bg-gray-100"

@@ -106,7 +106,7 @@ const AppRoutes = () => {
         path="/featured"
         element={
           <Layout>
-            <FeaturedProducts />
+            <FeaturedProducts products={[]} />
           </Layout>
         }
       />
