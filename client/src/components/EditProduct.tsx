@@ -1,21 +1,21 @@
-import React, { useState, useEffect, useContext } from 'react';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ProductContext } from '../context/ProductContext';
-import { uploadImageToCloudinary } from '../components/cloudinary';
-import toast from 'react-hot-toast';
+import React, { useState, useEffect, useContext } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import { ProductContext } from "../context/ProductContext";
+import { uploadImageToCloudinary } from "../components/cloudinary";
+import toast from "react-hot-toast";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const categoryOptions = [
-  'Cotton',
-  'Silk',
-  'Crape',
-  'Kota',
-  'Georgette',
-  'Tusser',
-  'Handlooms',
-  'new-arrivals',
-  'ceo-collections',
+  "Cotton",
+  "Silk",
+  "Crape",
+  "Kota",
+  "Georgette",
+  "Tusser",
+  "Handlooms",
+  "new-arrivals",
+  "ceo-collections",
 ];
 
 const EditProduct: React.FC = () => {
@@ -23,14 +23,14 @@ const EditProduct: React.FC = () => {
   const { productId } = useParams();
   const navigate = useNavigate();
 
-  const [name, setName] = useState('');
-  const [price, setPrice] = useState('');
-  const [stock, setStock] = useState('');
-  const [category, setCategory] = useState('');
+  const [name, setName] = useState("");
+  const [price, setPrice] = useState("");
+  const [stock, setStock] = useState("");
+  const [category, setCategory] = useState("");
   const [featured, setFeatured] = useState(false);
-  const [description, setDescription] = useState('');
+  const [description, setDescription] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
-  const [existingImage, setExistingImage] = useState('');
+  const [existingImage, setExistingImage] = useState("");
   const [extraImageFiles, setExtraImageFiles] = useState<File[]>([]);
   const [extraImagesPreview, setExtraImagesPreview] = useState<string[]>([]);
   const [existingExtraImages, setExistingExtraImages] = useState<string[]>([]);
@@ -51,7 +51,7 @@ const EditProduct: React.FC = () => {
         setExistingExtraImages(data.extraImages || []);
       } catch (err) {
         console.error(err);
-        toast.error('Failed to fetch product');
+        toast.error("Failed to fetch product");
       }
     };
     fetchProduct();
@@ -75,7 +75,9 @@ const EditProduct: React.FC = () => {
       const uploadedExtraImages =
         extraImageFiles.length > 0
           ? await Promise.all(
-              extraImageFiles.slice(0, 3).map((file) => uploadImageToCloudinary(file))
+              extraImageFiles
+                .slice(0, 3)
+                .map((file) => uploadImageToCloudinary(file))
             )
           : [];
 
@@ -91,23 +93,25 @@ const EditProduct: React.FC = () => {
       };
 
       const res = await fetch(`${API_URL}/api/products/${productId}`, {
-        method: 'PUT',
-        headers: { 'Content-Type': 'application/json' },
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(productData),
       });
 
-      if (!res.ok) throw new Error('Update failed');
+      if (!res.ok) throw new Error("Update failed");
 
       const updatedProduct = await res.json();
       setProducts((prev: any) =>
-        prev.map((p: any) => (p._id === updatedProduct._id ? updatedProduct : p))
+        prev.map((p: any) =>
+          p._id === updatedProduct._id ? updatedProduct : p
+        )
       );
 
-      toast.success('Product updated!');
-      navigate('/admin/manage');
+      toast.success("Product updated!");
+      navigate("/admin/manage");
     } catch (err) {
       console.error(err);
-      toast.error('Something went wrong. Please try again.');
+      toast.error("Something went wrong. Please try again.");
     } finally {
       setUploading(false);
     }
@@ -117,13 +121,14 @@ const EditProduct: React.FC = () => {
     <div className="p-4 sm:p-6 bg-white rounded-lg shadow-md max-w-screen-xl mx-auto">
       <div className="flex gap-4 border-b pb-3 mb-6">
         <button
-          onClick={() => navigate('/admin')}
+          onClick={() => navigate("/admin/manage")}
           className="text-gray-500 hover:text-blue-600"
         >
-          Add Product
+          Product Management
         </button>
+
         <button
-          onClick={() => navigate('/admin/manage')}
+          onClick={() => navigate("/admin/manage")}
           className="text-blue-600 border-b-2 border-blue-600 font-semibold"
         >
           Manage Products
@@ -242,11 +247,14 @@ const EditProduct: React.FC = () => {
             onChange={(e) => {
               const files = Array.from(e.target.files || []).slice(0, 3);
               setExtraImageFiles(files);
-              setExtraImagesPreview(files.map((file) => URL.createObjectURL(file)));
+              setExtraImagesPreview(
+                files.map((file) => URL.createObjectURL(file))
+              );
             }}
             className="w-full text-sm"
           />
-          {(existingExtraImages.length > 0 || extraImagesPreview.length > 0) && (
+          {(existingExtraImages.length > 0 ||
+            extraImagesPreview.length > 0) && (
             <div className="mt-4 flex gap-3 flex-wrap">
               {existingExtraImages.map((url, idx) => (
                 <div key={idx} className="relative group">
@@ -283,7 +291,7 @@ const EditProduct: React.FC = () => {
             disabled={uploading}
             className="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
           >
-            {uploading ? 'Updating...' : 'Update Product'}
+            {uploading ? "Updating..." : "Update Product"}
           </button>
         </div>
       </form>

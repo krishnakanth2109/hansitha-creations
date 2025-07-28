@@ -13,7 +13,7 @@ router.post('/', async (req, res) => {
       category,
       stock,
       description,
-      extraImages = [], // ✅ added
+      extraImages = [],
     } = req.body;
 
     const product = new Product({
@@ -24,7 +24,7 @@ router.post('/', async (req, res) => {
       category,
       stock,
       description,
-      extraImages, // ✅ added
+      extraImages,
     });
 
     const saved = await product.save();
@@ -42,7 +42,6 @@ router.get('/', async (req, res) => {
 
     if (name) {
       const decodedName = decodeURIComponent(name);
-
       const product = await Product.find({
         name: { $regex: new RegExp(`^${decodedName}$`, 'i') },
       });
@@ -75,8 +74,7 @@ router.get('/search', async (req, res) => {
   }
 });
 
-// ✅ Update Product by ID
-// routes/productRoutes.js or wherever you handle product routes
+// ✅ Get Product by ID
 router.get('/:id', async (req, res) => {
   try {
     const product = await Product.findById(req.params.id);
@@ -87,6 +85,45 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// ✅ Update Product by ID
+router.put('/:id', async (req, res) => {
+  try {
+    const {
+      name,
+      price,
+      image,
+      featured,
+      category,
+      stock,
+      description,
+      extraImages = [],
+    } = req.body;
+
+    const updatedProduct = await Product.findByIdAndUpdate(
+      req.params.id,
+      {
+        name,
+        price,
+        image,
+        featured,
+        category,
+        stock,
+        description,
+        extraImages,
+      },
+      { new: true }
+    );
+
+    if (!updatedProduct) {
+      return res.status(404).json({ message: 'Product not found' });
+    }
+
+    res.json(updatedProduct);
+  } catch (err) {
+    console.error('Update error:', err);
+    res.status(500).json({ message: 'Failed to update product' });
+  }
+});
 
 // ✅ Delete Product by ID
 router.delete('/:id', async (req, res) => {
