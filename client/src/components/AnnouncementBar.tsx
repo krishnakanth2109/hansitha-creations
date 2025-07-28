@@ -6,24 +6,22 @@ const AnnouncementBar = () => {
   const [isActive, setIsActive] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
-  // Fetch announcements on mount
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const res = await fetch("/api/announcements");
-        if (!res.ok) throw new Error("Failed to load announcements");
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+        const res = await fetch(`${baseUrl}/api/announcements`);
         const data = await res.json();
+        console.log("📩 Announcement data:", data);
         setMessages(data.messages || []);
         setIsActive(data.isActive);
       } catch (err) {
-        console.error("Announcement fetch error:", err);
-        // Optional toast: toast.error("Failed to load announcements");
+        console.error("Fetch error:", err);
       }
     };
     fetchAnnouncements();
   }, []);
 
-  // Auto-switch message every 4s
   useEffect(() => {
     if (!isActive || messages.length <= 1) return;
 

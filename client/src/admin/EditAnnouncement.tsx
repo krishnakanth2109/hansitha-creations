@@ -22,13 +22,19 @@ const EditAnnouncement = () => {
   }, [messages, isActive]);
 
   // Auto save
-  const autoSave = async (updatedMessages: string[], updatedActive = isActive) => {
+  const autoSave = async (
+    updatedMessages: string[],
+    updatedActive = isActive
+  ) => {
     setMessages(updatedMessages);
     try {
-      await fetch("/api/announcements", {
+      await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages: updatedMessages, isActive: updatedActive }),
+        body: JSON.stringify({
+          messages: updatedMessages,
+          isActive: updatedActive,
+        }),
       });
     } catch (err) {
       console.error("Auto-save failed:", err);
@@ -71,10 +77,16 @@ const EditAnnouncement = () => {
 
   useEffect(() => {
     const fetchAnnouncements = async () => {
-      const res = await fetch("/api/announcements");
-      const data = await res.json();
-      setMessages(data.messages || []);
-      setIsActive(data.isActive ?? true);
+      try {
+        const res = await fetch(
+          `${import.meta.env.VITE_API_BASE_URL}/api/announcements`
+        );
+        const data = await res.json();
+        setMessages(data.messages || []);
+        setIsActive(data.isActive ?? true);
+      } catch (error) {
+        console.error("Fetch error:", error);
+      }
     };
     fetchAnnouncements();
   }, []);
@@ -97,7 +109,10 @@ const EditAnnouncement = () => {
           onChange={(e) => setText(e.target.value)}
         />
         <div className="mt-2 flex justify-end">
-          <Button className="bg-black text-white hover:bg-gray-900" onClick={handleAddMessage}>
+          <Button
+            className="bg-black text-white hover:bg-gray-900"
+            onClick={handleAddMessage}
+          >
             Add Message
           </Button>
         </div>
@@ -117,7 +132,11 @@ const EditAnnouncement = () => {
                     className="text-sm"
                   />
                   <div className="mt-1 flex gap-2">
-                    <Button size="sm" onClick={handleSaveEdit} className="bg-blue-500 text-white">
+                    <Button
+                      size="sm"
+                      onClick={handleSaveEdit}
+                      className="bg-blue-500 text-white"
+                    >
                       Save
                     </Button>
                     <Button
