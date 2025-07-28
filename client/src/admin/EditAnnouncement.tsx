@@ -140,17 +140,17 @@ const EditAnnouncement = () => {
                     value={editText}
                     onChange={(e) => setEditText(e.target.value)}
                     rows={1}
-                    className="text-sm"
+                    className="text-sm mb-4"
                   />
                   <div className="mt-1 flex gap-2">
-                    <Button size="sm" onClick={handleSaveEdit} className="bg-blue-500 text-white">
+                    <Button size="sm" onClick={handleSaveEdit} className="bg-green-500 text-white">
                       Save
                     </Button>
                     <Button
                       size="sm"
                       variant="ghost"
                       onClick={() => setEditingIndex(null)}
-                      className="text-gray-600"
+                      className="hover:text-white hover:bg-red-600 bg-red-600 text-white"
                     >
                       Cancel
                     </Button>
@@ -160,7 +160,7 @@ const EditAnnouncement = () => {
                 <>
                   <span className="flex-1">{msg}</span>
                   <div className="flex gap-2">
-                    <Button size="sm" variant="outline" onClick={() => handleEditMessage(index)}>
+                    <Button size="sm" variant="outline" className="hover:bg-green-500" onClick={() => handleEditMessage(index)}>
                       Edit
                     </Button>
                     <Button
