@@ -28,7 +28,8 @@ const EditAnnouncement = () => {
   ) => {
     setMessages(updatedMessages);
     try {
-      await fetch(`${import.meta.env.VITE_API_BASE_URL}/api/announcements`, {
+      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+      await fetch(`${baseUrl}/api/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -78,14 +79,14 @@ const EditAnnouncement = () => {
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const res = await fetch(
-          `${import.meta.env.VITE_API_BASE_URL}/api/announcements`
-        );
+        const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
+        const res = await fetch(`${baseUrl}/api/announcements`);
         const data = await res.json();
+        console.log("📢 EditAnnouncement data:", data);
         setMessages(data.messages || []);
         setIsActive(data.isActive ?? true);
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("❌ Fetch error in EditAnnouncement:", error);
       }
     };
     fetchAnnouncements();
