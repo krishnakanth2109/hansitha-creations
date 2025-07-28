@@ -1,5 +1,4 @@
-// App.tsx
-import { useLocation, BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { useLocation, BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -47,11 +46,13 @@ import AdminProfile from "./admin/AdminProfile";
 import AdminCategoryPanel from "./admin/AdminCategoryPanel";
 import ProductManagementPage from "./admin/ProductManagementPage";
 import EditAnnouncement from "./admin/EditAnnouncement";
+import EditProduct from "./components/EditProduct";
 
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
   const location = useLocation();
+  const navigate = useNavigate();
 
   return (
     <Routes>
@@ -88,11 +89,12 @@ const AppRoutes = () => {
           element={
             <ProductManagementPage
               onEdit={(productId: string) => {
-                console.log("Edit Product ID:", productId);
+                navigate(`/admin/edit/${productId}`);
               }}
             />
           }
         />
+        <Route path="edit/:productId" element={<EditProduct />} />
         <Route path="announcements" element={<EditAnnouncement />} />
         <Route path="carousel" element={<CarouselManager />} />
         <Route path="circle" element={<AdminCategoryPanel />} />
@@ -100,7 +102,7 @@ const AppRoutes = () => {
         <Route path="profile" element={<AdminProfile />} />
       </Route>
 
-      {/* 404 */}
+      {/* 404 Page */}
       <Route path="*" element={<NotFound />} />
     </Routes>
   );
@@ -116,7 +118,6 @@ const App = () => {
               <BrowserRouter>
                 <CurrencyProvider>
                   <LiveReloadListener />
-                  {/* ✅ Sonner Toast Setup */}
                   <Sonner
                     position="bottom-right"
                     expand={true}
@@ -130,8 +131,6 @@ const App = () => {
                       },
                     }}
                   />
-
-                  {/* ✅ Hidden element for screen reader announcements */}
                   <div
                     id="toast-announcer"
                     aria-live="polite"
@@ -144,7 +143,6 @@ const App = () => {
                       overflow: 'hidden',
                     }}
                   />
-
                   <AppRoutes />
                 </CurrencyProvider>
               </BrowserRouter>
