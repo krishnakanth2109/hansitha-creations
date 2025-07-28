@@ -75,9 +75,7 @@ const EditProduct: React.FC = () => {
       const uploadedExtraImages =
         extraImageFiles.length > 0
           ? await Promise.all(
-              extraImageFiles
-                .slice(0, 3)
-                .map((file) => uploadImageToCloudinary(file))
+              extraImageFiles.slice(0, 3).map(uploadImageToCloudinary)
             )
           : [];
 
@@ -101,17 +99,18 @@ const EditProduct: React.FC = () => {
       if (!res.ok) throw new Error("Update failed");
 
       const updatedProduct = await res.json();
+
+      // ✅ Replace product in context
       setProducts((prev: any) =>
         prev.map((p: any) =>
           p._id === updatedProduct._id ? updatedProduct : p
         )
       );
 
-      toast.success("Product updated!");
-      navigate("/admin/manage");
+      toast.success("✅ Product updated successfully!");
     } catch (err) {
       console.error(err);
-      toast.error("Something went wrong. Please try again.");
+      toast.error("❌ Something went wrong while updating.");
     } finally {
       setUploading(false);
     }
@@ -163,6 +162,7 @@ const EditProduct: React.FC = () => {
             <label className="block font-medium mb-1">Stock</label>
             <input
               type="number"
+              min="0"
               value={stock}
               onChange={(e) => setStock(e.target.value)}
               required
