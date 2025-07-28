@@ -1,11 +1,12 @@
-import { useParams, useNavigate, useLocation, Link } from "react-router-dom";
+import { useParams, useNavigate, useLocation } from "react-router-dom";
 import { useContext, useEffect, useState } from "react";
 import { ProductContext } from "../context/ProductContext";
 import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
 import { toastWithVoice } from "@/utils/toast";
-import { Heart, Share2 } from "lucide-react";
+import { Heart, HeartIcon, Share2 } from "lucide-react";
+import { motion } from "framer-motion";
 import SearchSidebar from "../components/SearchSidebar";
 import { Footer } from "../components/Footer";
 import BottomNavBar from "../components/BottomNavBar";
@@ -31,7 +32,6 @@ const ProductDetailsPage = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
-  const [isAddingToWishlist, setIsAddingToWishlist] = useState(false);
   const [selectedSize, setSelectedSize] = useState("M");
   const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -119,7 +119,6 @@ const ProductDetailsPage = () => {
       navigate("/login");
       return;
     }
-    setIsAddingToWishlist(true);
     try {
       const wasInWishlist = isInWishlist(product._id);
       await toggleWishlist(product._id);
@@ -129,32 +128,25 @@ const ProductDetailsPage = () => {
       );
     } catch {
       toastWithVoice.error("Error updating wishlist", { duration: 2000 });
-    } finally {
-      setIsAddingToWishlist(false);
     }
   };
 
   const handleShare = async () => {
     const shareData = {
-      title: "Handcrafted Midi Dress - Hansitha Creations",
-      text: "Embrace elegance with our handcrafted midi dress, featuring delicate embroidery and flowing silhouette. Made from premium sustainable fabrics.",
+      title: product.name,
+      text: product.description,
       url: window.location.href,
     };
-
     try {
       if (navigator.share) {
         await navigator.share(shareData);
         toastWithVoice.success("Product shared successfully!");
       } else {
         await navigator.clipboard.writeText(window.location.href);
-        toastWithVoice.success("Product link copied to clipboard!");
+        toastWithVoice.success("Link copied to clipboard!");
       }
     } catch (error) {
-      if (error instanceof Error && error.name === "AbortError") {
-        toastWithVoice.error("Sharing was cancelled by user.");
-      } else {
-        toastWithVoice.error("Unable to share. Please try again.");
-      }
+      toastWithVoice.error("Unable to share.");
     }
   };
 
@@ -163,6 +155,8 @@ const ProductDetailsPage = () => {
   const related = products.filter(
     (p) => p.category === product.category && p._id !== product._id
   );
+
+  const lowStock = product.stock > 0 && product.stock <= 5;
 
   return (
     <>
@@ -190,23 +184,8 @@ const ProductDetailsPage = () => {
                 className="w-160 h-80 mx-auto object-cover rounded-lg shadow-lg"
                 alt={product.name}
               />
-              {allImages.length > 1 && (
-                <>
-                  <button
-                    onClick={handlePrevImage}
-                    className="hidden md:block absolute top-1/2 left-64 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full"
-                  >
-                    ‹
-                  </button>
-                  <button
-                    onClick={handleNextImage}
-                    className="hidden md:block absolute top-1/2 right-64 -translate-y-1/2 bg-black/40 text-white p-2 rounded-full"
-                  >
-                    ›
-                  </button>
-                </>
-              )}
             </div>
+
             <div className="flex gap-2 mt-4 justify-center">
               {allImages.map((img, i) => (
                 <img
@@ -232,21 +211,40 @@ const ProductDetailsPage = () => {
             </div>
             <h1 className="text-3xl font-bold mb-2">{product.name}</h1>
             <p className="text-black-500 text-sm mb-4">{product.description}</p>
-            <p className="text-2xl font-bold text-blue-100 mb-2">
-              ₹{product.price.toLocaleString("en-IN")}
-            </p>
-
+            <div className="flex items-center justify-start mb-2">
+              <p className="text-2xl font-bold text-blue-100">
+                ₹{product.price.toLocaleString("en-IN")}
+              </p>
+              <span
+                className={`text-xl ml-10 font-medium ${
+                  product.stock > 0 ? "text-white" : "text-red-600"
+                }`}
+              >
+                {product.stock > 0
+                  ? `Stock : ${product.stock}`
+                  : "Out of Stock"}
+              </span>
+            </div>
+            {lowStock && (
+              <p className="text-red-500 text-sm mb-2">
+                Hurry! Only {product.stock} left in stock.
+              </p>
+            )}
             <div className="flex items-center gap-4 mb-6">
               <button
                 onClick={() => setQuantity(Math.max(1, quantity - 1))}
                 className="px-3 py-1 border bg-white rounded-lg"
+                disabled={quantity <= 1}
               >
                 -
               </button>
               <span>{quantity}</span>
               <button
-                onClick={() => setQuantity(quantity + 1)}
+                onClick={() =>
+                  setQuantity(Math.min(product.stock, quantity + 1))
+                }
                 className="px-3 py-1 border bg-white rounded-lg"
+                disabled={quantity >= product.stock}
               >
                 +
               </button>
@@ -260,6 +258,7 @@ const ProductDetailsPage = () => {
               >
                 {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
               </button>
+
               <button
                 onClick={handleToggleWishlist}
                 className={`p-2 border bg-white rounded-lg ${
@@ -272,7 +271,14 @@ const ProductDetailsPage = () => {
                   }`}
                 />
               </button>
-              <Button onClick={handleShare} variant="outline" size="lg">
+
+              <Button
+                onClick={() =>
+                  navigator.clipboard.writeText(window.location.href)
+                }
+                variant="outline"
+                size="lg"
+              >
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
@@ -366,22 +372,56 @@ const ProductDetailsPage = () => {
               {related.map((item) => (
                 <div
                   key={item._id}
-                  className="min-w-[200px] bg-white p-3 rounded-lg shadow cursor-pointer"
-                  onClick={() =>
-                    navigate(`/product/${encodeURIComponent(item.name)}`, {
-                      state: { product: item },
-                    })
-                  }
+                  className="relative min-w-[200px] text-left p-3 bg-white rounded-lg shadow hover:shadow-md transition"
                 >
-                  <img
-                    src={item.image}
-                    className="w-[180px] h-[300px] object-cover rounded"
-                  />
-                  <h3 className="mt-2 font-semibold">{item.name}</h3>
-                  <p className="text-sm text-gray-500">{item.category}</p>
-                  <p className="text-blue-600 font-bold">
-                    ₹{item.price.toLocaleString("en-IN")}
-                  </p>
+                  {/* Wishlist Heart */}
+                  <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    animate={{ scale: isInWishlist(item._id) ? 1.2 : 1 }}
+                    transition={{ type: "spring", stiffness: 300, damping: 10 }}
+                    onClick={async (e) => {
+                      e.stopPropagation();
+                      if (!user) {
+                        toastWithVoice.error(
+                          "Please log in to add to wishlist",
+                          { duration: 2000 }
+                        );
+                        return;
+                      }
+                      const added = await toggleWishlist(item._id);
+                      toastWithVoice.success(
+                        added ? "Added to wishlist" : "Removed from wishlist",
+                        { duration: 2000 }
+                      );
+                    }}
+                    className="absolute top-2 right-2 z-10 rounded-full p-1 text-white bg-black/50 hover:bg-black/70 transition"
+                  >
+                    {isInWishlist(item._id) ? (
+                      <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                    ) : (
+                      <HeartIcon className="w-5 h-5" />
+                    )}
+                  </motion.button>
+
+                  <button
+                    onClick={() =>
+                      navigate(`/product/${encodeURIComponent(item.name)}`, {
+                        state: { product: item },
+                      })
+                    }
+                    className="text-left"
+                  >
+                    <img
+                      src={item.image}
+                      className="w-[180px] h-[300px] object-cover rounded"
+                      alt={item.name}
+                    />
+                    <h3 className="mt-2 font-semibold">{item.name}</h3>
+                    <p className="text-sm text-gray-500">{item.category}</p>
+                    <p className="text-blue-600 font-bold">
+                      ₹{item.price.toLocaleString("en-IN")}
+                    </p>
+                  </button>
                 </div>
               ))}
             </div>

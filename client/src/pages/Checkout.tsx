@@ -2,33 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useCart } from '../context/CartContext';
 import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { useToast } from '@/hooks/use-toast';
-import { CreditCard, Lock, MapPin, User } from 'lucide-react';
-import { initiateRazorpayPayment } from '../utils/razorpay';
-
-interface CheckoutFormData {
-  email: string;
-  firstName: string;
-  lastName: string;
-  address: string;
-  city: string;
-  state: string;
-  zipCode: string;
-  phone: string;
-  cardNumber: string;
-  expiryDate: string;
-  cvv: string;
-  nameOnCard: string;
-  sameAsShipping: boolean;
-  billingAddress: string;
-  billingCity: string;
-  billingState: string;
-  billingZipCode: string;
-}
+import { User, Lock } from 'lucide-react';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 
 const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
@@ -36,55 +15,23 @@ const Checkout: React.FC = () => {
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
 
-  const [formData, setFormData] = useState<CheckoutFormData>({
+  const [formData, setFormData] = useState({
     email: '',
     firstName: '',
     lastName: '',
-    address: '',
-    city: '',
-    state: '',
-    zipCode: '',
-    phone: '',
-    cardNumber: '',
-    expiryDate: '',
-    cvv: '',
-    nameOnCard: '',
-    sameAsShipping: true,
-    billingAddress: '',
-    billingCity: '',
-    billingState: '',
-    billingZipCode: '',
+    phone: ''
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
+    const { name, value } = e.target;
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? checked : value
+      [name]: value
     }));
   };
 
-  const handleCardNumberChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value.replace(/\D/g, '');
-    const formatted = value.match(/.{1,4}/g)?.join(' ') || '';
-    setFormData(prev => ({ ...prev, cardNumber: formatted }));
-  };
-
-  const formatExpiryDate = (value: string) => {
-    const v = value.replace(/\s+/g, '').replace(/[^0-9]/gi, '');
-    return v.length >= 2 ? v.substring(0, 2) + '/' + v.substring(2, 4) : v;
-  };
-
-  const handleExpiryDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatExpiryDate(e.target.value);
-    setFormData(prev => ({ ...prev, expiryDate: formatted }));
-  };
-
   const validateForm = () => {
-    const requiredFields: (keyof CheckoutFormData)[] = [
-      'email', 'firstName', 'lastName', 'address', 'city', 'state', 'zipCode',
-      'phone', 'cardNumber', 'expiryDate', 'cvv', 'nameOnCard'
-    ];
+    const requiredFields = ['email', 'firstName', 'lastName', 'phone'];
 
     for (const field of requiredFields) {
       if (!formData[field]) {
@@ -96,17 +43,6 @@ const Checkout: React.FC = () => {
         return false;
       }
     }
-
-    if (formData.cardNumber.replace(/\s/g, '').length < 16) {
-      toast({ title: 'Error', description: 'Invalid card number.', variant: 'destructive' });
-      return false;
-    }
-
-    if (formData.cvv.length < 3) {
-      toast({ title: 'Error', description: 'Invalid CVV.', variant: 'destructive' });
-      return false;
-    }
-
     return true;
   };
 
@@ -126,36 +62,24 @@ const Checkout: React.FC = () => {
     const tax = subtotal * 0.08;
     const total = subtotal + shipping + tax;
 
-    const orderPayload = {
-      ...formData,
-      cartItems,
-      totalAmount: total,
-    };
-
     try {
       const res = await fetch(`http://localhost:5000/api/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(orderPayload),
+        body: JSON.stringify({
+          ...formData,
+          cartItems,
+          totalAmount: total,
+        }),
       });
 
       if (!res.ok) throw new Error('Failed to save order');
 
-      await initiateRazorpayPayment({
-        amount: total,
-        items: cartItems,
-        onSuccess: () => {
-          localStorage.setItem('lastOrderNumber', `ORD-${Date.now().toString().slice(-6)}`);
-          clearCart();
-          toast({ title: 'Payment Success', description: 'Thank you for your purchase!' });
-          navigate('/order-confirmation');
-        },
-        onFailure: () => {
-          toast({ title: 'Verification Failed', description: 'Payment was successful but verification failed.', variant: 'destructive' });
-        }
-      });
+      clearCart();
+      toast({ title: 'Order Placed', description: 'Thank you for your order!' });
+      navigate('/order-confirmation');
     } catch (err) {
       toast({ title: 'Error', description: 'Order could not be saved.', variant: 'destructive' });
     } finally {
@@ -184,10 +108,10 @@ const Checkout: React.FC = () => {
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 py-8">
       <div className="container mx-auto px-4">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left - Form */}
+            {/* Left - Contact Info Only */}
             <div className="space-y-6">
               <CheckoutSection
                 icon={<User className="w-5 h-5" />}
@@ -197,32 +121,6 @@ const Checkout: React.FC = () => {
                   { id: 'firstName', label: 'First Name' },
                   { id: 'lastName', label: 'Last Name' },
                   { id: 'phone', label: 'Phone Number' },
-                ]}
-                formData={formData}
-                handleChange={handleInputChange}
-              />
-
-              <CheckoutSection
-                icon={<MapPin className="w-5 h-5" />}
-                title="Shipping Address"
-                fields={[
-                  { id: 'address', label: 'Street Address' },
-                  { id: 'city', label: 'City' },
-                  { id: 'state', label: 'State' },
-                  { id: 'zipCode', label: 'ZIP Code' },
-                ]}
-                formData={formData}
-                handleChange={handleInputChange}
-              />
-
-              <CheckoutSection
-                icon={<CreditCard className="w-5 h-5" />}
-                title="Payment Information"
-                fields={[
-                  { id: 'nameOnCard', label: 'Name on Card' },
-                  { id: 'cardNumber', label: 'Card Number', onChange: handleCardNumberChange, maxLength: 19 },
-                  { id: 'expiryDate', label: 'Expiry Date', onChange: handleExpiryDateChange, maxLength: 5 },
-                  { id: 'cvv', label: 'CVV', maxLength: 4 },
                 ]}
                 formData={formData}
                 handleChange={handleInputChange}
@@ -261,7 +159,7 @@ const Checkout: React.FC = () => {
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full" disabled={isProcessing}>
+                    <Button type="submit" className="w-full bg-black text-white hover:bg-gray-900" disabled={isProcessing}>
                       {isProcessing ? (
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -270,13 +168,13 @@ const Checkout: React.FC = () => {
                       ) : (
                         <div className="flex items-center gap-2">
                           <Lock className="w-4 h-4" />
-                          Complete Order
+                          Place Order
                         </div>
                       )}
                     </Button>
 
                     <p className="text-sm text-center text-gray-600 flex items-center justify-center gap-1 mt-2">
-                      <Lock className="w-3 h-3" /> Your payment info is secure.
+                      <Lock className="w-3 h-3" /> Your order details are safe and secure.
                     </p>
                   </div>
                 </CardContent>
@@ -291,6 +189,7 @@ const Checkout: React.FC = () => {
 
 export default Checkout;
 
+// Reusable Components
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>
@@ -315,7 +214,7 @@ const CheckoutSection = ({
   icon: React.ReactNode;
   title: string;
   fields: any[];
-  formData: CheckoutFormData;
+  formData: any;
   handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }) => (
   <Card>
@@ -329,7 +228,7 @@ const CheckoutSection = ({
           id={field.id}
           label={field.label}
           value={formData[field.id]}
-          onChange={field.onChange || handleChange}
+          onChange={handleChange}
           maxLength={field.maxLength}
         />
       ))}

@@ -15,6 +15,7 @@ import AdminLayout from "./components/AdminLayout";
 
 // Public Pages
 import Home from "./pages/Home";
+import AnnouncementBar from "./components/AnnouncementBar";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import AboutPage from "./pages/About";
@@ -55,6 +56,7 @@ const AppRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Layout><Home /></Layout>} />
+      <Route path="/announcement" element={<AnnouncementBar messages={["Welcome to our store!", "Check out our new arrivals!"]} isActive={true} />} />
       <Route path="/shop" element={<Layout><Shop /></Layout>} />
       <Route path="/cart" element={<Layout><Cart /></Layout>} />
       <Route path="/order-confirmation" element={<Layout><OrderConfirmation /></Layout>} />
