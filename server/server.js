@@ -17,17 +17,19 @@ const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
   cors: {
-    origin: ['http://localhost:8080', 'https://hansithacreations.netlify.app'],
+    origin: ["http://localhost:8080", "https://hansithacreations.netlify.app"],
     credentials: true,
   },
 });
 app.set("io", io); // expose io to routes
 
 // Middleware
-app.use(cors({
-  origin: ['http://localhost:8080', 'https://hansithacreations.netlify.app'],
-  credentials: true
-}));
+app.use(
+  cors({
+    origin: ["http://localhost:8080", "https://hansithacreations.netlify.app"],
+    credentials: true,
+  })
+);
 app.use(express.json());
 app.use(cookieParser());
 
@@ -49,15 +51,18 @@ const razorpay = new Razorpay({
 });
 
 // Database Connection
-mongoose.connect(process.env.MONGO_URI, {
-  useNewUrlParser: true,
-  useUnifiedTopology: true,
-  dbName: 'web-store'
-}).then(() => {
-  console.log("✅ MongoDB connected");
-}).catch(err => {
-  console.error("❌ MongoDB connection error:", err);
-});
+mongoose
+  .connect(process.env.MONGO_URI, {
+    useNewUrlParser: true,
+    useUnifiedTopology: true,
+    dbName: "web-store",
+  })
+  .then(() => {
+    console.log("✅ MongoDB connected");
+  })
+  .catch((err) => {
+    console.error("❌ MongoDB connection error:", err);
+  });
 
 // WebSocket
 io.on("connection", (socket) => {
@@ -71,43 +76,44 @@ const categoryRoutes = require("./routes/categories");
 const checkoutRoutes = require("./routes/checkoutRoutes");
 const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
-const orderRoutes = require('./routes/orderRoutes');
+const orderRoutes = require("./routes/orderRoutes");
+const announcementRoutes = require("./routes/announcementRoutes");
 
-app.get('/', (req, res) => res.send('API is working'));
+app.get("/", (req, res) => res.send("API is working"));
 
-app.use('/api/categories', categoryRoutes);
-app.use('/api', checkoutRoutes);
-app.use('/api/products', productRoutes);
-app.use('/api/auth', authRoutes);
-app.use('/api/users', userRoutes);
+app.use("/api/categories", categoryRoutes);
+app.use("/api", checkoutRoutes);
+app.use("/api/products", productRoutes);
+app.use("/api/auth", authRoutes);
+app.use("/api/users", userRoutes);
 app.use("/auth", otpRoutes);
-app.use('/api/orders', orderRoutes);
-app.use("/api/announcements", require("./routes/announcementRoutes"));
-
+app.use("/api/orders", orderRoutes);
+app.use("/api/announcements", announcementRoutes);
 
 // Razorpay Create Order
-app.post('/api/payment/orders', async (req, res) => {
+app.post("/api/payment/orders", async (req, res) => {
   try {
     const { amount } = req.body;
     const order = await razorpay.orders.create({
       amount,
-      currency: 'INR',
-      receipt: `receipt_order_${Date.now()}`
+      currency: "INR",
+      receipt: `receipt_order_${Date.now()}`,
     });
     res.json(order);
   } catch (err) {
     console.error("Razorpay order error:", err);
-    res.status(500).send('Error creating Razorpay order');
+    res.status(500).send("Error creating Razorpay order");
   }
 });
 
 // Razorpay Payment Verification
-app.post('/api/payment/verify', (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
+app.post("/api/payment/verify", (req, res) => {
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
+    req.body;
   const generated_signature = crypto
-    .createHmac('sha256', process.env.RAZORPAY_KEY_SECRET)
+    .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
-    .digest('hex');
+    .digest("hex");
 
   if (generated_signature === razorpay_signature) {
     return res.status(200).json({ success: true });
@@ -123,36 +129,47 @@ const ImageSchema = new mongoose.Schema({
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
 
-app.post("/api/upload-carousel", upload.fields([
-  { name: "image", maxCount: 1 },
-  { name: "mobileImage", maxCount: 1 }
-]), async (req, res) => {
-  try {
-    const { carouselId } = req.body;
-    if (!carouselId) return res.status(400).json({ message: "Missing carouselId" });
+app.post(
+  "/api/upload-carousel",
+  upload.fields([
+    { name: "image", maxCount: 1 },
+    { name: "mobileImage", maxCount: 1 },
+  ]),
+  async (req, res) => {
+    try {
+      const { carouselId } = req.body;
+      if (!carouselId)
+        return res.status(400).json({ message: "Missing carouselId" });
 
-    let existing = await ImageModel.findOne({ carouselId });
-    if (!existing) existing = new ImageModel({ carouselId });
+      let existing = await ImageModel.findOne({ carouselId });
+      if (!existing) existing = new ImageModel({ carouselId });
 
-    if (req.files?.image?.[0]) {
-      const base64 = `data:${req.files.image[0].mimetype};base64,${req.files.image[0].buffer.toString("base64")}`;
-      const result = await cloudinary.uploader.upload(base64, { folder: "carousel_images" });
-      existing.imageUrl = result.secure_url;
+      if (req.files?.image?.[0]) {
+        const base64 = `data:${req.files.image[0].mimetype};base64,${req.files.image[0].buffer.toString("base64")}`;
+        const result = await cloudinary.uploader.upload(base64, {
+          folder: "carousel_images",
+        });
+        existing.imageUrl = result.secure_url;
+      }
+
+      if (req.files?.mobileImage?.[0]) {
+        const base64 = `data:${req.files.mobileImage[0].mimetype};base64,${req.files.mobileImage[0].buffer.toString("base64")}`;
+        const result = await cloudinary.uploader.upload(base64, {
+          folder: "carousel_images/mobile",
+        });
+        existing.mobileImageUrl = result.secure_url;
+      }
+
+      await existing.save();
+      res.json({ success: true, message: "Carousel updated successfully." });
+    } catch (err) {
+      console.error("Upload error:", err);
+      res
+        .status(500)
+        .json({ success: false, message: "Upload failed", error: err.message });
     }
-
-    if (req.files?.mobileImage?.[0]) {
-      const base64 = `data:${req.files.mobileImage[0].mimetype};base64,${req.files.mobileImage[0].buffer.toString("base64")}`;
-      const result = await cloudinary.uploader.upload(base64, { folder: "carousel_images/mobile" });
-      existing.mobileImageUrl = result.secure_url;
-    }
-
-    await existing.save();
-    res.json({ success: true, message: "Carousel updated successfully." });
-  } catch (err) {
-    console.error("Upload error:", err);
-    res.status(500).json({ success: false, message: "Upload failed", error: err.message });
   }
-});
+);
 
 app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
   try {
@@ -160,13 +177,17 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
     const deleted = await ImageModel.findOneAndDelete({ carouselId });
 
     if (!deleted) {
-      return res.status(404).json({ success: false, message: "Carousel not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "Carousel not found" });
     }
 
     res.json({ success: true, message: "Carousel deleted successfully." });
   } catch (error) {
     console.error("Delete error:", error);
-    res.status(500).json({ success: false, message: "Failed to delete carousel" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to delete carousel" });
   }
 });
 
@@ -208,4 +229,6 @@ app.post("/api/newsletter", async (req, res) => {
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, '0.0.0.0',() => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, "0.0.0.0", () =>
+  console.log(`🚀 Server running on port ${PORT}`)
+);

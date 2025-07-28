@@ -1,6 +1,5 @@
-// routes/announcementRoutes.ts
-import express from "express";
-import { Announcement } from "../models/Announcement";
+const express = require("express");
+const { Announcement } = require("../models/Announcement");
 
 const router = express.Router();
 
@@ -26,4 +25,4 @@ router.post("/", async (req, res) => {
   res.json({ success: true });
 });
 
-export default router;
+module.exports = router;
