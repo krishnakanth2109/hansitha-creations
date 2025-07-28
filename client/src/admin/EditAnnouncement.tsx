@@ -3,16 +3,19 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AnimatePresence, motion } from "framer-motion";
+import { toast } from "sonner"; // <== Snackbar toast
 
 const EditAnnouncement = () => {
   const [isActive, setIsActive] = useState(true);
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
+  const [originalMessages, setOriginalMessages] = useState<string[]>([]);
+  const [originalActive, setOriginalActive] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
 
   const handleAddMessage = () => {
     if (text.trim() !== "") {
-      setMessages([...messages, text]);
+      setMessages([...messages, text.trim()]);
       setText("");
     }
   };
@@ -23,28 +26,41 @@ const EditAnnouncement = () => {
     setMessages(updated);
   };
 
+  const fetchAnnouncements = async () => {
+    const res = await fetch("/api/announcements");
+    const data = await res.json();
+    setMessages(data.messages || []);
+    setOriginalMessages(data.messages || []);
+    setIsActive(data.isActive);
+    setOriginalActive(data.isActive);
+  };
+
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      const res = await fetch("/api/announcements");
-      const data = await res.json();
-      setMessages(data.messages || []);
-      setIsActive(data.isActive);
-    };
     fetchAnnouncements();
   }, []);
 
-  useEffect(() => {
-  const save = async () => {
-    await fetch("/api/announcements", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ messages, isActive }),
-    });
+  const handleSave = async () => {
+    try {
+      const res = await fetch("/api/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages, isActive }),
+      });
+
+      if (!res.ok) throw new Error("Failed to save");
+
+      toast.success("Announcement saved successfully");
+
+      setOriginalMessages(messages);
+      setOriginalActive(isActive);
+    } catch (error) {
+      toast.error("Failed to save announcement");
+    }
   };
 
-  if (messages.length > 0) save();
-}, [messages, isActive]);
-
+  const hasChanges =
+    JSON.stringify(messages) !== JSON.stringify(originalMessages) ||
+    isActive !== originalActive;
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
@@ -91,9 +107,17 @@ const EditAnnouncement = () => {
         </ul>
       </div>
 
+      <Button
+        className="w-full bg-green-600 hover:bg-green-700 text-white"
+        disabled={!hasChanges}
+        onClick={handleSave}
+      >
+        Save Changes
+      </Button>
+
       {isActive && messages.length > 0 && (
         <div className="mt-6">
-          <p className="font-medium mb-1">Live Preview (centered scroll-in):</p>
+          <p className="font-medium mb-1">Live Preview:</p>
           <div className="relative h-12 overflow-hidden border rounded bg-yellow-400 flex items-center justify-center">
             <div className="relative w-full h-full flex justify-center items-center">
               <AnimatePresence mode="wait">

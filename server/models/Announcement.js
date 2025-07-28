@@ -5,6 +5,6 @@ const announcementSchema = new mongoose.Schema({
   isActive: { type: Boolean, default: true },
 });
 
-const AnnouncementConfig = mongoose.model("AnnouncementConfig", announcementSchema);
+const AnnouncementConfig = mongoose.model("Announcements", announcementSchema);
 
 module.exports = AnnouncementConfig;
