@@ -6,21 +6,29 @@ const AnnouncementBar = () => {
   const [isActive, setIsActive] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
 
+  const API_BASE = import.meta.env.VITE_API_URL;
+
   useEffect(() => {
-    const fetchAnnouncements = async () => {
-      try {
-        const baseUrl = import.meta.env.VITE_API_URL;
-        const res = await fetch(`${baseUrl}/api/announcements`);
-        const data = await res.json();
-        console.log("📩 Announcement data:", data);
-        setMessages(data.messages || []);
-        setIsActive(data.isActive);
-      } catch (err) {
-        console.error("Fetch error:", err);
-      }
-    };
-    fetchAnnouncements();
-  }, []);
+      const fetchAnnouncements = async () => {
+        try {
+          console.log("📦 Fetching announcements from:", `${API_BASE}/api/announcements`);
+          const res = await fetch(`${API_BASE}/api/announcements`);
+          const contentType = res.headers.get("content-type");
+  
+          if (!res.ok || !contentType?.includes("application/json")) {
+            const text = await res.text();
+            throw new Error(`Bad response: ${text}`);
+          }
+  
+          const data = await res.json();
+          setMessages(data.messages || []);
+          setIsActive(data.isActive ?? true);
+        } catch (error) {
+          console.error("❌ Fetch error:", error);
+        }
+      };
+      fetchAnnouncements();
+    }, []);
 
   useEffect(() => {
     if (!isActive || messages.length <= 1) return;
