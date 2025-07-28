@@ -12,7 +12,7 @@ const EditAnnouncement = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
-  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+  const API_BASE = import.meta.env.VITE_API_URL || "http://localhost:8080";
 
   // Auto scroll every 3s
   useEffect(() => {
