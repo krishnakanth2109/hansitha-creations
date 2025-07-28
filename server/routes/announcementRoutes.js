@@ -1,28 +1,47 @@
+// server/routes/announcementRoutes.js
 const express = require("express");
-const { Announcement } = require("../models/Announcement");
+const { Announcement, AnnouncementSettings } = require("../models/Announcement");
 
 const router = express.Router();
 
-// GET - Fetch announcement settings
+// GET announcements
 router.get("/", async (req, res) => {
-  const data = await Announcement.findOne();
-  if (!data) return res.json({ messages: [], isActive: true });
-  res.json(data);
+  try {
+    const messages = await Announcement.find().lean();
+    const settings = await AnnouncementSettings.findOne().lean();
+    res.json({
+      messages: messages.map((m) => m.message),
+      isActive: settings?.isActive ?? true,
+    });
+  } catch (err) {
+    console.error("❌ Fetch error:", err);
+    res.status(500).json({ error: "Failed to fetch announcements" });
+  }
 });
 
-// POST - Save messages and active status
+// POST announcements
 router.post("/", async (req, res) => {
-  const { messages, isActive } = req.body;
+  try {
+    const { messages, isActive } = req.body;
 
-  let data = await Announcement.findOne();
-  if (!data) {
-    data = new Announcement({ messages, isActive });
-  } else {
-    data.messages = messages;
-    data.isActive = isActive;
+    if (!Array.isArray(messages)) {
+      return res.status(400).json({ error: "Invalid messages format" });
+    }
+
+    await Announcement.deleteMany({});
+    await Announcement.insertMany(messages.map((m) => ({ message: m })));
+
+    await AnnouncementSettings.findOneAndUpdate(
+      {},
+      { isActive },
+      { upsert: true, new: true }
+    );
+
+    res.json({ success: true });
+  } catch (err) {
+    console.error("❌ Save error:", err);
+    res.status(500).json({ error: "Failed to save announcements" });
   }
-  await data.save();
-  res.json({ success: true });
 });
 
 module.exports = router;

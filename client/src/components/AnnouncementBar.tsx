@@ -1,13 +1,22 @@
+// components/AnnouncementBar.tsx
 import React, { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 
-type AnnouncementBarProps = {
-  messages: string[];
-  isActive: boolean;
-};
-
-const AnnouncementBar: React.FC<AnnouncementBarProps> = ({ messages, isActive }) => {
+const AnnouncementBar = () => {
+  const [messages, setMessages] = useState<string[]>([]);
+  const [isActive, setIsActive] = useState(false);
   const [currentIndex, setCurrentIndex] = useState(0);
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      const res = await fetch("/api/announcements");
+      const data = await res.json();
+      setMessages(data.messages);
+      setIsActive(data.isActive);
+    };
+
+    fetchAnnouncements();
+  }, []);
 
   useEffect(() => {
     if (!isActive || messages.length === 0) return;
@@ -22,7 +31,7 @@ const AnnouncementBar: React.FC<AnnouncementBarProps> = ({ messages, isActive })
   if (!isActive || messages.length === 0) return null;
 
   return (
-    <div className="h-12 bg-yellow-400 border-b border-yellow-600 flex items-center justify-center relative overflow-hidden">
+    <div className="h-12 overflow-hidden bg-yellow-400 flex items-center justify-center border-b">
       <div className="relative w-full h-full flex justify-center items-center">
         <AnimatePresence mode="wait">
           <motion.div
@@ -30,8 +39,8 @@ const AnnouncementBar: React.FC<AnnouncementBarProps> = ({ messages, isActive })
             initial={{ x: "100%", opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             exit={{ x: "-100%", opacity: 0 }}
-            transition={{ duration: 0.5 }}
-            className="absolute w-full text-center px-4 font-medium text-black"
+            transition={{ duration: 0.6 }}
+            className="absolute text-center font-medium text-black px-4"
           >
             {messages[currentIndex]}
           </motion.div>

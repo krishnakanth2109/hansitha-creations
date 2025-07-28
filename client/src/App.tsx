@@ -56,7 +56,7 @@ const AppRoutes = () => {
     <Routes>
       {/* Public Routes */}
       <Route path="/" element={<Layout><Home /></Layout>} />
-      <Route path="/announcement" element={<AnnouncementBar messages={["Welcome to our store!", "Check out our new arrivals!"]} isActive={true} />} />
+      <Route path="/announcement" element={<AnnouncementBar />} />
       <Route path="/shop" element={<Layout><Shop /></Layout>} />
       <Route path="/cart" element={<Layout><Cart /></Layout>} />
       <Route path="/order-confirmation" element={<Layout><OrderConfirmation /></Layout>} />
