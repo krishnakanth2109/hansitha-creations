@@ -76,42 +76,17 @@ router.get('/search', async (req, res) => {
 });
 
 // ✅ Update Product by ID
-router.put('/:id', async (req, res) => {
+// routes/productRoutes.js or wherever you handle product routes
+router.get('/:id', async (req, res) => {
   try {
-    const {
-      name,
-      price,
-      image,
-      featured,
-      category,
-      stock,
-      description,
-      extraImages = [], // ✅ added
-    } = req.body;
-
-    const updated = await Product.findByIdAndUpdate(
-      req.params.id,
-      {
-        $set: {
-          name,
-          price,
-          image,
-          featured,
-          category,
-          stock,
-          description,
-          extraImages, // ✅ added
-        },
-      },
-      { new: true }
-    );
-
-    res.json(updated);
+    const product = await Product.findById(req.params.id);
+    if (!product) return res.status(404).json({ message: 'Product not found' });
+    res.json(product);
   } catch (err) {
-    console.error('Update error:', err);
-    res.status(500).json({ message: 'Failed to update product' });
+    res.status(500).json({ message: err.message });
   }
 });
+
 
 // ✅ Delete Product by ID
 router.delete('/:id', async (req, res) => {
