@@ -98,31 +98,37 @@ router.put("/:id", async (req, res) => {
       description,
       extraImages = [],
     } = req.body;
-    
-    if (stock < 0) {
+
+    const existing = await Product.findById(req.params.id);
+    if (!existing) {
+      return res.status(404).json({ message: "Product not found" });
+    }
+
+    const updatedFields = {
+      name: name ?? existing.name,
+      price: price ?? existing.price,
+      image: image ?? existing.image,
+      featured: featured ?? existing.featured,
+      category: category ?? existing.category,
+      stock: stock ?? existing.stock,
+      description: description ?? existing.description,
+      extraImages: extraImages.length > 0 ? extraImages : existing.extraImages,
+    };
+
+    if (updatedFields.stock < 0) {
       return res.status(400).json({ message: "Stock cannot be negative" });
     }
 
     const updatedProduct = await Product.findByIdAndUpdate(
       req.params.id,
-      {
-        name,
-        price,
-        image,
-        featured,
-        category,
-        stock,
-        description,
-        extraImages,
-      },
+      updatedFields,
       { new: true }
     );
 
-    if (!updatedProduct) {
-      return res.status(404).json({ message: "Product not found" });
-    }
-
-    res.json(updatedProduct);
+    res.json({
+      message: "Product updated successfully",
+      product: updatedProduct,
+    });
   } catch (err) {
     console.error("Update error:", err);
     res.status(500).json({ message: "Failed to update product" });

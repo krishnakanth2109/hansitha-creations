@@ -90,6 +90,11 @@ const EditProduct: React.FC = () => {
         extraImages: [...existingExtraImages, ...uploadedExtraImages],
       };
 
+      // 💡 Add stock only if it's a valid number
+      if (stock !== "" && !isNaN(Number(stock))) {
+        productData.stock = Number(stock);
+      }
+
       const res = await fetch(`${API_URL}/api/products/${productId}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
@@ -159,7 +164,7 @@ const EditProduct: React.FC = () => {
             />
           </div>
           <div>
-            <label className="block font-medium mb-1">Stock</label>
+            <label className="hidden font-medium mb-1">Stock</label>
             <input
               type="number"
               min="0"
