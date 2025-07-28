@@ -1,43 +1,35 @@
 const express = require("express");
 const router = express.Router();
-const AnnouncementConfig = require("../models/Announcement");
+const Announcement = require("../models/Announcement");
 
-// GET: Fetch announcement settings
+// Get the announcement (assuming one document only)
 router.get("/", async (req, res) => {
   try {
-    let config = await AnnouncementConfig.findOne();
-    if (!config) {
-      config = await AnnouncementConfig.create({ messages: [], isActive: true });
+    let doc = await Announcement.findOne();
+    if (!doc) {
+      doc = await Announcement.create({ messages: [], isActive: true });
     }
-    res.json(config);
+    res.json(doc);
   } catch (err) {
-    console.error("❌ Error fetching announcement config:", err);
-    res.status(500).json({ error: "Failed to fetch announcement config" });
+    res.status(500).json({ error: "Failed to fetch announcement" });
   }
 });
 
-// POST: Save announcement settings
+// Update or create announcement
 router.post("/", async (req, res) => {
   try {
     const { messages, isActive } = req.body;
-
-    if (!Array.isArray(messages)) {
-      return res.status(400).json({ error: "Messages must be an array" });
+    let doc = await Announcement.findOne();
+    if (!doc) {
+      doc = new Announcement({ messages, isActive });
+    } else {
+      doc.messages = messages;
+      doc.isActive = isActive;
     }
-
-    let config = await AnnouncementConfig.findOne();
-    if (!config) {
-      config = new AnnouncementConfig();
-    }
-
-    config.messages = messages;
-    config.isActive = isActive;
-    await config.save();
-
+    await doc.save();
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ Error saving announcement config:", err);
-    res.status(500).json({ error: "Failed to save announcement config" });
+    res.status(500).json({ error: "Failed to save announcement" });
   }
 });
 

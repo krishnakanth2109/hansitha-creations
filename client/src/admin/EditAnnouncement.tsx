@@ -3,64 +3,81 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
 import { AnimatePresence, motion } from "framer-motion";
-import { toast } from "sonner"; // <== Snackbar toast
 
 const EditAnnouncement = () => {
   const [isActive, setIsActive] = useState(true);
   const [text, setText] = useState("");
   const [messages, setMessages] = useState<string[]>([]);
-  const [originalMessages, setOriginalMessages] = useState<string[]>([]);
-  const [originalActive, setOriginalActive] = useState(true);
   const [currentIndex, setCurrentIndex] = useState(0);
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editText, setEditText] = useState("");
+
+  // Auto scroll every 3 seconds
+  useEffect(() => {
+    if (!isActive || messages.length === 0) return;
+    const interval = setInterval(() => {
+      setCurrentIndex((prev) => (prev + 1) % messages.length);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [messages, isActive]);
+
+  // Auto save
+  const autoSave = async (updatedMessages: string[], updatedActive = isActive) => {
+    setMessages(updatedMessages);
+    try {
+      await fetch("/api/announcements", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ messages: updatedMessages, isActive: updatedActive }),
+      });
+    } catch (err) {
+      console.error("Auto-save failed:", err);
+    }
+  };
 
   const handleAddMessage = () => {
     if (text.trim() !== "") {
-      setMessages([...messages, text.trim()]);
+      const updated = [...messages, text.trim()];
       setText("");
+      autoSave(updated);
     }
   };
 
   const handleRemoveMessage = (index: number) => {
     const updated = [...messages];
     updated.splice(index, 1);
-    setMessages(updated);
+    autoSave(updated);
   };
 
-  const fetchAnnouncements = async () => {
-    const res = await fetch("/api/announcements");
-    const data = await res.json();
-    setMessages(data.messages || []);
-    setOriginalMessages(data.messages || []);
-    setIsActive(data.isActive);
-    setOriginalActive(data.isActive);
+  const handleEditMessage = (index: number) => {
+    setEditingIndex(index);
+    setEditText(messages[index]);
   };
 
-  useEffect(() => {
-    fetchAnnouncements();
-  }, []);
-
-  const handleSave = async () => {
-    try {
-      const res = await fetch("/api/announcements", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messages, isActive }),
-      });
-
-      if (!res.ok) throw new Error("Failed to save");
-
-      toast.success("Announcement saved successfully");
-
-      setOriginalMessages(messages);
-      setOriginalActive(isActive);
-    } catch (error) {
-      toast.error("Failed to save announcement");
+  const handleSaveEdit = () => {
+    if (editingIndex !== null && editText.trim() !== "") {
+      const updated = [...messages];
+      updated[editingIndex] = editText.trim();
+      setEditingIndex(null);
+      setEditText("");
+      autoSave(updated);
     }
   };
 
-  const hasChanges =
-    JSON.stringify(messages) !== JSON.stringify(originalMessages) ||
-    isActive !== originalActive;
+  const handleToggleActive = (value: boolean) => {
+    setIsActive(value);
+    autoSave(messages, value);
+  };
+
+  useEffect(() => {
+    const fetchAnnouncements = async () => {
+      const res = await fetch("/api/announcements");
+      const data = await res.json();
+      setMessages(data.messages || []);
+      setIsActive(data.isActive ?? true);
+    };
+    fetchAnnouncements();
+  }, []);
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
@@ -68,7 +85,7 @@ const EditAnnouncement = () => {
 
       <div className="flex items-center justify-between mb-4">
         <label className="text-lg font-medium">Announcement Active:</label>
-        <Switch checked={isActive} onCheckedChange={setIsActive} />
+        <Switch checked={isActive} onCheckedChange={handleToggleActive} />
       </div>
 
       <div className="mb-4">
@@ -80,10 +97,7 @@ const EditAnnouncement = () => {
           onChange={(e) => setText(e.target.value)}
         />
         <div className="mt-2 flex justify-end">
-          <Button
-            className="bg-black text-white hover:bg-gray-900"
-            onClick={handleAddMessage}
-          >
+          <Button className="bg-black text-white hover:bg-gray-900" onClick={handleAddMessage}>
             Add Message
           </Button>
         </div>
@@ -91,33 +105,60 @@ const EditAnnouncement = () => {
 
       <div className="mb-6">
         <p className="font-medium mb-2">Messages:</p>
-        <ul className="list-disc list-inside space-y-1">
+        <ul className="list-disc list-inside space-y-2">
           {messages.map((msg, index) => (
-            <li key={index} className="flex justify-between items-center">
-              <span>{msg}</span>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleRemoveMessage(index)}
-              >
-                Remove
-              </Button>
+            <li key={index} className="flex justify-between items-start gap-2">
+              {editingIndex === index ? (
+                <div className="flex-1">
+                  <Textarea
+                    value={editText}
+                    onChange={(e) => setEditText(e.target.value)}
+                    rows={1}
+                    className="text-sm"
+                  />
+                  <div className="mt-1 flex gap-2">
+                    <Button size="sm" onClick={handleSaveEdit} className="bg-blue-500 text-white">
+                      Save
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setEditingIndex(null)}
+                      className="text-gray-600"
+                    >
+                      Cancel
+                    </Button>
+                  </div>
+                </div>
+              ) : (
+                <>
+                  <span className="flex-1">{msg}</span>
+                  <div className="flex gap-2">
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      onClick={() => handleEditMessage(index)}
+                    >
+                      Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleRemoveMessage(index)}
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </>
+              )}
             </li>
           ))}
         </ul>
       </div>
 
-      <Button
-        className="w-full bg-green-600 hover:bg-green-700 text-white"
-        disabled={!hasChanges}
-        onClick={handleSave}
-      >
-        Save Changes
-      </Button>
-
       {isActive && messages.length > 0 && (
         <div className="mt-6">
-          <p className="font-medium mb-1">Live Preview:</p>
+          <p className="font-medium mb-1">Live Preview (scrolling):</p>
           <div className="relative h-12 overflow-hidden border rounded bg-yellow-400 flex items-center justify-center">
             <div className="relative w-full h-full flex justify-center items-center">
               <AnimatePresence mode="wait">

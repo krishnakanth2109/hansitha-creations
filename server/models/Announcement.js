@@ -1,10 +1,15 @@
 const mongoose = require("mongoose");
 
 const announcementSchema = new mongoose.Schema({
-  messages: { type: [String], default: [] },
-  isActive: { type: Boolean, default: true },
+  messages: {
+    type: [String],
+    required: true,
+    default: [],
+  },
+  isActive: {
+    type: Boolean,
+    default: true,
+  },
 });
 
-const AnnouncementConfig = mongoose.model("Announcements", announcementSchema);
-
-module.exports = AnnouncementConfig;
+module.exports = mongoose.model("Announcement", announcementSchema);
