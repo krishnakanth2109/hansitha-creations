@@ -12,7 +12,9 @@ const EditAnnouncement = () => {
   const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
 
-  // Auto scroll every 3 seconds
+  const API_BASE = import.meta.env.VITE_API_BASE_URL || "http://localhost:8080";
+
+  // Auto scroll every 3s
   useEffect(() => {
     if (!isActive || messages.length === 0) return;
     const interval = setInterval(() => {
@@ -21,15 +23,11 @@ const EditAnnouncement = () => {
     return () => clearInterval(interval);
   }, [messages, isActive]);
 
-  // Auto save
-  const autoSave = async (
-    updatedMessages: string[],
-    updatedActive = isActive
-  ) => {
+  // Auto save to backend
+  const autoSave = async (updatedMessages: string[], updatedActive = isActive) => {
     setMessages(updatedMessages);
     try {
-      const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-      await fetch(`${baseUrl}/api/announcements`, {
+      const res = await fetch(`${API_BASE}/api/announcements`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
@@ -37,13 +35,18 @@ const EditAnnouncement = () => {
           isActive: updatedActive,
         }),
       });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Auto-save failed:", errorText);
+      }
     } catch (err) {
-      console.error("Auto-save failed:", err);
+      console.error("Auto-save error:", err);
     }
   };
 
   const handleAddMessage = () => {
-    if (text.trim() !== "") {
+    if (text.trim()) {
       const updated = [...messages, text.trim()];
       setText("");
       autoSave(updated);
@@ -62,7 +65,7 @@ const EditAnnouncement = () => {
   };
 
   const handleSaveEdit = () => {
-    if (editingIndex !== null && editText.trim() !== "") {
+    if (editingIndex !== null && editText.trim()) {
       const updated = [...messages];
       updated[editingIndex] = editText.trim();
       setEditingIndex(null);
@@ -76,17 +79,24 @@ const EditAnnouncement = () => {
     autoSave(messages, value);
   };
 
+  // Initial fetch
   useEffect(() => {
     const fetchAnnouncements = async () => {
       try {
-        const baseUrl = import.meta.env.VITE_API_BASE_URL || "";
-        const res = await fetch(`${baseUrl}/api/announcements`);
+        console.log("📦 Fetching announcements from:", `${API_BASE}/api/announcements`);
+        const res = await fetch(`${API_BASE}/api/announcements`);
+        const contentType = res.headers.get("content-type");
+
+        if (!res.ok || !contentType?.includes("application/json")) {
+          const text = await res.text();
+          throw new Error(`Bad response: ${text}`);
+        }
+
         const data = await res.json();
-        console.log("📢 EditAnnouncement data:", data);
         setMessages(data.messages || []);
         setIsActive(data.isActive ?? true);
       } catch (error) {
-        console.error("❌ Fetch error in EditAnnouncement:", error);
+        console.error("❌ Fetch error:", error);
       }
     };
     fetchAnnouncements();
@@ -133,11 +143,7 @@ const EditAnnouncement = () => {
                     className="text-sm"
                   />
                   <div className="mt-1 flex gap-2">
-                    <Button
-                      size="sm"
-                      onClick={handleSaveEdit}
-                      className="bg-blue-500 text-white"
-                    >
+                    <Button size="sm" onClick={handleSaveEdit} className="bg-blue-500 text-white">
                       Save
                     </Button>
                     <Button
@@ -154,11 +160,7 @@ const EditAnnouncement = () => {
                 <>
                   <span className="flex-1">{msg}</span>
                   <div className="flex gap-2">
-                    <Button
-                      size="sm"
-                      variant="outline"
-                      onClick={() => handleEditMessage(index)}
-                    >
+                    <Button size="sm" variant="outline" onClick={() => handleEditMessage(index)}>
                       Edit
                     </Button>
                     <Button
