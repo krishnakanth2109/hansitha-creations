@@ -88,7 +88,7 @@ const CategoryCircle = () => {
   };
 
   return (
-    <div className="relative bg-white">
+    <div className="relative">
       <div
         ref={scrollRef}
         className="flex overflow-x-auto sm:grid sm:grid-cols-7 gap-6 scroll-smooth sm:overflow-visible no-scrollbar"

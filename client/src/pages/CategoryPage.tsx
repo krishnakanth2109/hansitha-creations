@@ -8,6 +8,7 @@ import { toast } from 'react-hot-toast';
 import { useWishlist } from '@/context/WishlistContext';
 import { Footer } from '../components/Footer';
 import clsx from 'clsx';
+import { toastWithVoice } from '@/utils/toast';
 
 const CategoryPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
@@ -65,7 +66,7 @@ const CategoryPage: React.FC = () => {
   };
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
       <main className="p-4 flex-grow">
         {/* Mobile Heading and Filter Toggle */}
         <div className="flex items-center justify-between mb-4 lg:hidden">
@@ -200,7 +201,7 @@ const CategoryPage: React.FC = () => {
                               image: product.image,
                               quantity: 1,
                             });
-                            toast.success(`${product.name} added to cart!`);
+                            toastWithVoice.success(`${product.name} added to cart!`, { duration: 2000 });
                           }}
                           disabled={isOutOfStock}
                           className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${

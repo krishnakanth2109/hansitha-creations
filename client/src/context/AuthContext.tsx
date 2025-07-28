@@ -19,6 +19,7 @@ interface AuthContextType {
   register: (data: { name: string; email: string; password: string }) => Promise<any>;
   logout: () => void;
   refreshUser: () => Promise<void>;
+  isLoggedIn: boolean; 
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
@@ -44,8 +45,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } catch (error) {
       console.warn('❌ Failed to refresh user (maybe not logged in):', error);
-      setUser(null);
-      localStorage.removeItem('user');
+      
+      // Only clear user data if it's an authentication error (401)
+      // This prevents logout on network errors or server issues
+      if (axios.isAxiosError(error) && error.response?.status === 401) {
+        setUser(null);
+        localStorage.removeItem('user');
+      }
     }
   };
 
@@ -116,7 +122,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, refreshUser, loading }}>
+    <AuthContext.Provider value={{ user, login, register, logout, refreshUser, loading, isLoggedIn: !!user, }}>
       {children}
     </AuthContext.Provider>
   );

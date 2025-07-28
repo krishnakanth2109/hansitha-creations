@@ -1,62 +1,92 @@
-import {
+import React, {
   createContext,
   useContext,
   useState,
   useEffect,
   ReactNode,
-} from 'react';
-import { toggleWishlist as toggleWishlistAPI, fetchWishlist } from '@/api/wishlist';
-import { useAuth } from './AuthContext';
+} from "react";
 
-type WishlistContextType = {
+// Define the shape of the context
+interface WishlistContextType {
   wishlist: string[];
-  toggleWishlist: (productId: string) => Promise<void>;
-};
+  toggleWishlist: (productId: string) => boolean;
+  isInWishlist: (productId: string) => boolean;
+  clearWishlist: () => void;
+  refreshWishlist: () => void;
+}
 
-const WishlistContext = createContext<WishlistContextType | null>(null);
+// Create the context
+const WishlistContext = createContext<WishlistContextType | undefined>(undefined);
 
+// Provider component
 export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   const [wishlist, setWishlist] = useState<string[]>([]);
-  const { user } = useAuth();
 
-  // 🔁 Fetch wishlist when user logs in
+  // Load wishlist from localStorage on mount
   useEffect(() => {
-    const loadWishlist = async () => {
-      if (user) {
-        try {
-          const data = await fetchWishlist(); // should return string[]
-          setWishlist(data);
-        } catch (error) {
-          console.error('❌ Failed to fetch wishlist', error);
-        }
-      } else {
-        setWishlist([]); // Clear on logout
-      }
-    };
+    const stored = localStorage.getItem("wishlist");
+    if (stored) {
+      setWishlist(JSON.parse(stored));
+    }
+  }, []);
 
-    loadWishlist();
-  }, [user]);
+  // Save wishlist to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+  }, [wishlist]);
 
-  const toggleWishlist = async (productId: string) => {
-    try {
-      const updatedWishlist = await toggleWishlistAPI(productId);
-      setWishlist(updatedWishlist);
-    } catch (error) {
-      console.error('❌ Wishlist toggle failed:', error);
+  // Toggle item in wishlist
+  const toggleWishlist = (productId: string): boolean => {
+    const exists = wishlist.includes(productId);
+    if (exists) {
+      setWishlist((prev) => prev.filter((id) => id !== productId));
+      return false; // Removed
+    } else {
+      setWishlist((prev) => [...prev, productId]);
+      return true; // Added
+    }
+  };
+
+  // Check if product is in wishlist
+  const isInWishlist = (productId: string): boolean => {
+    return wishlist.includes(productId);
+  };
+
+  // Clear wishlist
+  const clearWishlist = () => {
+    setWishlist([]);
+  };
+
+  // Refresh wishlist from localStorage
+  const refreshWishlist = () => {
+    const stored = localStorage.getItem("wishlist");
+    if (stored) {
+      setWishlist(JSON.parse(stored));
+    } else {
+      setWishlist([]);
     }
   };
 
   return (
-    <WishlistContext.Provider value={{ wishlist, toggleWishlist }}>
+    <WishlistContext.Provider
+      value={{
+        wishlist,
+        toggleWishlist,
+        isInWishlist,
+        clearWishlist,
+        refreshWishlist,
+      }}
+    >
       {children}
     </WishlistContext.Provider>
   );
 };
 
+// Custom hook
 export const useWishlist = () => {
   const context = useContext(WishlistContext);
   if (!context) {
-    throw new Error('useWishlist must be used within a WishlistProvider');
+    throw new Error("useWishlist must be used within a WishlistProvider");
   }
   return context;
 };

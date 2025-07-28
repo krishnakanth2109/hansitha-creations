@@ -42,7 +42,7 @@ const SearchResults: React.FC = () => {
   };
 
   return (
-    <div className="p-4 min-h-screen bg-gray-50">
+    <div className="p-4 min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
       <h1 className="text-2xl font-bold mb-4">
         Search results for: <span className="text-purple-600">"{query}"</span>
       </h1>

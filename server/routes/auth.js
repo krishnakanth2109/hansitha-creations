@@ -27,7 +27,7 @@ const sendToken = (res, user) => {
 };
 
 // ✅ GET /api/auth/me
-router.get("/me", async (req, res) => {
+router.get("/me", require("../middleware/auth"), async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
     if (!user) {

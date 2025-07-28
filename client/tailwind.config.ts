@@ -1,4 +1,6 @@
 import type { Config } from "tailwindcss";
+import animate from "tailwindcss-animate";
+import scrollbarHide from "tailwind-scrollbar-hide";
 
 const config: Config = {
   darkMode: ["class"],
@@ -20,6 +22,9 @@ const config: Config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ["Merienda", "sans-serif"],
+      },
       colors: {
         brand: {
           blue: "#03B9F0",
@@ -78,6 +83,10 @@ const config: Config = {
         "blue-pink": "linear-gradient(90deg, #03B9F0 0%, #C5499A 100%)",
       },
       keyframes: {
+        marquee: {
+        "0%": { transform: "translateX(100%)" },
+        "100%": { transform: "translateX(-100%)" },
+      },
         "accordion-down": {
           from: { height: "0" },
           to: { height: "var(--radix-accordion-content-height)" },
@@ -88,13 +97,17 @@ const config: Config = {
         },
       },
       animation: {
+        marquee: "marquee 20s linear infinite",
         "accordion-down": "accordion-down 0.2s ease-out",
         "accordion-up": "accordion-up 0.2s ease-out",
-        bounce: 'bounce 1s infinite',
+        bounce: "bounce 1s infinite",
       },
     },
   },
-  plugins: [require("tailwindcss-animate")],
+  plugins: [
+    animate,
+    scrollbarHide,
+  ],
 };
 
 export default config;

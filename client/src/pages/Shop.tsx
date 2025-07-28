@@ -1,61 +1,44 @@
-import React, { useContext, useEffect, useState } from 'react';
-import { ProductContext } from '../context/ProductContext';
-import { useCart } from '../context/CartContext';
-import { toast } from 'react-hot-toast';
-import { useNavigate } from 'react-router-dom';
-import { X, Heart, HeartIcon } from 'lucide-react';
-import clsx from 'clsx';
-import { useCurrency } from '@/context/CurrencyContext';
-import { Footer } from '../components/Footer';
+import React, { useContext, useEffect, useState } from "react";
+import { ProductContext } from "../context/ProductContext";
+import { useCart } from "../context/CartContext";
+import { toast } from "react-hot-toast";
+import { useNavigate } from "react-router-dom";
+import { X, Heart, HeartIcon } from "lucide-react";
+import clsx from "clsx";
+import { useCurrency } from "@/context/CurrencyContext";
+import { Footer } from "../components/Footer";
+import { useWishlist } from "@/context/WishlistContext";
+import { toastWithVoice } from "@/utils/toast";
+import { useAuth } from "@/context/AuthContext";
+import { motion } from "framer-motion";
 
 const Shop: React.FC = () => {
   const { products, loading } = useContext(ProductContext);
   const { addToCart } = useCart();
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
+  const { user } = useAuth();
+
+  const { wishlist, toggleWishlist, isInWishlist } = useWishlist(); // ✅ Use wishlist context
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number>(0);
   const [maxPrice, setMaxPrice] = useState<number>(10000);
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc' | ''>('');
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc" | "">("");
   const [showFilterMobile, setShowFilterMobile] = useState(false);
-  const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
-  const [wishlist, setWishlist] = useState<string[]>([]);
-  const [currentPage, setCurrentPage] = useState(1);
-  const PRODUCTS_PER_PAGE = 10;
-
-  const toggleWishlist = (productId: string) => {
-    setWishlist((prev) =>
-      prev.includes(productId) ? prev.filter((id) => id !== productId) : [...prev, productId]
-    );
-  };
+  const [isMobile, setIsMobile] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 1024;
+    }
+    return false;
+  });
 
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
   }, []);
-
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'ArrowRight') {
-        setCurrentPage((prev) => Math.min(prev + 1, totalPages));
-      } else if (e.key === 'ArrowLeft') {
-        setCurrentPage((prev) => Math.max(prev - 1, 1));
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [currentPage]);
-
-  useEffect(() => {
-    setCurrentPage(1);
-  }, [selectedCategory, minPrice, maxPrice, sortOrder]);
-
-  useEffect(() => {
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-  }, [currentPage]);
 
   if (loading) return <p className="p-4 text-center">Loading products...</p>;
 
@@ -70,13 +53,10 @@ const Shop: React.FC = () => {
       );
     })
     .sort((a, b) => {
-      if (sortOrder === 'asc') return a.price - b.price;
-      if (sortOrder === 'desc') return b.price - a.price;
+      if (sortOrder === "asc") return a.price - b.price;
+      if (sortOrder === "desc") return b.price - a.price;
       return 0;
     });
-
-  const totalPages = Math.ceil(filtered.length / PRODUCTS_PER_PAGE);
-  const paginatedProducts = filtered.slice((currentPage - 1) * PRODUCTS_PER_PAGE, currentPage * PRODUCTS_PER_PAGE);
 
   const handleProductClick = (product: any) => {
     navigate(`/product/${product.name}`, { state: { product } });
@@ -85,9 +65,8 @@ const Shop: React.FC = () => {
   const uniqueCategories = [...new Set(productList.map((p) => p.category))];
 
   return (
-    <div className="flex flex-col min-h-screen bg-white">
+    <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
       <main className="p-4 flex-grow">
-        {/* Mobile Heading and Filter Button */}
         <div className="flex items-center justify-between mb-4 lg:hidden">
           <h2 className="text-2xl font-bold">🛍️ Products</h2>
           <button
@@ -99,17 +78,18 @@ const Shop: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[20%_80%] gap-6 relative">
-          {/* Sidebar Filter */}
           <aside
             className={clsx(
-              'bg-white w-full lg:w-auto p-6 overflow-y-auto transition-transform duration-300 ease-in-out shadow-lg',
+              "bg-white w-full lg:w-auto p-6 overflow-y-auto transition-transform duration-300 ease-in-out shadow-lg",
               {
-                'fixed inset-0 transform translate-x-0 z-40': showFilterMobile && isMobile,
-                'fixed inset-0 transform -translate-x-full z-40': !showFilterMobile && isMobile,
-                'lg:sticky top-[100px] block': true,
+                "fixed inset-0 transform translate-x-0 z-40":
+                  showFilterMobile && isMobile,
+                "fixed inset-0 transform -translate-x-full z-40":
+                  !showFilterMobile && isMobile,
+                "lg:sticky top-[100px] block": true,
               }
             )}
-            style={{ maxHeight: 'calc(100vh - 140px)' }}
+            style={{ maxHeight: "calc(100vh - 140px)" }}
           >
             <div className="flex justify-between items-center mb-4 lg:hidden">
               <h2 className="text-lg font-bold">Filters</h2>
@@ -177,7 +157,9 @@ const Shop: React.FC = () => {
                 <h3 className="font-semibold mb-2">Sort By</h3>
                 <select
                   value={sortOrder}
-                  onChange={(e) => setSortOrder(e.target.value as 'asc' | 'desc' | '')}
+                  onChange={(e) =>
+                    setSortOrder(e.target.value as "asc" | "desc" | "")
+                  }
                   className="w-full border rounded px-3 py-2"
                 >
                   <option value="">Default</option>
@@ -188,7 +170,6 @@ const Shop: React.FC = () => {
             </div>
           </aside>
 
-          {/* Background Blur */}
           {isMobile && showFilterMobile && (
             <div
               className="fixed inset-0 bg-black bg-opacity-40 z-30 lg:hidden"
@@ -196,94 +177,104 @@ const Shop: React.FC = () => {
             />
           )}
 
-          {/* Product Cards */}
           <section className="lg:pl-0">
-            <h2 className="text-2xl font-bold mb-4 hidden lg:block">🛍️ Products</h2>
-            {paginatedProducts?.length === 0 ? (
+            <h2 className="text-2xl font-bold mb-4 hidden lg:block">
+              🛍️ Products
+            </h2>
+            {filtered.length === 0 ? (
               <p>No products match your filters.</p>
             ) : (
-              <>
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-6">
-                  {paginatedProducts.map((product) => {
-                    const isOutOfStock = product.stock === 0;
-                    const isWishlisted = wishlist.includes(product._id);
+              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-6">
+                {filtered.map((product) => {
+                  const isOutOfStock = product.stock === 0;
+                  const isWishlisted = isInWishlist(product._id);
 
-                    return (
-                      <div
-                        key={product._id}
-                        onClick={() => handleProductClick(product)}
-                        className="w-full max-w-[220px] mx-auto cursor-pointer group"
-                      >
-                        <div className="relative">
-                          <img
-                            src={product.image}
-                            alt={product.name}
-                            className={`w-full h-[280px] object-cover rounded ${isOutOfStock ? 'grayscale opacity-40' : ''}`}
-                          />
-
-                          <button
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              toggleWishlist(product._id);
-                            }}
-                            className="absolute top-2 right-2 z-10 bg-white p-1 rounded-full shadow-md transition-transform duration-150 active:scale-110"
-                            title={isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'}
-                          >
-                            {isWishlisted ? (
-                              <HeartIcon className="w-5 h-5 text-red-500 fill-red-500" />
-                            ) : (
-                              <Heart className="w-5 h-5 text-red-500" />
-                            )}
-                          </button>
-                        </div>
-
-                        <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
-                        <p className="text-blue-600 font-bold text-base text-center">{formatPrice(product.price)}</p>
-
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            if (isOutOfStock) return;
-                            addToCart({
-                              id: product._id,
-                              name: product.name,
-                              price: product.price,
-                              image: product.image,
-                              quantity: 1,
-                            });
-                            toast.success(`${product.name} added to cart!`);
-                          }}
-                          disabled={isOutOfStock}
-                          className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${
-                            isOutOfStock
-                              ? 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                              : 'bg-blue-600 text-white hover:bg-blue-700 active:scale-95'
-                          }`}
-                        >
-                          {isOutOfStock ? 'Out of Stock' : 'Add to Cart'}
-                        </button>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Page Buttons */}
-                <div className="flex flex-wrap justify-center items-center gap-2 mt-8">
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
-                    <button
-                      key={pageNum}
-                      onClick={() => setCurrentPage(pageNum)}
-                      className={`px-3 py-1 rounded border ${
-                        currentPage === pageNum
-                          ? 'bg-blue-600 text-white'
-                          : 'bg-gray-100 text-gray-800 hover:bg-gray-200'
-                      }`}
+                  return (
+                    <div
+                      key={product._id}
+                      onClick={() => handleProductClick(product)}
+                      className="w-full max-w-[220px] mx-auto cursor-pointer group"
                     >
-                      {pageNum}
-                    </button>
-                  ))}
-                </div>
-              </>
+                      <div className="relative">
+                        <img
+                          src={product.image}
+                          alt={product.name}
+                          className={`w-full h-[280px] object-cover rounded ${
+                            isOutOfStock ? "grayscale opacity-40" : ""
+                          }`}
+                        />
+
+                        <motion.button
+                          whileTap={{ scale: 0.9 }}
+                          animate={{ scale: isWishlisted ? 1.2 : 1 }}
+                          transition={{
+                            type: "spring",
+                            stiffness: 300,
+                            damping: 10,
+                          }}
+                          onClick={async (e) => {
+                            e.stopPropagation();
+                            if (!user) {
+                              toastWithVoice.error(
+                                "Please log in to add to wishlist",
+                                { duration: 2000 }
+                              );
+                              return;
+                            }
+                            const added = await toggleWishlist(product._id);
+                            toastWithVoice.success(
+                              added
+                                ? "Added to wishlist"
+                                : "Removed from wishlist",
+                              { duration: 2000 }
+                            );
+                          }}
+                          className="absolute top-2 right-2 z-0 rounded-full p-1 text-white bg-black/50 hover:bg-black/70 transition"
+                        >
+                          {isWishlisted ? (
+                            <Heart className="w-5 h-5 text-red-500 fill-red-500" />
+                          ) : (
+                            <HeartIcon className="w-5 h-5" />
+                          )}
+                        </motion.button>
+                      </div>
+
+                      <h3 className="text-base font-medium mt-2 truncate">
+                        {product.name}
+                      </h3>
+
+                      <p className="text-blue-100 font-bold text-base text-center">
+                        {formatPrice(product.price)}
+                      </p>
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isOutOfStock) return;
+                          addToCart({
+                            id: product._id,
+                            name: product.name,
+                            price: product.price,
+                            image: product.image,
+                            quantity: 1,
+                          });
+                          toastWithVoice.success("Added to cart", {
+                            duration: 2000,
+                          });
+                        }}
+                        disabled={isOutOfStock}
+                        className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${
+                          isOutOfStock
+                            ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                            : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                        }`}
+                      >
+                        {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                      </button>
+                    </div>
+                  );
+                })}
+              </div>
             )}
           </section>
         </div>

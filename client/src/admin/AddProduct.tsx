@@ -85,7 +85,7 @@ const AddProduct: React.FC = () => {
       resetForm();
 
       setTimeout(() => {
-        navigate('/admin/admin?page=1');
+        navigate('/admin?page=1');
       }, 1000);
     } catch (err) {
       console.error(err);

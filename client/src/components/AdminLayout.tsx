@@ -5,6 +5,7 @@ import {
   X,
   Plus,
   LayoutList,
+  Megaphone ,
   Image,
   Circle,
   ShoppingCart,
@@ -70,6 +71,12 @@ const AdminLayout = () => {
       label: 'Manage Products',
       icon: <LayoutList className="w-4 h-4 mr-2" />,
       path: '/admin/manage',
+    },
+    {
+      key: 'announcements',
+      label: 'Anouncement Manage',
+      icon: <Megaphone  className="w-4 h-4 mr-2" />,
+      path: '/admin/announcements',
     },
     {
       key: 'carousel',
@@ -141,7 +148,7 @@ const AdminLayout = () => {
   );
 
   return (
-    <div className="flex min-h-screen bg-gray-100 text-gray-900">
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 text-gray-900">
       {/* Desktop Sidebar */}
       {isDesktopSidebarVisible && (
         <aside className="hidden sm:flex flex-col w-64 bg-blue-800 p-6 shadow-lg">

@@ -76,18 +76,48 @@ router.post("/cart", auth, async (req, res) => {
 router.post("/wishlist", auth, async (req, res) => {
   try {
     const { productId } = req.body;
+    if (!productId) {
+      return res.status(400).json({ message: "Product ID is required" });
+    }
+
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    const exists = user.wishlist.includes(productId);
-    if (exists) user.wishlist.pull(productId);
-    else user.wishlist.push(productId);
+    // Check if product exists in wishlist
+    const exists = user.wishlist.some(id => id.toString() === productId);
+    
+    if (exists) {
+      // Remove from wishlist
+      user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
+    } else {
+      // Add to wishlist
+      user.wishlist.push(productId);
+    }
 
     await user.save();
-    res.json({ wishlist: user.wishlist });
+    
+    // Return updated wishlist
+    res.json({
+      success: true,
+      wishlist: user.wishlist,
+      action: exists ? 'removed' : 'added'
+    });
   } catch (err) {
     console.error("Wishlist error", err);
-    res.status(500).json({ message: "Server error updating wishlist" });
+    res.status(500).json({ success: false, message: "Server error updating wishlist" });
+  }
+});
+
+// ✅ Get user's wishlist
+router.get("/wishlist", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("wishlist");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    
+    res.json({ success: true, wishlist: user.wishlist });
+  } catch (err) {
+    console.error("Get wishlist error", err);
+    res.status(500).json({ success: false, message: "Server error fetching wishlist" });
   }
 });
 

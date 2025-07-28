@@ -23,7 +23,7 @@ export default function Account() {
   // Show loading indicator during initial auth check
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 flex items-center justify-center">
         <p className="text-lg font-medium">Authenticating...</p>
       </div>
     );
@@ -66,7 +66,7 @@ export default function Account() {
 
   return (
     <Layout>
-      <div className="min-h-screen bg-gradient-subtle">
+      <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
         <main className="container mx-auto px-4 py-6 space-y-6 pb-20 md:pb-6">
           <ProfileHeader user={user} onLogout={handleLogout} />
           {renderMainContent()}

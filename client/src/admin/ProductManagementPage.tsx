@@ -28,7 +28,7 @@ const ProductManagementPage: React.FC<ProductManagementPageProps> = ({ onEdit })
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const totalPages = Math.ceil(filteredProducts?.length / pageSize);
+  const totalPages = Math.ceil(filteredProducts.length / pageSize);
   const paginatedProducts = filteredProducts.slice(
     (currentPage - 1) * pageSize,
     currentPage * pageSize
@@ -188,9 +188,9 @@ const ProductManagementPage: React.FC<ProductManagementPageProps> = ({ onEdit })
           <button
             onClick={handleBulkDelete}
             className="bg-red-600 text-white px-3 py-2 rounded disabled:opacity-50"
-            disabled={selectedProducts?.length === 0}
+            disabled={selectedProducts.length === 0}
           >
-            Delete Selected ({selectedProducts?.length})
+            Delete Selected ({selectedProducts.length})
           </button>
         </div>
       </div>

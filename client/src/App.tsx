@@ -1,16 +1,7 @@
 // App.tsx
-import { useEffect, useState } from "react";
-import {
-  BrowserRouter,
-  Routes,
-  Route,
-  useLocation,
-  Navigate,
-} from "react-router-dom";
+import { useLocation, BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { Toaster } from "react-hot-toast";
-
 import { Toaster as Sonner } from "@/components/ui/sonner";
 
 import { CartProvider } from "./context/CartContext";
@@ -53,6 +44,7 @@ import OrdersDashboard from "./admin/OrdersDashboard";
 import AdminProfile from "./admin/AdminProfile";
 import AdminCategoryPanel from "./admin/AdminCategoryPanel";
 import ProductManagementPage from "./admin/ProductManagementPage";
+import EditAnnouncement from "./admin/EditAnnouncement";
 
 const queryClient = new QueryClient();
 
@@ -62,146 +54,27 @@ const AppRoutes = () => {
   return (
     <Routes>
       {/* Public Routes */}
-      <Route
-        path="/"
-        element={
-          <Layout>
-            <Home />
-          </Layout>
-        }
-      />
-      <Route
-        path="/shop"
-        element={
-          <Layout>
-            <Shop />
-          </Layout>
-        }
-      />
-      <Route
-        path="/cart"
-        element={
-          <Layout>
-            <Cart />
-          </Layout>
-        }
-      />
-      <Route
-        path="/order-confirmation"
-        element={
-          <Layout>
-            <OrderConfirmation />
-          </Layout>
-        }
-      />
-      <Route
-        path="/search"
-        element={
-          <Layout>
-            <SearchResults />
-          </Layout>
-        }
-      />
-      <Route
-        path="/featured"
-        element={
-          <Layout>
-            <FeaturedProducts products={[]} />
-          </Layout>
-        }
-      />
-      <Route
-        path="/fabrics/:category"
-        element={
-          <Layout>
-            <CategoryPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/checkout"
-        element={
-          <Layout>
-            <Checkout />
-          </Layout>
-        }
-      />
-      <Route
-        path="/about"
-        element={
-          <Layout>
-            <AboutPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/contact"
-        element={
-          <Layout>
-            <ContactPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/new-arrivals"
-        element={
-          <Layout>
-            <NewArrivalsPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/ceo-collections"
-        element={
-          <Layout>
-            <CEOCollectionsPage />
-          </Layout>
-        }
-      />
-      <Route
-        path="/product/:name"
-        element={
-          <Layout>
-            <ProductDetailsPage key={location.pathname} />
-          </Layout>
-        }
-      />
-      <Route
-        path="/login"
-        element={
-          <Layout>
-            <Login />
-          </Layout>
-        }
-      />
-      <Route
-        path="/register"
-        element={
-          <Layout>
-            <Register />
-          </Layout>
-        }
-      />
-      <Route
-        path="/wishlist"
-        element={
-          <Layout>
-            <WishlistPage />
-          </Layout>
-        }
-      />
+      <Route path="/" element={<Layout><Home /></Layout>} />
+      <Route path="/shop" element={<Layout><Shop /></Layout>} />
+      <Route path="/cart" element={<Layout><Cart /></Layout>} />
+      <Route path="/order-confirmation" element={<Layout><OrderConfirmation /></Layout>} />
+      <Route path="/search" element={<Layout><SearchResults /></Layout>} />
+      <Route path="/featured" element={<Layout><FeaturedProducts /></Layout>} />
+      <Route path="/fabrics/:category" element={<Layout><CategoryPage /></Layout>} />
+      <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
+      <Route path="/about" element={<Layout><AboutPage /></Layout>} />
+      <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+      <Route path="/new-arrivals" element={<Layout><NewArrivalsPage /></Layout>} />
+      <Route path="/ceo-collections" element={<Layout><CEOCollectionsPage /></Layout>} />
+      <Route path="/product/:name" element={<Layout><ProductDetailsPage key={location.pathname} /></Layout>} />
+      <Route path="/login" element={<Layout><Login /></Layout>} />
+      <Route path="/register" element={<Layout><Register /></Layout>} />
+      <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
       <Route path="/account" element={<Account />} />
       <Route path="/orders" element={<Orders />} />
       <Route path="/addresses" element={<Addresses />} />
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
-      <Route
-        path="/privacy-policy"
-        element={
-          <Layout>
-            <PrivacyPolicy />
-          </Layout>
-        }
-      />
+      <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
 
       {/* Admin Layout + Nested Routes */}
       <Route path="/admin" element={<AdminLayout />}>
@@ -212,12 +85,12 @@ const AppRoutes = () => {
           element={
             <ProductManagementPage
               onEdit={(productId: string) => {
-                // Optional: Implement edit logic or redirect
                 console.log("Edit Product ID:", productId);
               }}
             />
           }
         />
+        <Route path="announcements" element={<EditAnnouncement />} />
         <Route path="carousel" element={<CarouselManager />} />
         <Route path="circle" element={<AdminCategoryPanel />} />
         <Route path="orders" element={<OrdersDashboard />} />
@@ -239,15 +112,7 @@ const App = () => {
             <WishlistProvider>
               <BrowserRouter>
                 <CurrencyProvider>
-                  {/* Toasts */}
-                  <Toaster
-                    position="bottom-right"
-                    toastOptions={{
-                      style: {
-                        marginBottom: window.innerWidth < 768 ? "5rem" : "1rem",
-                      },
-                    }}
-                  />
+                  {/* ✅ Sonner Toast Setup */}
                   <Sonner
                     position="bottom-right"
                     expand={true}
@@ -255,7 +120,27 @@ const App = () => {
                     closeButton={true}
                     duration={3000}
                     className="sonner-toast"
+                    toastOptions={{
+                      style: {
+                        marginBottom: window.innerWidth < 768 ? "5rem" : "1rem",
+                      },
+                    }}
                   />
+
+                  {/* ✅ Hidden element for screen reader announcements */}
+                  <div
+                    id="toast-announcer"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    style={{
+                      position: 'absolute',
+                      left: '-9999px',
+                      height: '1px',
+                      width: '1px',
+                      overflow: 'hidden',
+                    }}
+                  />
+
                   <AppRoutes />
                 </CurrencyProvider>
               </BrowserRouter>

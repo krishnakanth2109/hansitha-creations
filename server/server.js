@@ -72,7 +72,6 @@ const checkoutRoutes = require("./routes/checkoutRoutes");
 const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
 const orderRoutes = require('./routes/orderRoutes');
-const wishlistRoutes = require('./routes/wishList.js');
 
 app.get('/', (req, res) => res.send('API is working'));
 
@@ -83,7 +82,8 @@ app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
 app.use("/auth", otpRoutes);
 app.use('/api/orders', orderRoutes);
-app.use('/api/wishlist', wishlistRoutes);
+app.use("/api/announcements", require("./routes/announcementRoutes"));
+
 
 // Razorpay Create Order
 app.post('/api/payment/orders', async (req, res) => {
@@ -208,4 +208,4 @@ app.post("/api/newsletter", async (req, res) => {
 
 // Start Server
 const PORT = process.env.PORT || 5000;
-server.listen(PORT, () => console.log(`🚀 Server running on port ${PORT}`));
+server.listen(PORT, '0.0.0.0',() => console.log(`🚀 Server running on port ${PORT}`));

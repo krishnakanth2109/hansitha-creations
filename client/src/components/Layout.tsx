@@ -26,7 +26,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const whatsappUrl = `https://wa.me/918142504687?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100">
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
       <Header onMenuClick={openSidebar} />
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
       <SignInPanel isOpen={isSignInOpen} onClose={closeSignIn} />

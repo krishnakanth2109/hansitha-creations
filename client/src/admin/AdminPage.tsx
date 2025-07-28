@@ -108,7 +108,7 @@ const AdminPage = () => {
 
   return (
     <div>
-      <div className="flex min-h-screen bg-gray-100 text-gray-900">
+      <div className="flex min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 text-gray-900">
         {/* Desktop Sidebar (initially hidden) */}
         {isDesktopSidebarVisible && (
           <aside className="hidden sm:flex flex-col w-64 bg-blue-800 p-6 shadow-lg">
