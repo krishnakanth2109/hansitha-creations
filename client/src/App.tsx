@@ -16,6 +16,7 @@ import AdminLayout from "./components/AdminLayout";
 // Public Pages
 import Home from "./pages/Home";
 import AnnouncementBar from "./components/AnnouncementBar";
+import LiveReloadListener from "./components/LiveReloadListener";
 import Shop from "./pages/Shop";
 import Cart from "./pages/Cart";
 import AboutPage from "./pages/About";
@@ -114,6 +115,7 @@ const App = () => {
             <WishlistProvider>
               <BrowserRouter>
                 <CurrencyProvider>
+                  <LiveReloadListener />
                   {/* ✅ Sonner Toast Setup */}
                   <Sonner
                     position="bottom-right"

@@ -15,13 +15,14 @@ const { Server } = require("socket.io");
 dotenv.config();
 const app = express();
 const server = http.createServer(app);
+
 const io = new Server(server, {
   cors: {
     origin: ["http://localhost:8080", "https://hansithacreations.netlify.app"],
     credentials: true,
   },
 });
-app.set("io", io); // expose io to routes
+global.io = io; // ✅ Make io globally accessible
 
 // Middleware
 app.use(
@@ -64,7 +65,7 @@ mongoose
     console.error("❌ MongoDB connection error:", err);
   });
 
-// WebSocket
+// WebSocket Connection
 io.on("connection", (socket) => {
   console.log("🔌 Admin connected:", socket.id);
 });
@@ -77,8 +78,38 @@ const checkoutRoutes = require("./routes/checkoutRoutes");
 const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
 const orderRoutes = require("./routes/orderRoutes");
-const announcementRoutes = require("./routes/announcementRoutes");
 
+// ✅ Announcement route with auto-refresh
+const Announcement = require("./models/Announcement");
+const announcementRoutes = require("express").Router();
+
+announcementRoutes.get("/", async (req, res) => {
+  try {
+    const data = await Announcement.findOne({});
+    res.json(data || { messages: [], isActive: false });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to load announcement" });
+  }
+});
+
+announcementRoutes.post("/", async (req, res) => {
+  try {
+    const { messages, isActive } = req.body;
+
+    const updated = await Announcement.findOneAndUpdate(
+      {},
+      { messages, isActive },
+      { upsert: true, new: true }
+    );
+
+    global.io.emit("refresh"); // ✅ Trigger refresh on frontend
+    res.json({ success: true, updated });
+  } catch (err) {
+    res.status(500).json({ error: "Failed to update announcement" });
+  }
+});
+
+// Route Setup
 app.get("/", (req, res) => res.send("API is working"));
 
 app.use("/api/categories", categoryRoutes);
@@ -110,6 +141,7 @@ app.post("/api/payment/orders", async (req, res) => {
 app.post("/api/payment/verify", (req, res) => {
   const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
     req.body;
+
   const generated_signature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
     .update(`${razorpay_order_id}|${razorpay_payment_id}`)
@@ -164,9 +196,7 @@ app.post(
       res.json({ success: true, message: "Carousel updated successfully." });
     } catch (err) {
       console.error("Upload error:", err);
-      res
-        .status(500)
-        .json({ success: false, message: "Upload failed", error: err.message });
+      res.status(500).json({ success: false, message: "Upload failed", error: err.message });
     }
   }
 );
@@ -177,17 +207,13 @@ app.delete("/api/delete-carousel/:carouselId", async (req, res) => {
     const deleted = await ImageModel.findOneAndDelete({ carouselId });
 
     if (!deleted) {
-      return res
-        .status(404)
-        .json({ success: false, message: "Carousel not found" });
+      return res.status(404).json({ success: false, message: "Carousel not found" });
     }
 
     res.json({ success: true, message: "Carousel deleted successfully." });
   } catch (error) {
     console.error("Delete error:", error);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to delete carousel" });
+    res.status(500).json({ success: false, message: "Failed to delete carousel" });
   }
 });
 
