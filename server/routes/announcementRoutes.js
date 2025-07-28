@@ -1,46 +1,43 @@
-// server/routes/announcementRoutes.js
 const express = require("express");
-const { Announcement, AnnouncementSettings } = require("../models/Announcement");
-
 const router = express.Router();
+const AnnouncementConfig = require("../models/Announcement");
 
-// GET announcements
+// GET: Fetch announcement settings
 router.get("/", async (req, res) => {
   try {
-    const messages = await Announcement.find().lean();
-    const settings = await AnnouncementSettings.findOne().lean();
-    res.json({
-      messages: messages.map((m) => m.message),
-      isActive: settings?.isActive ?? true,
-    });
+    let config = await AnnouncementConfig.findOne();
+    if (!config) {
+      config = await AnnouncementConfig.create({ messages: [], isActive: true });
+    }
+    res.json(config);
   } catch (err) {
-    console.error("❌ Fetch error:", err);
-    res.status(500).json({ error: "Failed to fetch announcements" });
+    console.error("❌ Error fetching announcement config:", err);
+    res.status(500).json({ error: "Failed to fetch announcement config" });
   }
 });
 
-// POST announcements
+// POST: Save announcement settings
 router.post("/", async (req, res) => {
   try {
     const { messages, isActive } = req.body;
 
     if (!Array.isArray(messages)) {
-      return res.status(400).json({ error: "Invalid messages format" });
+      return res.status(400).json({ error: "Messages must be an array" });
     }
 
-    await Announcement.deleteMany({});
-    await Announcement.insertMany(messages.map((m) => ({ message: m })));
+    let config = await AnnouncementConfig.findOne();
+    if (!config) {
+      config = new AnnouncementConfig();
+    }
 
-    await AnnouncementSettings.findOneAndUpdate(
-      {},
-      { isActive },
-      { upsert: true, new: true }
-    );
+    config.messages = messages;
+    config.isActive = isActive;
+    await config.save();
 
     res.json({ success: true });
   } catch (err) {
-    console.error("❌ Save error:", err);
-    res.status(500).json({ error: "Failed to save announcements" });
+    console.error("❌ Error saving announcement config:", err);
+    res.status(500).json({ error: "Failed to save announcement config" });
   }
 });
 

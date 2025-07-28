@@ -11,10 +11,9 @@ const AnnouncementBar = () => {
     const fetchAnnouncements = async () => {
       const res = await fetch("/api/announcements");
       const data = await res.json();
-      setMessages(data.messages);
+      setMessages(data.messages || []);
       setIsActive(data.isActive);
     };
-
     fetchAnnouncements();
   }, []);
 

@@ -24,14 +24,27 @@ const EditAnnouncement = () => {
   };
 
   useEffect(() => {
-    if (!isActive || messages.length === 0) return;
+    const fetchAnnouncements = async () => {
+      const res = await fetch("/api/announcements");
+      const data = await res.json();
+      setMessages(data.messages || []);
+      setIsActive(data.isActive);
+    };
+    fetchAnnouncements();
+  }, []);
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prev) => (prev + 1) % messages.length);
-    }, 4000);
+  useEffect(() => {
+  const save = async () => {
+    await fetch("/api/announcements", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ messages, isActive }),
+    });
+  };
 
-    return () => clearInterval(interval);
-  }, [isActive, messages]);
+  if (messages.length > 0) save();
+}, [messages, isActive]);
+
 
   return (
     <div className="max-w-xl mx-auto p-6 bg-white rounded shadow">
@@ -51,7 +64,10 @@ const EditAnnouncement = () => {
           onChange={(e) => setText(e.target.value)}
         />
         <div className="mt-2 flex justify-end">
-          <Button className="bg-black text-white hover:bg-gray-900" onClick={handleAddMessage}>
+          <Button
+            className="bg-black text-white hover:bg-gray-900"
+            onClick={handleAddMessage}
+          >
             Add Message
           </Button>
         </div>
