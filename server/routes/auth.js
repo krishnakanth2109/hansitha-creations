@@ -3,25 +3,36 @@ const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
 const User = require("../models/User.model.js");
 const sendEmail = require("../utils/sendEmail.js");
+const authMiddleware = require("../middleware/auth");
 
 const router = express.Router();
 
-// 🔒 Helper to sign token (for localStorage use)
+// -----------------------------
+// 🔒 Token Generator
+// -----------------------------
 const generateToken = (user) =>
-  jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+  jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
 
+// -----------------------------
 // ✅ GET /api/auth/me
-router.get("/me", require("../middleware/auth"), async (req, res) => {
+// -----------------------------
+router.get("/me", authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    if (!user) return res.status(404).json({ message: "User not found" });
-    res.status(200).json({ user });
+    if (!user)
+      return res.status(404).json({ success: false, message: "User not found" });
+
+    res.status(200).json({ success: true, user });
   } catch (error) {
-    res.status(500).json({ message: "Server error" });
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 
+// -----------------------------
 // ✅ POST /api/auth/register
+// -----------------------------
 router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
@@ -41,53 +52,70 @@ router.post("/register", async (req, res) => {
 
     res.json({
       success: true,
-      user: { id: user._id, name: user.name, email: user.email },
+      user: { _id: user._id, name: user.name, email: user.email },
       token,
     });
   } catch (err) {
-    console.error("🔴 Register error:", err);
-    res
-      .status(500)
-      .json({ success: false, message: "Server error during registration" });
+    console.error("🔴 Register error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Server error during registration",
+    });
   }
 });
 
+// -----------------------------
 // ✅ POST /api/auth/login
-// auth.routes.js or wherever your login route is
+// -----------------------------
 router.post("/login", async (req, res) => {
-  const { email, password } = req.body;
+  try {
+    const { email, password } = req.body;
+    if (!email || !password)
+      return res
+        .status(400)
+        .json({ success: false, message: "Email and password are required" });
 
-  const user = await User.findOne({ email });
+    const user = await User.findOne({ email });
+    if (!user || !(await user.comparePassword(password)))
+      return res
+        .status(401)
+        .json({ success: false, message: "Invalid credentials" });
 
-  if (!user || !(await user.comparePassword(password))) {
-    return res
-      .status(401)
-      .json({ success: false, message: "Invalid credentials" });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      message: "Login successful",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+      token,
+    });
+  } catch (err) {
+    console.error("🔴 Login error:", err.message);
+    res.status(500).json({
+      success: false,
+      message: "Login failed due to server error",
+    });
   }
-
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  res.json({
-    success: true,
-    message: "Login successful",
-    user: {
-      _id: user._id,
-      name: user.name,
-      email: user.email,
-      role: user.role,
-    },
-    token,
-  });
 });
 
-// ✅ POST /api/auth/logout (optional for localStorage-based auth)
+// -----------------------------
+// ✅ POST /api/auth/logout
+// -----------------------------
 router.post("/logout", (req, res) => {
+  // If using cookies:
+  // res.clearCookie("token");
+
   res.json({ success: true, message: "Logged out successfully" });
 });
 
+// -----------------------------
 // ✅ POST /api/auth/forgot-password
+// -----------------------------
 router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
@@ -113,22 +141,23 @@ router.post("/forgot-password", async (req, res) => {
       <p>You requested a password reset.</p>
       <p>Click the link below to reset your password (valid for 15 minutes):</p>
       <a href="${resetLink}" style="color:#6B46C1;">${resetLink}</a>
-      <p>If you didn't request this, please ignore this email.</p>
+      <p>If you didn't request this, you can ignore this email.</p>
     `;
 
-    console.log("📧 Sending email to:", user.email);
     await sendEmail(user.email, "Reset Your Password", html);
 
     res.json({ success: true, message: "Reset link sent to your email" });
   } catch (err) {
-    console.error("🔴 Forgot Password error:", err);
+    console.error("🔴 Forgot Password error:", err.message);
     res
       .status(500)
       .json({ success: false, message: "Failed to send reset link" });
   }
 });
 
+// -----------------------------
 // ✅ POST /api/auth/reset-password/:token
+// -----------------------------
 router.post("/reset-password/:token", async (req, res) => {
   try {
     const { token } = req.params;
@@ -151,10 +180,8 @@ router.post("/reset-password/:token", async (req, res) => {
 
     res.json({ success: true, message: "Password has been reset" });
   } catch (err) {
-    console.error("🔴 Reset Password error:", err);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to reset password" });
+    console.error("🔴 Reset Password error:", err.message);
+    res.status(500).json({ success: false, message: "Failed to reset password" });
   }
 });
 

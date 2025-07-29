@@ -66,7 +66,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ---------------------
   const refreshUser = async () => {
     const token = localStorage.getItem('token');
-    if (!token) return;
+    if (!token) {
+      setUser(null);
+      return;
+    }
 
     try {
       const response = await axios.get(
@@ -88,9 +91,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       console.warn('❌ Failed to refresh user:', error);
 
       if (axios.isAxiosError(error) && error.response?.status === 401) {
-        setUser(null);
-        localStorage.removeItem('user');
-        localStorage.removeItem('token');
+        logout(); // token expired or invalid
       }
     }
   };
@@ -102,11 +103,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-      setLoading(false);
-      refreshUser(); // background update
-    } else {
-      refreshUser().finally(() => setLoading(false));
     }
+
+    refreshUser().finally(() => setLoading(false));
   }, []);
 
   // ---------------------
