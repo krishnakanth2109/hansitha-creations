@@ -13,7 +13,7 @@ import { WishlistProvider } from "./context/WishlistContext";
 import Layout from "./components/Layout";
 import AdminLayout from "./components/AdminLayout";
 
-// Pages
+// Public Pages
 import Home from "./pages/Home";
 import AnnouncementBar from "./components/AnnouncementBar";
 import LiveReloadListener from "./components/LiveReloadListener";
@@ -49,9 +49,6 @@ import ProductManagementPage from "./admin/ProductManagementPage";
 import EditAnnouncement from "./admin/EditAnnouncement";
 import EditProduct from "./components/EditProduct";
 
-// Private Route
-import PrivateRoute from "./components/PrivateRoute";
-
 const queryClient = new QueryClient();
 
 const AppRoutes = () => {
@@ -78,13 +75,11 @@ const AppRoutes = () => {
       <Route path="/login" element={<Layout><Login /></Layout>} />
       <Route path="/register" element={<Layout><Register /></Layout>} />
       <Route path="/wishlist" element={<Layout><WishlistPage /></Layout>} />
+      <Route path="/account" element={<Account />} />
+      <Route path="/orders" element={<Orders />} />
+      <Route path="/addresses" element={<Addresses />} />
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
       <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
-
-      {/* Protected Routes */}
-      <Route path="/account" element={<PrivateRoute><Layout><Account /></Layout></PrivateRoute>} />
-      <Route path="/orders" element={<PrivateRoute><Layout><Orders /></Layout></PrivateRoute>} />
-      <Route path="/addresses" element={<PrivateRoute><Layout><Addresses /></Layout></PrivateRoute>} />
 
       {/* Admin Layout + Nested Routes */}
       <Route path="/admin" element={<AdminLayout />}>
@@ -117,47 +112,47 @@ const AppRoutes = () => {
 const App = () => {
   return (
     <AuthProvider>
-      <QueryClientProvider client={queryClient}>
-        <TooltipProvider>
-          <CartProvider>
-            <ProductProvider>
-              <WishlistProvider>
-                <BrowserRouter>
-                  <CurrencyProvider>
-                    <LiveReloadListener />
-                    <Sonner
-                      position="bottom-right"
-                      expand={true}
-                      richColors={true}
-                      closeButton={true}
-                      duration={3000}
-                      className="sonner-toast"
-                      toastOptions={{
-                        style: {
-                          marginBottom: window.innerWidth < 768 ? "5rem" : "1rem",
-                        },
-                      }}
-                    />
-                    <div
-                      id="toast-announcer"
-                      aria-live="polite"
-                      aria-atomic="true"
-                      style={{
-                        position: 'absolute',
-                        left: '-9999px',
-                        height: '1px',
-                        width: '1px',
-                        overflow: 'hidden',
-                      }}
-                    />
-                    <AppRoutes />
-                  </CurrencyProvider>
-                </BrowserRouter>
-              </WishlistProvider>
-            </ProductProvider>
-          </CartProvider>
-        </TooltipProvider>
-      </QueryClientProvider>
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <CartProvider>
+          <ProductProvider>
+            <WishlistProvider>
+              <BrowserRouter>
+                <CurrencyProvider>
+                  <LiveReloadListener />
+                  <Sonner
+                    position="bottom-right"
+                    expand={true}
+                    richColors={true}
+                    closeButton={true}
+                    duration={3000}
+                    className="sonner-toast"
+                    toastOptions={{
+                      style: {
+                        marginBottom: window.innerWidth < 768 ? "5rem" : "1rem",
+                      },
+                    }}
+                  />
+                  <div
+                    id="toast-announcer"
+                    aria-live="polite"
+                    aria-atomic="true"
+                    style={{
+                      position: 'absolute',
+                      left: '-9999px',
+                      height: '1px',
+                      width: '1px',
+                      overflow: 'hidden',
+                    }}
+                  />
+                  <AppRoutes />
+                </CurrencyProvider>
+              </BrowserRouter>
+            </WishlistProvider>
+          </ProductProvider>
+        </CartProvider>
+      </TooltipProvider>
+    </QueryClientProvider>
     </AuthProvider>
   );
 };
