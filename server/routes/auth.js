@@ -6,33 +6,15 @@ const sendEmail = require("../utils/sendEmail.js");
 
 const router = express.Router();
 
-// 🔒 Helper to sign token and send as cookie
-const sendToken = (res, user) => {
-  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-  res.cookie("token", token, {
-    httpOnly: true,
-    sameSite: "None",
-    secure: process.env.NODE_ENV === "production",
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
-
-  return {
-    id: user._id,
-    name: user.name,
-    email: user.email,
-  };
-};
+// 🔒 Helper to sign token (for localStorage use)
+const generateToken = (user) =>
+  jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
 // ✅ GET /api/auth/me
 router.get("/me", require("../middleware/auth"), async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select("-password");
-    if (!user) {
-      return res.status(404).json({ message: "User not found" });
-    }
+    if (!user) return res.status(404).json({ message: "User not found" });
     res.status(200).json({ user });
   } catch (error) {
     res.status(500).json({ message: "Server error" });
@@ -51,8 +33,13 @@ router.post("/register", async (req, res) => {
       return res.status(400).json({ success: false, message: "Email already exists" });
 
     const user = await User.create({ email, password, name });
-    const publicUser = sendToken(res, user);
-    res.json({ success: true, user: publicUser });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      user: { id: user._id, name: user.name, email: user.email },
+      token,
+    });
   } catch (err) {
     console.error("🔴 Register error:", err);
     res.status(500).json({ success: false, message: "Server error during registration" });
@@ -74,23 +61,22 @@ router.post("/login", async (req, res) => {
     if (!isMatch)
       return res.status(400).json({ success: false, message: "Invalid credentials" });
 
-    const publicUser = sendToken(res, user);
-    res.json({ success: true, user: publicUser });
+    const token = generateToken(user);
+
+    res.json({
+      success: true,
+      user: { id: user._id, name: user.name, email: user.email },
+      token,
+    });
   } catch (err) {
     console.error("🔴 Login error:", err);
     res.status(500).json({ success: false, message: "Server error during login" });
   }
 });
 
-// ✅ POST /api/auth/logout
+// ✅ POST /api/auth/logout (optional for localStorage-based auth)
 router.post("/logout", (req, res) => {
-  res
-    .clearCookie("token", {
-      httpOnly: true,
-      sameSite: "None",
-      secure: process.env.NODE_ENV === "production",
-    })
-    .json({ success: true, message: "Logged out successfully" });
+  res.json({ success: true, message: "Logged out successfully" });
 });
 
 // ✅ POST /api/auth/forgot-password

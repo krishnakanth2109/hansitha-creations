@@ -1,8 +1,8 @@
-// middlewares/authMiddleware.js
 const jwt = require("jsonwebtoken");
 
-const verifyToken = (req, res, next) => {
-  const token = req.cookies.token; // ✅ Read from cookies
+module.exports = (req, res, next) => {
+  const authHeader = req.headers.authorization;
+  const token = authHeader?.startsWith("Bearer ") ? authHeader.split(" ")[1] : null;
 
   if (!token) {
     return res.status(401).json({ message: "No token, authorization denied" });
@@ -16,5 +16,3 @@ const verifyToken = (req, res, next) => {
     return res.status(401).json({ message: "Token is not valid" });
   }
 };
-
-module.exports = verifyToken;

@@ -50,12 +50,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // Fetch current user
   // ---------------------
   const refreshUser = async () => {
+    const token = localStorage.getItem('token');
+    if (!token) return;
+
     try {
       const response = await axios.get(
         `${import.meta.env.VITE_API_URL}/api/auth/me`,
         {
-          withCredentials: true,
-          headers: { 'Content-Type': 'application/json' },
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`,
+          },
         }
       );
 
@@ -67,10 +72,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } catch (error) {
       console.warn('❌ Failed to refresh user:', error);
 
-      // Only clear on unauthorized errors (401)
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         setUser(null);
         localStorage.removeItem('user');
+        localStorage.removeItem('token');
       }
     }
   };
@@ -80,7 +85,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ---------------------
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
-
     if (storedUser) {
       setUser(JSON.parse(storedUser));
       setLoading(false);
@@ -103,18 +107,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         `${import.meta.env.VITE_API_URL}/api/auth/login`,
         credentials,
         {
-          withCredentials: true,
           headers: { 'Content-Type': 'application/json' },
         }
       );
 
-      const loggedInUser = response.data.user;
-      if (!loggedInUser) {
+      const { user: loggedInUser, token } = response.data;
+
+      if (!loggedInUser || !token) {
         return { success: false, message: 'Invalid login response' };
       }
 
-      setUser(loggedInUser);
       localStorage.setItem('user', JSON.stringify(loggedInUser));
+      localStorage.setItem('token', token);
+      setUser(loggedInUser);
       return { success: true };
     } catch (error: unknown) {
       const err = error as AxiosError<any>;
@@ -136,8 +141,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/register`,
-        data,
-        { withCredentials: true }
+        data
       );
       return response.data;
     } catch (error) {
@@ -151,13 +155,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    axios
-      .post(
-        `${import.meta.env.VITE_API_URL}/api/auth/logout`,
-        {},
-        { withCredentials: true }
-      )
-      .catch(() => {});
+    localStorage.removeItem('token');
   };
 
   // ---------------------
