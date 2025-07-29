@@ -2,6 +2,7 @@ import { useLocation, BrowserRouter, Routes, Route, Navigate, useNavigate } from
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "@/components/ui/sonner";
+import { AuthProvider } from "./context/AuthContext";
 
 import { CartProvider } from "./context/CartContext";
 import { ProductProvider } from "./context/ProductContext";
@@ -110,6 +111,7 @@ const AppRoutes = () => {
 
 const App = () => {
   return (
+    <AuthProvider>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <CartProvider>
@@ -151,6 +153,7 @@ const App = () => {
         </CartProvider>
       </TooltipProvider>
     </QueryClientProvider>
+    </AuthProvider>
   );
 };
 
