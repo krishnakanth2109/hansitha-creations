@@ -37,7 +37,7 @@ const Login = () => {
       toast.success("Login successful");
 
       if (user.role === "admin") {
-        navigate("/admin", { replace: true });
+        navigate("/account", { replace: true });
       } else {
         navigate("/account", { replace: true });
       }
