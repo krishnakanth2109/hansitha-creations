@@ -1,16 +1,15 @@
 import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Navigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
-import { Navigate } from "react-router-dom";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth(); // ✅ Get user and loading
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -21,6 +20,11 @@ const Login = () => {
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
+
+  // ✅ If user is already logged in, redirect
+  if (!loading && user) {
+    return <Navigate to="/account" replace />;
+  }
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -73,9 +77,6 @@ const Login = () => {
     visible: { opacity: 1, x: 0 },
     exit: { opacity: 0, x: -50 },
   };
-
-  const { user } = useAuth();
-  if (!user) return <Navigate to="/login" />;
 
   return (
     <div className="max-w-md mx-auto mt-20 p-8 border rounded-lg shadow-lg bg-white relative overflow-hidden">

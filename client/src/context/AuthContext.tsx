@@ -1,5 +1,15 @@
-import { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import {
+  createContext,
+  useContext,
+  useEffect,
+  useState,
+  ReactNode,
+} from 'react';
 import axios, { AxiosError } from 'axios';
+
+// -----------------------
+// Types
+// -----------------------
 
 interface User {
   _id: string;
@@ -19,15 +29,26 @@ interface AuthContextType {
   register: (data: { name: string; email: string; password: string }) => Promise<any>;
   logout: () => void;
   refreshUser: () => Promise<void>;
-  isLoggedIn: boolean; 
+  isLoggedIn: boolean;
 }
 
+// -----------------------
+// Context Setup
+// -----------------------
+
 const AuthContext = createContext<AuthContextType | null>(null);
+
+// -----------------------
+// Provider
+// -----------------------
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // ---------------------
+  // Fetch current user
+  // ---------------------
   const refreshUser = async () => {
     try {
       const response = await axios.get(
@@ -44,10 +65,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         localStorage.setItem('user', JSON.stringify(latestUser));
       }
     } catch (error) {
-      console.warn('❌ Failed to refresh user (maybe not logged in):', error);
-      
-      // Only clear user data if it's an authentication error (401)
-      // This prevents logout on network errors or server issues
+      console.warn('❌ Failed to refresh user:', error);
+
+      // Only clear on unauthorized errors (401)
       if (axios.isAxiosError(error) && error.response?.status === 401) {
         setUser(null);
         localStorage.removeItem('user');
@@ -55,21 +75,24 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // ---------------------
+  // Load user on mount
+  // ---------------------
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
 
     if (storedUser) {
       setUser(JSON.parse(storedUser));
-      setLoading(false); // ✅ Show UI immediately if local user exists
-
-      // Then refresh from DB in background
-      refreshUser();
+      setLoading(false);
+      refreshUser(); // background update
     } else {
-      // No user in localStorage, must fetch
       refreshUser().finally(() => setLoading(false));
     }
   }, []);
 
+  // ---------------------
+  // Login
+  // ---------------------
   const login = async (credentials: { email: string; password: string }) => {
     try {
       if (!credentials.email || !credentials.password) {
@@ -102,7 +125,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
-  const register = async (data: { name: string; email: string; password: string }) => {
+  // ---------------------
+  // Register
+  // ---------------------
+  const register = async (data: {
+    name: string;
+    email: string;
+    password: string;
+  }) => {
     try {
       const response = await axios.post(
         `${import.meta.env.VITE_API_URL}/api/auth/register`,
@@ -115,18 +145,44 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   };
 
+  // ---------------------
+  // Logout
+  // ---------------------
   const logout = () => {
     setUser(null);
     localStorage.removeItem('user');
-    axios.post(`${import.meta.env.VITE_API_URL}/api/auth/logout`, {}, { withCredentials: true }).catch(() => {});
+    axios
+      .post(
+        `${import.meta.env.VITE_API_URL}/api/auth/logout`,
+        {},
+        { withCredentials: true }
+      )
+      .catch(() => {});
   };
 
+  // ---------------------
+  // Provider value
+  // ---------------------
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, refreshUser, loading, isLoggedIn: !!user, }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        login,
+        register,
+        logout,
+        refreshUser,
+        loading,
+        isLoggedIn: !!user,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
 };
+
+// -----------------------
+// Hook
+// -----------------------
 
 export const useAuth = (): AuthContextType => {
   const context = useContext(AuthContext);
