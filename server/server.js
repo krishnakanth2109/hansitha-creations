@@ -110,7 +110,7 @@ announcementRoutes.post("/", async (req, res) => {
 });
 
 // Route Setup
-app.get("/", (req, res) => res.send("API is working"));
+app.get("/", (req, res) => res.send("Internet is Not Connected..."));
 
 app.use("/api/categories", categoryRoutes);
 app.use("/api", checkoutRoutes);
