@@ -1,6 +1,7 @@
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { FiPlus, FiMinus } from 'react-icons/fi'; // Icons for toggle
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -10,6 +11,8 @@ const AdminProfile = () => {
   const [newRole, setNewRole] = useState('user');
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
+  const [admins, setAdmins] = useState<{ name: string; email: string }[]>([]);
+  const [showAdmins, setShowAdmins] = useState(false); // toggle state
 
   const handleLogout = async () => {
     try {
@@ -42,6 +45,21 @@ const AdminProfile = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    const fetchAdmins = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/users/admins`, {
+          withCredentials: true,
+        });
+        setAdmins(res.data);
+      } catch (err) {
+        console.error('Error fetching admin users:', err);
+      }
+    };
+
+    fetchAdmins();
+  }, []);
 
   return (
     <div className="bg-white p-4 rounded shadow max-w-md mx-auto">
@@ -97,6 +115,28 @@ const AdminProfile = () => {
 
         {message && <p className="text-sm mt-2">{message}</p>}
       </form>
+
+      {/* Toggle Admin List */}
+      <div className="mt-6">
+        <button
+          onClick={() => setShowAdmins(prev => !prev)}
+          className="flex items-center gap-2 text-blue-600 hover:underline"
+        >
+          {showAdmins ? <FiMinus /> : <FiPlus />}
+          <span>{showAdmins ? 'Hide Admin List' : 'Show Admin List'}</span>
+        </button>
+
+        {showAdmins && (
+          <ul className="mt-3 space-y-2">
+            {admins.map((admin) => (
+              <li key={admin.email} className="border p-2 rounded">
+                <span className="font-medium">{admin.name}</span> <br />
+                <span className="text-sm text-gray-600">{admin.email}</span>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
     </div>
   );
 };

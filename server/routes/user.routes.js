@@ -8,6 +8,16 @@ const User = require("../models/User.model.js");
 
 const router = express.Router();
 
+// ✅ GET /api/users/admins - Get list of admin users
+router.get('/admins', async (req, res) => {
+  try {
+    const admins = await User.find({ role: 'admin' }).select('name email');
+    res.json(admins);
+  } catch (err) {
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 // PATCH /api/users/update-role
 router.patch('/update-role', async (req, res) => {
   const { email, role } = req.body;
