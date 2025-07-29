@@ -5,17 +5,15 @@ import {
   useState,
   ReactNode,
 } from 'react';
-import axios, { AxiosError } from 'axios';
+import axios from 'axios';
 
-// -----------------------
-// Types
-// -----------------------
+const API_URL = import.meta.env.VITE_API_URL;
 
 interface User {
   _id: string;
   name: string;
   email: string;
-  role: string;
+  role?: string;
   wishlist?: string[];
   cart?: {
     productId: string;
@@ -23,187 +21,71 @@ interface User {
   }[];
 }
 
-interface LoginResponse {
-  success: boolean;
-  message?: string;
-  user?: User;
-  token?: string;
-}
-
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: {
-    email: string;
-    password: string;
-  }) => Promise<LoginResponse>;
-  register: (data: {
-    name: string;
-    email: string;
-    password: string;
-  }) => Promise<any>;
-  logout: () => void;
+  login: (credentials: { email: string; password: string }) => Promise<void>;
+  logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
-  isLoggedIn: boolean;
 }
 
-// -----------------------
-// Context Setup
-// -----------------------
+const AuthContext = createContext<AuthContextType>({
+  user: null,
+  loading: true,
+  login: async () => {},
+  logout: async () => {},
+  refreshUser: async () => {},
+});
 
-const AuthContext = createContext<AuthContextType | null>(null);
-
-// -----------------------
-// Provider
-// -----------------------
+export const useAuth = () => useContext(AuthContext);
 
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ---------------------
-  // Fetch current user
-  // ---------------------
+  // ✅ Refresh user from API and store in localStorage
   const refreshUser = async () => {
-    const token = localStorage.getItem('token');
-    if (!token) {
-      setUser(null);
-      return;
-    }
-
     try {
-      const response = await axios.get(
-        `${import.meta.env.VITE_API_URL}/api/auth/me`,
-        {
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-
-      const latestUser = response.data.user;
-      if (latestUser) {
-        setUser(latestUser);
-        localStorage.setItem('user', JSON.stringify(latestUser));
-      }
-    } catch (error) {
-      console.warn('❌ Failed to refresh user:', error);
-
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        logout(); // token expired or invalid
-      }
+      const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+      setUser(res.data.user);
+      localStorage.setItem('user', JSON.stringify(res.data.user));
+    } catch {
+      setUser(null);
+      localStorage.removeItem('user');
+    } finally {
+      setLoading(false);
     }
   };
 
-  // ---------------------
-  // Load user on mount
-  // ---------------------
   useEffect(() => {
     const storedUser = localStorage.getItem('user');
     if (storedUser) {
       setUser(JSON.parse(storedUser));
+      setLoading(false);
+    } else {
+      refreshUser();
     }
-
-    refreshUser().finally(() => setLoading(false));
   }, []);
 
-  // ---------------------
-  // Login
-  // ---------------------
-  const login = async (
-    credentials: { email: string; password: string }
-  ): Promise<LoginResponse> => {
-    try {
-      if (!credentials.email || !credentials.password) {
-        return { success: false, message: 'Email and password are required' };
-      }
-
-      const response = await axios.post<LoginResponse>(
-        `${import.meta.env.VITE_API_URL}/api/auth/login`,
-        credentials,
-        {
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
-
-      const { user: loggedInUser, token } = response.data;
-
-      if (!loggedInUser || !token) {
-        return { success: false, message: 'Invalid login response' };
-      }
-
-      localStorage.setItem('user', JSON.stringify(loggedInUser));
-      localStorage.setItem('token', token);
-      setUser(loggedInUser);
-
-      return { success: true, user: loggedInUser, token };
-    } catch (error: unknown) {
-      const err = error as AxiosError<any>;
-      return {
-        success: false,
-        message:
-          err.response?.data?.message || 'Login failed. Please try again.',
-      };
-    }
+  // ✅ Login and store user
+  const login = async (credentials: { email: string; password: string }) => {
+    const res = await axios.post(`${API_URL}/api/auth/login`, credentials, {
+      withCredentials: true,
+    });
+    setUser(res.data.user);
+    localStorage.setItem('user', JSON.stringify(res.data.user));
   };
 
-  // ---------------------
-  // Register
-  // ---------------------
-  const register = async (data: {
-    name: string;
-    email: string;
-    password: string;
-  }) => {
-    try {
-      const response = await axios.post(
-        `${import.meta.env.VITE_API_URL}/api/auth/register`,
-        data
-      );
-      return response.data;
-    } catch (error) {
-      throw error;
-    }
-  };
-
-  // ---------------------
-  // Logout
-  // ---------------------
-  const logout = () => {
+  // ✅ Logout and clear localStorage
+  const logout = async () => {
+    await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
     setUser(null);
     localStorage.removeItem('user');
-    localStorage.removeItem('token');
   };
 
-  // ---------------------
-  // Provider value
-  // ---------------------
   return (
-    <AuthContext.Provider
-      value={{
-        user,
-        login,
-        register,
-        logout,
-        refreshUser,
-        loading,
-        isLoggedIn: !!user,
-      }}
-    >
+    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
       {children}
     </AuthContext.Provider>
   );
-};
-
-// -----------------------
-// Hook
-// -----------------------
-
-export const useAuth = (): AuthContextType => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error('useAuth must be used within an AuthProvider');
-  }
-  return context;
 };

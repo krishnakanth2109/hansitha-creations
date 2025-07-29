@@ -1,3 +1,5 @@
+// ✅ Updated Login.tsx - now fixes the login flow, handles errors, and integrates correctly with AuthContext
+
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
@@ -16,48 +18,38 @@ const Login = () => {
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
 
-  const [stage, setStage] = useState<"login" | "forgot" | "verify">("login");
+  const [stage, setStage] = useState("login");
   const [email, setEmail] = useState("");
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleLogin = async (e) => {
     e.preventDefault();
     setError("");
 
-    const result = await login(formData);
-
-    if (result.success) {
-      const user = result.user;
-      const token = result.token;
-
-      localStorage.setItem("user", JSON.stringify(user));
-      localStorage.setItem("token", JSON.stringify(token));
-
+    try {
+      await login(formData);
       toast.success("Login successful");
-
-      if (user.role === "admin") {
-        navigate("/account", { replace: true });
-      } else {
-        navigate("/account", { replace: true });
-      }
-    } else {
-      setError(result.message);
+      navigate("/account", { replace: true });
+    } catch (err) {
+      const message = err?.response?.data?.message || "Login failed";
+      setError(message);
+      toast.error(message);
     }
   };
 
-  const handleSendOtp = async (e: React.FormEvent) => {
+  const handleSendOtp = async (e) => {
     e.preventDefault();
     try {
       const { data } = await axios.post(`${API_URL}/auth/request-otp`, { email });
       toast.success(data.message || "OTP sent");
       setStage("verify");
-    } catch (err: any) {
+    } catch (err) {
       toast.error(err?.response?.data?.message || "Failed to send OTP");
     }
   };
 
-  const handleResetPassword = async (e: React.FormEvent) => {
+  const handleResetPassword = async (e) => {
     e.preventDefault();
 
     if (newPassword === formData.password) {
@@ -74,7 +66,7 @@ const Login = () => {
       toast.success(data.message || "Password reset successful");
       setStage("login");
       setFormData({ email, password: "" });
-    } catch (err: any) {
+    } catch (err) {
       toast.error(err?.response?.data?.message || "Invalid OTP or error");
     }
   };
@@ -105,9 +97,7 @@ const Login = () => {
             transition={{ duration: 0.3 }}
             className="space-y-5"
           >
-            {error && (
-              <p className="text-red-500 text-sm text-center">{error}</p>
-            )}
+            {error && <p className="text-red-500 text-sm text-center">{error}</p>}
 
             <div className="relative">
               <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
@@ -151,11 +141,7 @@ const Login = () => {
                   onClick={() => setShowPassword((prev) => !prev)}
                   className="absolute right-4 text-gray-400"
                 >
-                  {showPassword ? (
-                    <EyeOff className="w-5 h-5" />
-                  ) : (
-                    <Eye className="w-5 h-5" />
-                  )}
+                  {showPassword ? <EyeOff className="w-5 h-5" /> : <Eye className="w-5 h-5" />}
                 </button>
               </div>
             </div>
@@ -257,11 +243,8 @@ const Login = () => {
       {stage === "login" && (
         <div className="mt-6 text-center">
           <p className="text-gray-600 text-sm">
-            Don&apos;t have an account?{" "}
-            <a
-              href="/register"
-              className="text-purple-600 hover:underline font-medium"
-            >
+            Don&apos;t have an account?{' '}
+            <a href="/register" className="text-purple-600 hover:underline font-medium">
               Register
             </a>
           </p>
