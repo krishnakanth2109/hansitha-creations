@@ -15,7 +15,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   if (!user) return <Navigate to="/" replace />;
 
   // Not an admin
-  if (user.role !== "admin") return <Navigate to="/" replace />;
+  if (!user.roles?.includes("admin")) return <Navigate to="/" replace />;
 
   return <>{children}</>;
 };

@@ -36,7 +36,7 @@ const Login = () => {
 
       toast.success("Login successful");
 
-      if (user.role === "admin") {
+      if (user.roles.includes("admin")) {
         navigate("/admin", { replace: true });
       } else {
         navigate("/account", { replace: true });
@@ -49,7 +49,9 @@ const Login = () => {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post(`${API_URL}/auth/request-otp`, { email });
+      const { data } = await axios.post(`${API_URL}/auth/request-otp`, {
+        email,
+      });
       toast.success(data.message || "OTP sent");
       setStage("verify");
     } catch (err: any) {
@@ -110,7 +112,9 @@ const Login = () => {
             )}
 
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Email
+              </label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-gray-400">
                   <Mail className="w-5 h-5" />
@@ -130,7 +134,9 @@ const Login = () => {
             </div>
 
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">
+                Password
+              </label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-gray-400">
                   <Lock className="w-5 h-5" />

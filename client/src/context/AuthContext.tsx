@@ -15,7 +15,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
-  role: string;
+  roles: string[];
   wishlist?: string[];
   cart?: {
     productId: string;

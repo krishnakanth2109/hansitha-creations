@@ -7,6 +7,8 @@ import { QuickActions } from "@/components/QuickActions";
 import { RecentOrders } from "@/components/RecentOrders";
 import { SecuritySettings } from "@/components/SecuritySettings";
 import { Footer } from "@/components/Footer";
+import { Link } from "react-router-dom";
+
 
 export default function Account() {
   const [activeSection, setActiveSection] = useState<string>("default");
@@ -58,7 +60,22 @@ export default function Account() {
       default:
         return (
           <div className="grid grid-cols-1 gap-6">
-            <QuickActions onActionClick={handleActionClick} userName={user.name} />
+            {/* Show Admin Link only if user has 'admin' role */}
+            {user?.roles?.includes("admin") && (
+              <div className="mb-4">
+                <Link
+                  to="/admin"
+                  className="inline-block bg-black text-white px-4 py-2 rounded hover:bg-gray-800 transition"
+                >
+                  Go to Admin Panel
+                </Link>
+              </div>
+            )}
+
+            <QuickActions
+              onActionClick={handleActionClick}
+              userName={user.name}
+            />
           </div>
         );
     }
