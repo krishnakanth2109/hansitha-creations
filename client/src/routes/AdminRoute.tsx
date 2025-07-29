@@ -12,7 +12,7 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   if (loading) return <div>Loading...</div>;
 
   // Not logged in
-  if (!user) return <Navigate to="/signin" replace />;
+  if (!user) return <Navigate to="/" replace />;
 
   // Not an admin
   if (user.role !== "admin") return <Navigate to="/" replace />;
