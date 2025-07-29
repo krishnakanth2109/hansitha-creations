@@ -15,6 +15,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  role: string;
   wishlist?: string[];
   cart?: {
     productId: string;
@@ -22,11 +23,25 @@ interface User {
   }[];
 }
 
+interface LoginResponse {
+  success: boolean;
+  message?: string;
+  user?: User;
+  token?: string;
+}
+
 interface AuthContextType {
   user: User | null;
   loading: boolean;
-  login: (credentials: { email: string; password: string }) => Promise<{ success: boolean; message?: string }>;
-  register: (data: { name: string; email: string; password: string }) => Promise<any>;
+  login: (credentials: {
+    email: string;
+    password: string;
+  }) => Promise<LoginResponse>;
+  register: (data: {
+    name: string;
+    email: string;
+    password: string;
+  }) => Promise<any>;
   logout: () => void;
   refreshUser: () => Promise<void>;
   isLoggedIn: boolean;
@@ -97,13 +112,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   // ---------------------
   // Login
   // ---------------------
-  const login = async (credentials: { email: string; password: string }) => {
+  const login = async (
+    credentials: { email: string; password: string }
+  ): Promise<LoginResponse> => {
     try {
       if (!credentials.email || !credentials.password) {
         return { success: false, message: 'Email and password are required' };
       }
 
-      const response = await axios.post(
+      const response = await axios.post<LoginResponse>(
         `${import.meta.env.VITE_API_URL}/api/auth/login`,
         credentials,
         {
@@ -120,12 +137,14 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.setItem('user', JSON.stringify(loggedInUser));
       localStorage.setItem('token', token);
       setUser(loggedInUser);
-      return { success: true };
+
+      return { success: true, user: loggedInUser, token };
     } catch (error: unknown) {
       const err = error as AxiosError<any>;
       return {
         success: false,
-        message: err.response?.data?.message || 'Login failed. Please try again.',
+        message:
+          err.response?.data?.message || 'Login failed. Please try again.',
       };
     }
   };

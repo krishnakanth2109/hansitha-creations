@@ -26,11 +26,15 @@ router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
     if (!email || !password || !name)
-      return res.status(400).json({ success: false, message: "All fields are required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "All fields are required" });
 
     const existing = await User.findOne({ email });
     if (existing)
-      return res.status(400).json({ success: false, message: "Email already exists" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email already exists" });
 
     const user = await User.create({ email, password, name });
     const token = generateToken(user);
@@ -42,36 +46,40 @@ router.post("/register", async (req, res) => {
     });
   } catch (err) {
     console.error("🔴 Register error:", err);
-    res.status(500).json({ success: false, message: "Server error during registration" });
+    res
+      .status(500)
+      .json({ success: false, message: "Server error during registration" });
   }
 });
 
 // ✅ POST /api/auth/login
+// auth.routes.js or wherever your login route is
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ success: false, message: "Email and password required" });
+  const { email, password } = req.body;
 
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(400).json({ success: false, message: "Invalid credentials" });
+  const user = await User.findOne({ email });
 
-    const isMatch = await user.comparePassword(password);
-    if (!isMatch)
-      return res.status(400).json({ success: false, message: "Invalid credentials" });
-
-    const token = generateToken(user);
-
-    res.json({
-      success: true,
-      user: { id: user._id, name: user.name, email: user.email },
-      token,
-    });
-  } catch (err) {
-    console.error("🔴 Login error:", err);
-    res.status(500).json({ success: false, message: "Server error during login" });
+  if (!user || !(await user.comparePassword(password))) {
+    return res
+      .status(401)
+      .json({ success: false, message: "Invalid credentials" });
   }
+
+  const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
+    expiresIn: "7d",
+  });
+
+  res.json({
+    success: true,
+    message: "Login successful",
+    user: {
+      _id: user._id,
+      name: user.name,
+      email: user.email,
+      role: user.role,
+    },
+    token,
+  });
 });
 
 // ✅ POST /api/auth/logout (optional for localStorage-based auth)
@@ -84,11 +92,15 @@ router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
     if (!email)
-      return res.status(400).json({ success: false, message: "Email is required" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Email is required" });
 
     const user = await User.findOne({ email });
     if (!user)
-      return res.status(404).json({ success: false, message: "User not found" });
+      return res
+        .status(404)
+        .json({ success: false, message: "User not found" });
 
     const token = crypto.randomBytes(32).toString("hex");
     user.resetToken = token;
@@ -110,7 +122,9 @@ router.post("/forgot-password", async (req, res) => {
     res.json({ success: true, message: "Reset link sent to your email" });
   } catch (err) {
     console.error("🔴 Forgot Password error:", err);
-    res.status(500).json({ success: false, message: "Failed to send reset link" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to send reset link" });
   }
 });
 
@@ -126,7 +140,9 @@ router.post("/reset-password/:token", async (req, res) => {
     });
 
     if (!user)
-      return res.status(400).json({ success: false, message: "Invalid or expired token" });
+      return res
+        .status(400)
+        .json({ success: false, message: "Invalid or expired token" });
 
     user.password = password;
     user.resetToken = undefined;
@@ -136,7 +152,9 @@ router.post("/reset-password/:token", async (req, res) => {
     res.json({ success: true, message: "Password has been reset" });
   } catch (err) {
     console.error("🔴 Reset Password error:", err);
-    res.status(500).json({ success: false, message: "Failed to reset password" });
+    res
+      .status(500)
+      .json({ success: false, message: "Failed to reset password" });
   }
 });
 

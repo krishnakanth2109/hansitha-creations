@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { useNavigate, Navigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { Mail, Lock, Eye, EyeOff } from "lucide-react";
 import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
@@ -9,7 +9,7 @@ import { motion, AnimatePresence } from "framer-motion";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Login = () => {
-  const { login, user, loading } = useAuth(); // ✅ Get user and loading
+  const { login } = useAuth();
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -21,17 +21,26 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  // ✅ If user is already logged in, redirect
-  if (!loading && user) {
-    return <Navigate to="/account" replace />;
-  }
-
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
+
     const result = await login(formData);
+
     if (result.success) {
-      navigate("/account", { replace: true });
+      const user = result.user;
+      const token = result.token;
+
+      localStorage.setItem("user", JSON.stringify(user));
+      localStorage.setItem("token", JSON.stringify(token));
+
+      toast.success("Login successful");
+
+      if (user.role === "admin") {
+        navigate("/admin/dashboard", { replace: true });
+      } else {
+        navigate("/account", { replace: true });
+      }
     } else {
       setError(result.message);
     }
@@ -40,9 +49,7 @@ const Login = () => {
   const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const { data } = await axios.post(`${API_URL}/auth/request-otp`, {
-        email,
-      });
+      const { data } = await axios.post(`${API_URL}/auth/request-otp`, { email });
       toast.success(data.message || "OTP sent");
       setStage("verify");
     } catch (err: any) {
@@ -101,10 +108,9 @@ const Login = () => {
             {error && (
               <p className="text-red-500 text-sm text-center">{error}</p>
             )}
+
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Email
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-gray-400">
                   <Mail className="w-5 h-5" />
@@ -124,9 +130,7 @@ const Login = () => {
             </div>
 
             <div className="relative">
-              <label className="block text-sm font-medium text-gray-700 mb-1">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Password</label>
               <div className="relative flex items-center">
                 <span className="absolute left-4 text-gray-400">
                   <Lock className="w-5 h-5" />

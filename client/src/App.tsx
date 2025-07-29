@@ -40,6 +40,7 @@ import WishlistPage from "./pages/WishlistPage";
 import PrivacyPolicy from "./pages/privacy-policy";
 
 // Admin Pages
+import AdminRoute from "./routes/AdminRoute";
 import AddProduct from "./admin/AddProduct";
 import CarouselManager from "./admin/CarouselManager";
 import OrdersDashboard from "./admin/OrdersDashboard";
@@ -82,7 +83,7 @@ const AppRoutes = () => {
       <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
 
       {/* Admin Layout + Nested Routes */}
-      <Route path="/admin" element={<AdminLayout />}>
+      <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<Navigate to="add" replace />} />
         <Route path="add" element={<AddProduct />} />
         <Route
