@@ -6,11 +6,10 @@ const userSchema = new mongoose.Schema({
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
 
-  // ✅ Support multiple roles (e.g., both 'user' and 'admin')
-  roles: {
-    type: [String],
+  role: {
+    type: String,
     enum: ["user", "admin"],
-    default: ["user"],
+    default: "user",
   },
 
   cart: [
