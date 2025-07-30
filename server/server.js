@@ -70,7 +70,7 @@ mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    dbName: "Hansitha Creations-Database",
+    dbName: "web-store",
   })
   .then(() => {
     console.log("✅ MongoDB connected");
