@@ -216,8 +216,7 @@ const Shop: React.FC = () => {
                             e.stopPropagation();
                             if (!user) {
                               toastWithVoice.error(
-                                "Please log in to add to wishlist",
-                                { duration: 2000 }
+                                "Please log in to add to wishlist"
                               );
                               return;
                             }
@@ -225,8 +224,7 @@ const Shop: React.FC = () => {
                             toastWithVoice.success(
                               added
                                 ? "Added to wishlist"
-                                : "Removed from wishlist",
-                              { duration: 2000 }
+                                : "Removed from wishlist"
                             );
                           }}
                           className="absolute top-2 right-2 z-0 rounded-full p-1 text-white bg-black/50 hover:bg-black/70 transition"
@@ -258,9 +256,7 @@ const Shop: React.FC = () => {
                             image: product.image,
                             quantity: 1,
                           });
-                          toastWithVoice.success("Added to cart", {
-                            duration: 2000,
-                          });
+                          toastWithVoice.success("Added to cart");
                         }}
                         disabled={isOutOfStock}
                         className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${

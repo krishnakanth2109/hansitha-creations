@@ -126,7 +126,7 @@ const App = () => {
                     expand={true}
                     richColors={true}
                     closeButton={true}
-                    duration={3000}
+                    duration={2000}
                     className="sonner-toast"
                     toastOptions={{
                       style: {

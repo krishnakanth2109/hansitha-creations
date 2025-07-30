@@ -32,8 +32,6 @@ const ProductDetailsPage = () => {
   const [selectedImage, setSelectedImage] = useState("");
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
-  const [selectedSize, setSelectedSize] = useState("M");
-  const [selectedColor, setSelectedColor] = useState("");
   const [quantity, setQuantity] = useState(1);
 
   const swipeHandlers = useSwipeable({
@@ -63,11 +61,11 @@ const ProductDetailsPage = () => {
         );
         if (res.data.length > 0) setProduct(res.data[0]);
         else {
-          toastWithVoice.error("Product not found", { duration: 2000 });
+          toastWithVoice.error("Product not found");
           navigate("/");
         }
       } catch (err) {
-        toastWithVoice.error("Error loading product", { duration: 2000 });
+        toastWithVoice.error("Error loading product");
         navigate("/");
       }
     };
@@ -77,7 +75,6 @@ const ProductDetailsPage = () => {
   useEffect(() => {
     if (product?.image) {
       setSelectedImage(product.image);
-      setSelectedColor(product.color || "Terracotta");
     }
   }, [product]);
 
@@ -110,12 +107,12 @@ const ProductDetailsPage = () => {
       image: product.image,
       quantity,
     });
-    toastWithVoice.success("Added to cart!", { duration: 2000 });
+    toastWithVoice.success("Added to cart!");
   };
 
   const handleToggleWishlist = async () => {
     if (!user) {
-      toastWithVoice.error("Login to use wishlist", { duration: 2000 });
+      toastWithVoice.error("Login to use wishlist");
       navigate("/login");
       return;
     }
@@ -123,11 +120,10 @@ const ProductDetailsPage = () => {
       const wasInWishlist = isInWishlist(product._id);
       await toggleWishlist(product._id);
       toastWithVoice.success(
-        `${wasInWishlist ? "Removed from" : "Added to"} wishlist`,
-        { duration: 2000 }
+        `${wasInWishlist ? "Removed from" : "Added to"} wishlist`
       );
     } catch {
-      toastWithVoice.error("Error updating wishlist", { duration: 2000 });
+      toastWithVoice.error("Error updating wishlist");
     }
   };
 
@@ -383,15 +379,13 @@ const ProductDetailsPage = () => {
                       e.stopPropagation();
                       if (!user) {
                         toastWithVoice.error(
-                          "Please log in to add to wishlist",
-                          { duration: 2000 }
+                          "Please log in to add to wishlist"
                         );
                         return;
                       }
                       const added = await toggleWishlist(item._id);
                       toastWithVoice.success(
-                        added ? "Added to wishlist" : "Removed from wishlist",
-                        { duration: 2000 }
+                        added ? "Added to wishlist" : "Removed from wishlist"
                       );
                     }}
                     className="absolute top-2 right-2 z-10 rounded-full p-1 text-white bg-black/50 hover:bg-black/70 transition"

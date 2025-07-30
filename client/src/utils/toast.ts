@@ -1,29 +1,44 @@
 import { toast } from 'sonner';
 
+// Get voice preference from localStorage (defaults to true)
+const isVoiceEnabled = () => {
+  const stored = localStorage.getItem('voice-enabled');
+  return stored !== 'false'; // if undefined or "true", return true
+};
+
 // Speak message using Web Speech API
 function speak(message: string) {
-  // Cancel any ongoing speech to avoid overlap
+  if (!('speechSynthesis' in window)) return;
   if (speechSynthesis.speaking || speechSynthesis.pending) {
     speechSynthesis.cancel();
   }
 
   const utterance = new SpeechSynthesisUtterance(message);
-  utterance.lang = 'en-US';
+  utterance.lang = 'en-US'; // or 'en-IN' if you prefer Indian English
   speechSynthesis.speak(utterance);
 }
 
-// Unified toast + speech
+// Toast + Voice wrapper
 export const toastWithVoice = {
   success: (msg: string, options = {}) => {
-    speak(msg);
+    if (isVoiceEnabled()) speak(msg);
     toast.success(msg, options);
   },
   error: (msg: string, options = {}) => {
-    speak(msg);
+    if (isVoiceEnabled()) speak(msg);
     toast.error(msg, options);
   },
   info: (msg: string, options = {}) => {
-    speak(msg);
+    if (isVoiceEnabled()) speak(msg);
     toast(msg, options);
+  },
+  warning: (msg: string, options = {}) => {
+    if (isVoiceEnabled()) speak(msg);
+    // sonner doesn't have toast.warning by default — fallback:
+    if ((toast as any).warning) {
+      (toast as any).warning(msg, options);
+    } else {
+      toast(msg, options);
+    }
   },
 };

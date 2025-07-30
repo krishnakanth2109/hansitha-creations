@@ -1,13 +1,13 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
-import { Minus, Plus, Trash2, ShoppingBag } from 'lucide-react';
-import { useCart } from '../context/CartContext';
+import React from "react";
+import { Link } from "react-router-dom";
+import { Minus, Plus, Trash2, ShoppingBag } from "lucide-react";
+import { useCart } from "../context/CartContext";
 
 // Format price safely
 const formatPrice = (value?: number) =>
-  typeof value === 'number'
-    ? `₹${value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}`
-    : '₹0.00';
+  typeof value === "number"
+    ? `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
+    : "₹0.00";
 
 const Cart = () => {
   const {
@@ -23,9 +23,18 @@ const Cart = () => {
       <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 py-16">
         <div className="container mx-auto px-4">
           <div className="max-w-md mx-auto text-center">
-            <ShoppingBag className="w-16 h-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-semibold text-gray-800 mb-4">Your cart is empty</h2>
-            <p className="text-gray-600 mb-8">Looks like you haven't added anything yet.</p>
+            <img
+              src="https://res.cloudinary.com/duajnpevb/image/upload/v1753867238/1000108103_gefpyo.png"
+              alt="Empty Cart"
+              className="mx-auto w-40 h-40 md:w-72 md:h-72 lg:w-96 lg:h-96 object-contain mb-6"
+            />
+l
+            <h2 className="text-2xl font-semibold text-gray-800 mb-4">
+              Your cart is empty
+            </h2>
+            <p className="text-gray-600 mb-8">
+              Looks like you haven't added anything yet.
+            </p>
             <Link
               to="/shop"
               className="inline-block bg-blue-600 text-white px-8 py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors"
@@ -83,15 +92,21 @@ const Cart = () => {
 
                       <div className="flex items-center space-x-2">
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity - 1)}
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity - 1)
+                          }
                           className="p-1 rounded-full hover:bg-gray-100 transition-colors"
                           disabled={item.quantity <= 1}
                         >
                           <Minus className="w-4 h-4 text-gray-600" />
                         </button>
-                        <span className="w-12 text-center font-medium">{item.quantity}</span>
+                        <span className="w-12 text-center font-medium">
+                          {item.quantity}
+                        </span>
                         <button
-                          onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                          onClick={() =>
+                            updateQuantity(item.id, item.quantity + 1)
+                          }
                           className="p-1 rounded-full hover:bg-gray-100 transition-colors"
                         >
                           <Plus className="w-4 h-4 text-gray-600" />
@@ -100,7 +115,11 @@ const Cart = () => {
 
                       <div className="text-right">
                         <p className="text-lg font-semibold text-gray-800">
-                          {formatPrice(item.price && item.quantity ? item.price * item.quantity : 0)}
+                          {formatPrice(
+                            item.price && item.quantity
+                              ? item.price * item.quantity
+                              : 0
+                          )}
                         </p>
                         <button
                           onClick={() => removeFromCart(item.id)}
@@ -119,7 +138,9 @@ const Cart = () => {
           {/* Order Summary */}
           <div className="lg:col-span-1">
             <div className="bg-white rounded-lg shadow-md p-6 sticky top-24">
-              <h2 className="text-xl font-semibold text-gray-800 mb-6">Order Summary</h2>
+              <h2 className="text-xl font-semibold text-gray-800 mb-6">
+                Order Summary
+              </h2>
 
               <div className="space-y-4 mb-6">
                 <div className="flex justify-between">

@@ -201,7 +201,7 @@ const CategoryPage: React.FC = () => {
                               image: product.image,
                               quantity: 1,
                             });
-                            toastWithVoice.success(`Added to cart!`, { duration: 2000 });
+                            toastWithVoice.success(`Added to cart!`);
                           }}
                           disabled={isOutOfStock}
                           className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${

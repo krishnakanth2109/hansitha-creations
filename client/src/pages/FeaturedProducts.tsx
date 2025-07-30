@@ -90,15 +90,13 @@ const FeaturedProducts: React.FC = () => {
                         e.stopPropagation();
                         if (!user) {
                           toastWithVoice.error(
-                            "Please log in to add to wishlist",
-                            { duration: 2000 }
+                            "Please log in to add to wishlist"
                           );
                           return;
                         }
                         const added = await toggleWishlist(product._id);
                         toastWithVoice.success(
-                          added ? "Added to wishlist" : "Removed from wishlist",
-                          { duration: 2000 }
+                          added ? "Added to wishlist" : "Removed from wishlist"
                         );
                       }}
                       className="absolute top-2 right-2 z-0 rounded-full p-1 text-white bg-black/50 hover:bg-black/70 transition"

@@ -38,7 +38,7 @@ const WishlistPage: React.FC = () => {
       }
     } catch (err) {
       console.error("Failed to filter wishlist:", err);
-      toastWithVoice.error("Could not load wishlist",{ duration: 2000 });
+      toastWithVoice.error("Could not load wishlist");
     } finally {
       setLoading(false);
     }
@@ -106,7 +106,7 @@ const WishlistPage: React.FC = () => {
                 onClick={async (e) => {
                   e.stopPropagation();
                   await toggleWishlist(product._id);
-                  toastWithVoice.success("Removed from wishlist",{ duration: 2000 });
+                  toastWithVoice.success("Removed from wishlist");
                 }}
                 className="absolute top-2 right-2 z-10 bg-white p-2 rounded-full shadow-md transition-transform duration-150 active:scale-125 hover:bg-red-50"
                 title="Remove from wishlist"
