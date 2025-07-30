@@ -1,13 +1,16 @@
+import { useEffect } from "react";
 import { useLocation, BrowserRouter, Routes, Route, Navigate, useNavigate } from "react-router-dom";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { AuthProvider } from "./context/AuthContext";
-
 import { CartProvider } from "./context/CartContext";
 import { ProductProvider } from "./context/ProductContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import { WishlistProvider } from "./context/WishlistContext";
+
+// WebSocket
+import { connectSocket, getSocket } from "./sockets/socket";
 
 // Layouts
 import Layout from "./components/Layout";
@@ -111,49 +114,64 @@ const AppRoutes = () => {
 };
 
 const App = () => {
+  useEffect(() => {
+    connectSocket();
+
+    const socket = getSocket();
+
+    socket.on("refresh", () => {
+      console.log("🔄 Received refresh event from server");
+      // Optional: trigger re-fetch or toast notification
+    });
+
+    return () => {
+      socket.disconnect();
+    };
+  }, []);
+
   return (
     <AuthProvider>
-    <QueryClientProvider client={queryClient}>
-      <TooltipProvider>
-        <CartProvider>
-          <ProductProvider>
-            <WishlistProvider>
-              <BrowserRouter>
-                <CurrencyProvider>
-                  <LiveReloadListener />
-                  <Sonner
-                    position="bottom-right"
-                    expand={true}
-                    richColors={true}
-                    closeButton={true}
-                    duration={2000}
-                    className="sonner-toast"
-                    toastOptions={{
-                      style: {
-                        marginBottom: window.innerWidth < 768 ? "5rem" : "1rem",
-                      },
-                    }}
-                  />
-                  <div
-                    id="toast-announcer"
-                    aria-live="polite"
-                    aria-atomic="true"
-                    style={{
-                      position: 'absolute',
-                      left: '-9999px',
-                      height: '1px',
-                      width: '1px',
-                      overflow: 'hidden',
-                    }}
-                  />
-                  <AppRoutes />
-                </CurrencyProvider>
-              </BrowserRouter>
-            </WishlistProvider>
-          </ProductProvider>
-        </CartProvider>
-      </TooltipProvider>
-    </QueryClientProvider>
+      <QueryClientProvider client={queryClient}>
+        <TooltipProvider>
+          <CartProvider>
+            <ProductProvider>
+              <WishlistProvider>
+                <BrowserRouter>
+                  <CurrencyProvider>
+                    <LiveReloadListener />
+                    <Sonner
+                      position="bottom-right"
+                      expand={true}
+                      richColors={true}
+                      closeButton={true}
+                      duration={2000}
+                      className="sonner-toast"
+                      toastOptions={{
+                        style: {
+                          marginBottom: window.innerWidth < 768 ? "5rem" : "1rem",
+                        },
+                      }}
+                    />
+                    <div
+                      id="toast-announcer"
+                      aria-live="polite"
+                      aria-atomic="true"
+                      style={{
+                        position: "absolute",
+                        left: "-9999px",
+                        height: "1px",
+                        width: "1px",
+                        overflow: "hidden",
+                      }}
+                    />
+                    <AppRoutes />
+                  </CurrencyProvider>
+                </BrowserRouter>
+              </WishlistProvider>
+            </ProductProvider>
+          </CartProvider>
+        </TooltipProvider>
+      </QueryClientProvider>
     </AuthProvider>
   );
 };

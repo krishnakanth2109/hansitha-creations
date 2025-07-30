@@ -14,10 +14,11 @@ const { Server } = require("socket.io");
 // Env Setup
 dotenv.config();
 const app = express();
+app.set("trust proxy", 1); // ✅ Required for proxy environments like Render
 const server = http.createServer(app);
 
 // ✅ Allowed Origins Setup
-const allowedOrigins = [
+const allowedOigins = [
   "http://localhost:8080",
   "https://hansithacreations.com",
   "https://hansithacreations.netlify.app",
@@ -31,7 +32,7 @@ const io = new Server(server, {
     credentials: true,
   },
 });
-global.io = io; // ✅ Make io globally accessible
+global.io = io;
 
 // ✅ Express Middleware
 app.use(cors({
@@ -115,16 +116,17 @@ announcementRoutes.post("/", async (req, res) => {
       { upsert: true, new: true }
     );
 
-    global.io.emit("refresh"); // ✅ Trigger refresh on frontend
+    global.io.emit("refresh");
     res.json({ success: true, updated });
   } catch (err) {
     res.status(500).json({ error: "Failed to update announcement" });
   }
 });
 
-// Route Setup
-app.get("/", (req, res) => res.send("Internet is Not Connected..."));
+// Health check route for Render
+app.get("/", (req, res) => res.status(200).send("Backend is live"));
 
+// Route Setup
 app.use("/api/categories", categoryRoutes);
 app.use("/api", checkoutRoutes);
 app.use("/api/products", productRoutes);
