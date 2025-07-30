@@ -82,7 +82,7 @@ router.get("/me", auth, async (req, res) => {
 });
 
 // GET /api/users/me
-router.get('/me', authMiddleware, async (req, res) => {
+router.get('/me', auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('name email role');
     res.json(user);
