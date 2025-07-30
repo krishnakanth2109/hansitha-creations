@@ -9,6 +9,7 @@ const Razorpay = require("razorpay");
 const crypto = require("crypto");
 const cookieParser = require("cookie-parser");
 const http = require("http");
+const path = require("path");
 const { Server } = require("socket.io");
 
 // Env Setup
@@ -115,7 +116,7 @@ announcementRoutes.post("/", async (req, res) => {
       { upsert: true, new: true }
     );
 
-    global.io.emit("refresh"); // ✅ Trigger refresh on frontend
+    global.io.emit("refresh");
     res.json({ success: true, updated });
   } catch (err) {
     res.status(500).json({ error: "Failed to update announcement" });
@@ -123,8 +124,6 @@ announcementRoutes.post("/", async (req, res) => {
 });
 
 // Route Setup
-app.get("/", (req, res) => res.send("Internet is Not Connected..."));
-
 app.use("/api/categories", categoryRoutes);
 app.use("/api", checkoutRoutes);
 app.use("/api/products", productRoutes);
@@ -263,6 +262,12 @@ app.post("/api/newsletter", async (req, res) => {
     console.error("Newsletter error:", err);
     res.status(500).json({ message: "Server error" });
   }
+});
+
+// ✅ React Router Fallback - must be LAST
+app.use(express.static(path.join(__dirname, "dist")));
+app.get("*", (req, res) => {
+  res.sendFile(path.join(__dirname, "dist", "index.html"));
 });
 
 // Start Server
