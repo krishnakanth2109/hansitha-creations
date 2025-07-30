@@ -18,7 +18,7 @@ app.set("trust proxy", 1); // ✅ Required for proxy environments like Render
 const server = http.createServer(app);
 
 // ✅ Allowed Origins Setup
-const allowedOigins = [
+const allowedOrigins = [
   "http://localhost:8080",
   "https://hansithacreations.com",
   "https://hansithacreations.netlify.app",
@@ -70,7 +70,7 @@ mongoose
   .connect(process.env.MONGO_URI, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    dbName: "web-store",
+    dbName: "Hansitha Creations-Database",
   })
   .then(() => {
     console.log("✅ MongoDB connected");
