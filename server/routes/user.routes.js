@@ -69,9 +69,20 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// ✅ Get current user info
+router.get("/me", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id)
+      .populate("wishlist")
+      .populate("cart.product");
+    res.json({ user });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching user", error: err });
+  }
+});
 
 // GET /api/users/me
-router.get('/me', auth, async (req, res) => {
+router.get('/me', authMiddleware, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).select('name email role');
     res.json(user);

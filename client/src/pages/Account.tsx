@@ -39,7 +39,7 @@ export default function Account() {
   };
 
   const handleGoToAdminPanel = () => {
-    navigate("/admin");
+    navigate("/admin/profile");
   };
 
   const renderMainContent = () => {

@@ -14,8 +14,10 @@ const AdminRoute = ({ children }: AdminRouteProps) => {
   // Not logged in
   if (!user) return <Navigate to="/" replace />;
 
-  // Not an admin
-  if (user.role !== "admin") return <Navigate to="/" replace />;
+  // Allow only admin or superadmin
+  if (user.role !== "admin" && user.role !== "superadmin") {
+    return <Navigate to="/" replace />;
+  }
 
   return <>{children}</>;
 };
