@@ -16,21 +16,34 @@ dotenv.config();
 const app = express();
 const server = http.createServer(app);
 
+// ✅ Allowed Origins Setup
+const allowedOrigins = [
+  "http://localhost:8080",
+  "https://hansithacreations.com",
+  "https://hansithacreations.netlify.app",
+  "https://hansithacreations.liveblog365.com"
+];
+
+// ✅ Socket.IO CORS Config
 const io = new Server(server, {
   cors: {
-    origin: ["http://localhost:8080", "https://hansithacreations.netlify.app"],
+    origin: allowedOrigins,
     credentials: true,
   },
 });
 global.io = io; // ✅ Make io globally accessible
 
-// Middleware
-app.use(
-  cors({
-    origin: ["http://localhost:8080", "https://hansithacreations.netlify.app"],
-    credentials: true,
-  })
-);
+// ✅ Express Middleware
+app.use(cors({
+  origin: function (origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+    } else {
+      callback(new Error("Not allowed by CORS"));
+    }
+  },
+  credentials: true,
+}));
 app.use(express.json());
 app.use(cookieParser());
 
@@ -139,8 +152,7 @@ app.post("/api/payment/orders", async (req, res) => {
 
 // Razorpay Payment Verification
 app.post("/api/payment/verify", (req, res) => {
-  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } =
-    req.body;
+  const { razorpay_order_id, razorpay_payment_id, razorpay_signature } = req.body;
 
   const generated_signature = crypto
     .createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
