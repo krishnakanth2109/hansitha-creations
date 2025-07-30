@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { FiPlus, FiMinus } from 'react-icons/fi'; // Icons for toggle
+import { FiPlus, FiMinus } from 'react-icons/fi';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -12,16 +12,8 @@ const AdminProfile = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState('');
   const [admins, setAdmins] = useState<{ name: string; email: string }[]>([]);
-  const [showAdmins, setShowAdmins] = useState(false); // toggle state
-
-  const handleLogout = async () => {
-    try {
-      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
-    } catch (error) {
-      console.error('Logout failed:', error);
-    }
-    navigate('/');
-  };
+  const [showAdmins, setShowAdmins] = useState(false);
+  const [userInfo, setUserInfo] = useState<{ name: string; email: string; role: string } | null>(null);
 
   const handleSwitchToUserView = () => {
     navigate('/account');
@@ -47,6 +39,17 @@ const AdminProfile = () => {
   };
 
   useEffect(() => {
+    const fetchUserInfo = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/users/me`, {
+          withCredentials: true,
+        });
+        setUserInfo(res.data);
+      } catch (err) {
+        console.error('Error fetching user info:', err);
+      }
+    };
+
     const fetchAdmins = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/users/admins`, {
@@ -58,29 +61,30 @@ const AdminProfile = () => {
       }
     };
 
+    fetchUserInfo();
     fetchAdmins();
   }, []);
 
   return (
     <div className="bg-white p-4 rounded shadow max-w-md mx-auto">
       <h2 className="text-xl font-semibold mb-4">Admin Profile</h2>
-      <p><strong>Name:</strong> Hansitha Creations Admin</p>
-      <p><strong>Email:</strong> admin@gmail.com</p>
-      <p><strong>Role:</strong> Admin</p>
 
-      <div className="mt-6 flex flex-col gap-3">
+      {userInfo ? (
+        <>
+          <p><strong>Name:</strong> {userInfo.name}</p>
+          <p><strong>Email:</strong> {userInfo.email}</p>
+          <p><strong>Role:</strong> {userInfo.role}</p>
+        </>
+      ) : (
+        <p>Loading user info...</p>
+      )}
+
+      <div className="mt-6">
         <button
           onClick={handleSwitchToUserView}
           className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
         >
           Go to User View
-        </button>
-
-        <button
-          onClick={handleLogout}
-          className="px-4 py-2 bg-red-500 text-white rounded hover:bg-red-600"
-        >
-          Logout
         </button>
       </div>
 

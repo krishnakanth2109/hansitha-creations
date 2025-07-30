@@ -69,17 +69,17 @@ router.post("/login", async (req, res) => {
   }
 });
 
-// ✅ Get current user info
-router.get("/me", auth, async (req, res) => {
+
+// GET /api/users/me
+router.get('/me', auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id)
-      .populate("wishlist")
-      .populate("cart.product");
-    res.json({ user });
+    const user = await User.findById(req.user.id).select('name email role');
+    res.json(user);
   } catch (err) {
-    res.status(500).json({ message: "Error fetching user", error: err });
+    res.status(500).json({ message: 'Failed to fetch user info' });
   }
 });
+
 
 // ✅ Cart
 router.post("/cart", auth, async (req, res) => {
