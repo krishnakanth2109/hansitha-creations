@@ -95,8 +95,8 @@ const AdminProfile = () => {
   );
 
   return (
-    <div className="bg-white p-4 rounded shadow max-w-md mx-auto mt-4">
-      <h2 className="text-xl font-semibold mb-4">Admin Profile</h2>
+    <div className="bg-white min-h-screen w-full p-4 rounded shadow overflow-y-auto">
+      <h2 className="text-xl text-center font-semibold mb-4">Admin Profile</h2>
 
       {user ? (
         <>
@@ -110,7 +110,7 @@ const AdminProfile = () => {
             <strong>Role:</strong> {user.role}
           </p>
 
-          <div className="mt-6">
+          <div className="mt-6 flex justify-center">
             <button
               onClick={handleSwitchToUserView}
               className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
@@ -121,7 +121,7 @@ const AdminProfile = () => {
 
           {user.role === "superadmin" && (
             <div className="space-y-4 text-center mt-6">
-              <h1>Additional Plugins</h1>
+              <h1 className="font-semibold text-xl">Additional Plugins</h1>
               {/* Change Role Section */}
               <div>
                 <SectionHeader title="Change User Role" sectionKey="changeRole" />
@@ -130,7 +130,7 @@ const AdminProfile = () => {
                     <input
                       type="email"
                       required
-                      placeholder="User Email"
+                      placeholder="Enter Email Address to Change Role"
                       value={email}
                       onChange={(e) => setEmail(e.target.value)}
                       className="w-full p-2 border rounded"
