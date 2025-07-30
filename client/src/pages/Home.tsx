@@ -146,7 +146,7 @@ const Home = () => {
       <div className="px-4 sm:px-6 lg:px-8 py-10">
         <div className="max-w-7xl mx-auto">
           <h2 className="text-2xl font-bold text-brandBlue mb-8 text-center">
-            SHOP BY CATEGORY
+            SHOP BY CATEGORIES
           </h2>
           <CategoryCircle />
         </div>
