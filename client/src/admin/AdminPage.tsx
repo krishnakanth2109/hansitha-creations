@@ -19,24 +19,23 @@ import AdminCategoryPanel from './AdminCategoryPanel';
 import ProductManagementPage from './ProductManagementPage';
 
 const AdminPage = () => {
-  const [activeTab, setActiveTab] = useState('add'); // default to Add Product
+  const [activeTab, setActiveTab] = useState('add');
   const [editingProductId, setEditingProductId] = useState<string | null>(null);
-  const [isMobileSidebarOpen, setIsMobileSidebarOpen] = useState(false); // sidebar closed by default on mobile
-  const [isDesktopSidebarVisible, setIsDesktopSidebarVisible] = useState(false); // sidebar closed by default on desktop
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false);
 
   const orderNotificationCount = 5;
 
   type TabItem = [key: string, label: string, icon: React.ReactNode];
 
   const tabs: TabItem[] = [
-    ['add', 'Add Products', <Plus className="w-4 h-4 mr-2" />],
-    ['manage', 'Manage Products', <LayoutList className="w-4 h-4 mr-2" />],
-    ['carousel', 'Carousel Images', <Image className="w-4 h-4 mr-2" />],
-    ['circle', 'Category Circle', <Circle className="w-4 h-4 mr-2" />],
+    ['add', 'Add Products', <Plus className="w-4 h-4" />],
+    ['manage', 'Manage Products', <LayoutList className="w-4 h-4" />],
+    ['carousel', 'Carousel Images', <Image className="w-4 h-4" />],
+    ['circle', 'Category Circle', <Circle className="w-4 h-4" />],
     [
       'orders',
       'Orders Dashboard',
-      <div className="relative mr-2">
+      <div className="relative">
         <ShoppingCart className="w-4 h-4" />
         {orderNotificationCount > 0 && (
           <span className="absolute -top-2 -right-2 bg-red-600 text-white text-xs w-4 h-4 rounded-full flex items-center justify-center">
@@ -45,7 +44,7 @@ const AdminPage = () => {
         )}
       </div>,
     ],
-    ['profile', 'Admin Profile', <User className="w-4 h-4 mr-2" />],
+    ['profile', 'Admin Profile', <User className="w-4 h-4" />],
   ];
 
   const renderContent = () => {
@@ -74,25 +73,23 @@ const AdminPage = () => {
     }
   };
 
-  const SidebarLinks = ({ isMobile = false }: { isMobile?: boolean }) => (
-    <div className="space-y-2">
+  const SidebarLinks = () => (
+    <div className="space-y-2 p-6">
       <div className="flex items-center justify-between mb-6">
         <Link to="/admin" className="text-2xl font-bold text-white">
           Admin Panel
         </Link>
-        {isMobile && (
-          <button onClick={() => setIsMobileSidebarOpen(false)}>
-            <X className="text-white w-6 h-6" />
-          </button>
-        )}
+        <button onClick={() => setIsSidebarOpen(false)}>
+          <X className="text-white w-6 h-6" />
+        </button>
       </div>
       {tabs.map(([key, label, icon]) => (
         <button
           key={key}
           onClick={() => {
-            setActiveTab(key as string);
+            setActiveTab(key);
             setEditingProductId(null);
-            setIsMobileSidebarOpen(false);
+            setIsSidebarOpen(false); // Optional: still closes sidebar on click
           }}
           className={`flex items-center w-full text-left px-4 py-2 rounded-md transition-colors ${
             activeTab === key
@@ -100,64 +97,48 @@ const AdminPage = () => {
               : 'text-white hover:bg-blue-600'
           }`}
         >
-          {icon} {label}
+          {icon}
+          <span className="ml-2">{label}</span>
         </button>
       ))}
     </div>
   );
 
   return (
-    <div>
-      <div className="flex min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 text-gray-900">
-        {/* Desktop Sidebar (initially hidden) */}
-        {isDesktopSidebarVisible && (
-          <aside className="hidden sm:flex flex-col w-64 bg-blue-800 p-6 shadow-lg">
-            <SidebarLinks />
-          </aside>
-        )}
-
-        {/* Mobile Sidebar Backdrop */}
-        {isMobileSidebarOpen && (
-          <div
-            className="fixed inset-0 bg-black bg-opacity-30 z-40 sm:hidden"
-            onClick={() => setIsMobileSidebarOpen(false)}
-          />
-        )}
-
-        {/* Mobile Sidebar Slide-in */}
+    <div className="flex min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 text-gray-900">
+      {/* Sidebar Backdrop */}
+      {isSidebarOpen && (
         <div
-          className={`fixed inset-y-0 left-0 z-50 w-64 bg-blue-800 p-6 sm:hidden transform transition-transform duration-300 ${
-            isMobileSidebarOpen ? 'translate-x-0' : '-translate-x-full'
-          }`}
-        >
-          <SidebarLinks isMobile />
-        </div>
+          className="fixed inset-0 bg-black bg-opacity-30 z-40"
+          onClick={() => setIsSidebarOpen(false)}
+        />
+      )}
 
-        {/* Main Content */}
-        <div className="flex-1 flex flex-col overflow-x-hidden">
-          {/* Top bar */}
-          <header className="sticky top-0 z-40 flex items-center justify-between bg-white border-b px-4 py-3 shadow-sm">
-            <div className="flex items-center gap-2">
-              <button
-                className="sm:hidden text-blue-800"
-                onClick={() => setIsMobileSidebarOpen(true)}
-              >
-                <Menu />
-              </button>
-              <button
-                className="hidden sm:inline-flex items-center text-blue-800"
-                onClick={() => setIsDesktopSidebarVisible(!isDesktopSidebarVisible)}
-              >
-                {isDesktopSidebarVisible ? <X /> : <Menu />}
-              </button>
-            </div>
-          </header>
+      {/* Slide-in Sidebar for all screen sizes */}
+      <div
+        className={`fixed inset-y-0 left-0 z-50 w-64 bg-blue-800 shadow-lg transform-gpu transition-transform duration-300 ease-in-out will-change-transform ${
+          isSidebarOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
+      >
+        <SidebarLinks />
+      </div>
 
-          {/* Page Content */}
-          <main className="p-4 sm:p-6 flex-1">
-            <div key={activeTab}>{renderContent()}</div>
-          </main>
-        </div>
+      {/* Main Content */}
+      <div className="flex-1 flex flex-col overflow-x-hidden">
+        {/* Top bar */}
+        <header className="sticky top-0 z-40 flex items-center justify-between bg-white border-b px-4 py-3 shadow-sm">
+          <button
+            className="text-blue-800"
+            onClick={() => setIsSidebarOpen(true)}
+          >
+            <Menu />
+          </button>
+        </header>
+
+        {/* Page Content */}
+        <main className="p-4 sm:p-6 flex-1">
+          <div key={activeTab}>{renderContent()}</div>
+        </main>
       </div>
     </div>
   );
