@@ -6,9 +6,10 @@ const CarouselManager = () => {
   const [desktopFile, setDesktopFile] = useState<File | null>(null);
   const [mobileFile, setMobileFile] = useState<File | null>(null);
   const [carouselData, setCarouselData] = useState([]);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchCarousels = async () => {
-    const res = await fetch('https://hansitha-web-storefront.onrender.com/api/carousel-images');
+    const res = await fetch('${API_URL}/api/carousel-images');
     const data = await res.json();
     setCarouselData(data);
   };

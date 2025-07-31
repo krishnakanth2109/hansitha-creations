@@ -13,6 +13,7 @@ export const HeroSection = () => {
   const [isMobile, setIsMobile] = useState(window.innerWidth <= 768);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const containerRef = useRef<HTMLDivElement>(null);
+  const API_URL = import.meta.env.VITE_API_URL;
 
   // Handle screen size changes
   useEffect(() => {
@@ -25,7 +26,7 @@ export const HeroSection = () => {
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        const res = await axios.get('https://hansitha-web-storefront.onrender.com/api/carousel-images');
+        const res = await axios.get('${API_URL}/api/carousel-images');
         const parsedSlides = res.data.map((item: any) => ({
           imageUrl: item.imageUrl || 'https://via.placeholder.com/1600x600?text=Banner',
           mobileImageUrl: item.mobileImageUrl || 'https://via.placeholder.com/800x600?text=Mobile+Banner',
