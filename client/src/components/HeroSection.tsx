@@ -26,7 +26,7 @@ export const HeroSection = () => {
   useEffect(() => {
     const fetchSlides = async () => {
       try {
-        const res = await axios.get('${API_URL}/api/carousel-images');
+        const res = await axios.get(`${API_URL}/api/carousel-images`);
         const parsedSlides = res.data.map((item: any) => ({
           imageUrl: item.imageUrl || 'https://via.placeholder.com/1600x600?text=Banner',
           mobileImageUrl: item.mobileImageUrl || 'https://via.placeholder.com/800x600?text=Mobile+Banner',
