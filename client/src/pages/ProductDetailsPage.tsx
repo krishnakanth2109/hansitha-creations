@@ -5,13 +5,18 @@ import { useCart } from "../context/CartContext";
 import { useWishlist } from "../context/WishlistContext";
 import { useAuth } from "../context/AuthContext";
 import { toastWithVoice } from "@/utils/toast";
-import { Heart, HeartIcon, Share2 } from "lucide-react";
-import { motion } from "framer-motion";
+import { Heart, HeartIcon, Share2, X } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 import SearchSidebar from "../components/SearchSidebar";
 import { Footer } from "../components/Footer";
 import BottomNavBar from "../components/BottomNavBar";
 import { useSwipeable } from "react-swipeable";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import {
+  Tabs,
+  TabsList,
+  TabsTrigger,
+  TabsContent,
+} from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -33,6 +38,7 @@ const ProductDetailsPage = () => {
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const [showZoom, setShowZoom] = useState(false);
 
   const swipeHandlers = useSwipeable({
     onSwipedLeft: () =>
@@ -169,20 +175,41 @@ const ProductDetailsPage = () => {
         </>
       )}
 
+      {/* Zoom Modal */}
+      <AnimatePresence>
+        {showZoom && (
+          <motion.div
+            className="fixed inset-0 z-50 bg-black bg-opacity-90 flex items-center justify-center"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setShowZoom(false)}
+          >
+            <motion.img
+              src={selectedImage}
+              alt="Zoomed"
+              className="max-h-[90vh] max-w-[90vw] object-contain"
+              initial={{ scale: 0.8 }}
+              animate={{ scale: 1 }}
+              exit={{ scale: 0.8 }}
+              onClick={(e) => e.stopPropagation()}
+            />
+            <button
+              className="absolute top-6 right-6 text-white bg-black rounded-full p-2"
+              onClick={() => setShowZoom(false)}
+            >
+              <X />
+            </button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       <div className="p-6 pb-4">
         <div className="grid md:grid-cols-2 gap-8">
-          <div>
-            <div className="relative">
-              <img
-                src={selectedImage}
-                onMouseEnter={() => setAutoScroll(false)}
-                onMouseLeave={() => setAutoScroll(true)}
-                className="w-160 h-80 mx-auto object-cover rounded-lg shadow-lg"
-                alt={product.name}
-              />
-            </div>
-
-            <div className="flex gap-2 mt-4 justify-center">
+          {/* Left Section */}
+          <div className="flex gap-4">
+            {/* Vertical Thumbnails */}
+            <div className="hidden md:flex flex-col gap-2">
               {allImages.map((img, i) => (
                 <img
                   key={i}
@@ -196,8 +223,35 @@ const ProductDetailsPage = () => {
                 />
               ))}
             </div>
-          </div>
 
+            {/* Main Image */}
+            <div className="relative w-full">
+              <img
+                src={selectedImage}
+                onClick={() => setShowZoom(true)}
+                onMouseEnter={() => setAutoScroll(false)}
+                onMouseLeave={() => setAutoScroll(true)}
+                className="w-160 h-80 mx-auto object-cover rounded-lg shadow-lg cursor-zoom-in"
+                alt={product.name}
+              />
+            </div>
+          </div>
+          {/* Thumbnails for mobile */}
+        <div className="flex md:hidden gap-2 mt-4 justify-center">
+          {allImages.map((img, i) => (
+            <img
+              key={i}
+              src={img}
+              onClick={() => setSelectedImage(img)}
+              className={`w-16 h-16 object-cover rounded-lg border-2 cursor-pointer ${
+                selectedImage === img ? 'border-blue-500' : 'border-transparent'
+              }`}
+              alt="Thumb"
+            />
+          ))}
+        </div>
+
+          {/* Right Section */}
           <div>
             <div className="mb-2 flex gap-2">
               {product.featured && (
@@ -268,13 +322,7 @@ const ProductDetailsPage = () => {
                 />
               </button>
 
-              <Button
-                onClick={() =>
-                  navigator.clipboard.writeText(window.location.href)
-                }
-                variant="outline"
-                size="lg"
-              >
+              <Button onClick={handleShare} variant="outline" size="lg">
                 <Share2 className="w-4 h-4" />
               </Button>
             </div>
@@ -366,11 +414,7 @@ const ProductDetailsPage = () => {
               id="related-scroll"
             >
               {related.map((item) => (
-                <div
-                  key={item._id}
-                  className="relative min-w-[200px] text-left p-3 bg-white rounded-lg shadow hover:shadow-md transition"
-                >
-                  {/* Wishlist Heart */}
+                <div key={item._id} className="relative min-w-[180px] text-left">
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     animate={{ scale: isInWishlist(item._id) ? 1.2 : 1 }}

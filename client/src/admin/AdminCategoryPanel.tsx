@@ -2,6 +2,8 @@ import React, { useEffect, useState, useRef } from 'react';
 import Papa from 'papaparse';
 import toast from 'react-hot-toast';
 import { motion, AnimatePresence } from 'framer-motion';
+import Cropper from 'react-easy-crop';
+import getCroppedImg from '../utils/cropImage';
 
 const CLOUDINARY_UPLOAD_URL = `https://api.cloudinary.com/v1_1/${import.meta.env.VITE_CLOUDINARY_CLOUD_NAME}/image/upload`;
 const CLOUDINARY_UPLOAD_PRESET = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
@@ -21,6 +23,12 @@ const AdminCategoryPanel = () => {
   const [categories, setCategories] = useState<Category[]>([]);
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
+  const [cropModalOpen, setCropModalOpen] = useState(false);
+  const [crop, setCrop] = useState({ x: 0, y: 0 });
+  const [zoom, setZoom] = useState(1);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState(null);
+  const [rawImage, setRawImage] = useState<string | null>(null);
+
   useEffect(() => {
     fetchCategories();
   }, []);
@@ -39,8 +47,9 @@ const AdminCategoryPanel = () => {
     e.preventDefault();
     const file = e.dataTransfer.files?.[0];
     if (file) {
-      setImageFile(file);
-      setPreviewUrl(URL.createObjectURL(file));
+      const imageURL = URL.createObjectURL(file);
+      setRawImage(imageURL);
+      setCropModalOpen(true);
     }
   };
 
@@ -149,10 +158,8 @@ const AdminCategoryPanel = () => {
   return (
     <div className="w-full max-w-3xl mx-auto px-4 sm:px-6 py-6">
       <div className="bg-white rounded-2xl shadow-lg p-6 md:p-8 space-y-8">
-
         <h2 className="text-2xl md:text-3xl font-bold">Manage Categories</h2>
 
-        {/* Manual Category Upload */}
         <div className="space-y-4">
           <input
             value={name}
@@ -200,7 +207,6 @@ const AdminCategoryPanel = () => {
           </button>
         </div>
 
-        {/* Bulk Upload */}
         <div className="space-y-2">
           <h3 className="text-lg font-semibold">Bulk Upload via CSV</h3>
           <input
@@ -208,17 +214,10 @@ const AdminCategoryPanel = () => {
             type="file"
             accept=".csv"
             onChange={handleCSVUpload}
-            className="block w-full text-sm text-gray-500
-              file:mr-4 file:py-2 file:px-4
-              file:rounded-full file:border-0
-              file:text-sm file:font-semibold
-              file:bg-blue-50 file:text-blue-700
-              hover:file:bg-blue-100
-            "
+            className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-blue-50 file:text-blue-700 hover:file:bg-blue-100"
           />
         </div>
 
-        {/* Existing Categories */}
         <div className="space-y-3">
           <h3 className="text-xl font-semibold">Existing Categories</h3>
           <ul className="space-y-4">
@@ -236,7 +235,13 @@ const AdminCategoryPanel = () => {
                   <span className="text-lg font-medium">{cat.name}</span>
                 </div>
                 <div className="flex gap-2">
-                  <button className="text-blue-600 hover:underline" disabled>
+                  <button
+                    onClick={() => {
+                      setRawImage(cat.image);
+                      setCropModalOpen(true);
+                    }}
+                    className="text-blue-600 hover:underline"
+                  >
                     Edit
                   </button>
                   <button
@@ -250,8 +255,61 @@ const AdminCategoryPanel = () => {
             ))}
           </ul>
         </div>
-
       </div>
+
+      {/* Crop Modal */}
+      <AnimatePresence>
+        {cropModalOpen && rawImage && (
+          <div className="fixed inset-0 z-50 bg-black bg-opacity-70 flex items-center justify-center p-4">
+            <div className="bg-white rounded-lg shadow-xl p-4 w-full max-w-md">
+              <h3 className="text-lg font-semibold mb-2">Crop Image</h3>
+              <div className="relative w-full h-64 bg-gray-200 rounded overflow-hidden">
+                <Cropper
+                  image={rawImage}
+                  crop={crop}
+                  zoom={zoom}
+                  aspect={1}
+                  onCropChange={setCrop}
+                  onZoomChange={setZoom}
+                  onCropComplete={(_, areaPixels) => setCroppedAreaPixels(areaPixels)}
+                />
+              </div>
+              <div className="flex justify-between mt-4">
+                <input
+                  type="range"
+                  min={1}
+                  max={3}
+                  step={0.1}
+                  value={zoom}
+                  onChange={(e) => setZoom(Number(e.target.value))}
+                />
+                <div className="space-x-2">
+                  <button
+                    onClick={() => {
+                      setCropModalOpen(false);
+                      setRawImage(null);
+                    }}
+                    className="px-3 py-1 bg-gray-300 rounded"
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    onClick={async () => {
+                      const croppedFile = await getCroppedImg(rawImage!, croppedAreaPixels);
+                      setImageFile(croppedFile);
+                      setPreviewUrl(URL.createObjectURL(croppedFile));
+                      setCropModalOpen(false);
+                    }}
+                    className="px-3 py-1 bg-blue-600 text-white rounded"
+                  >
+                    Confirm
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+      </AnimatePresence>
     </div>
   );
 };

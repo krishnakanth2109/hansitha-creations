@@ -9,7 +9,7 @@ const CarouselManager = () => {
   const API_URL = import.meta.env.VITE_API_URL;
 
   const fetchCarousels = async () => {
-    const res = await fetch('${API_URL}/api/carousel-images');
+    const res = await fetch(`${API_URL}/api/carousel-images`);
     const data = await res.json();
     setCarouselData(data);
   };
