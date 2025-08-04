@@ -5,7 +5,7 @@ let socket: Socket;
 // Auto-select backend URL depending on environment
 const SOCKET_URL = import.meta.env.PROD
   ? "wss://hansitha-web-backend.onrender.com"
-  : "http://localhost:8080";
+  : "http://localhost:3000";
 
 export const connectSocket = () => {
   socket = io(SOCKET_URL, {
