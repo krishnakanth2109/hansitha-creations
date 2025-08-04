@@ -127,8 +127,8 @@ const Home = () => {
   }, [carouselSlides.length]);
 
   // ✅ Add to cart
-  const handleAddToCart = (product: Product) => {
-    addToCart({
+  const handleAddToCart = async (product: Product) => {
+    await addToCart({
       id: product._id || product.id,
       name: product.name,
       price: product.price,

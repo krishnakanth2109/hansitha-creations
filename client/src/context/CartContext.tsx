@@ -5,6 +5,10 @@ import React, {
   useEffect,
   ReactNode,
 } from "react";
+import axios from "axios";
+import { useAuth } from "./AuthContext";
+
+const API_URL = import.meta.env.VITE_API_URL;
 
 // Define the shape of a cart item
 export interface CartItem {
@@ -18,11 +22,12 @@ export interface CartItem {
 // Define the shape of the context
 interface CartContextType {
   cartItems: CartItem[];
-  addToCart: (item: CartItem) => void;
-  removeFromCart: (id: string) => void;
-  updateQuantity: (id: string, quantity: number) => void;
+  addToCart: (item: CartItem) => Promise<void>;
+  removeFromCart: (id: string) => Promise<void>;
+  updateQuantity: (id: string, quantity: number) => Promise<void>;
   getTotalPrice: () => number;
-  clearCart: () => void;
+  clearCart: () => Promise<void>;
+  refreshCart: () => Promise<void>;
 }
 
 // Create the context
@@ -31,46 +36,169 @@ const CartContext = createContext<CartContextType | undefined>(undefined);
 // Cart provider component
 export const CartProvider = ({ children }: { children: ReactNode }) => {
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
+  const { user } = useAuth();
 
-  // Load cart from localStorage on first render
-  useEffect(() => {
-    const savedCart = localStorage.getItem("cart");
-    if (savedCart) {
-      setCartItems(JSON.parse(savedCart));
+  // Transform database cart to CartItem format
+  const transformDbCartToCartItems = (dbCart: any[]): CartItem[] => {
+    return dbCart.map((item) => ({
+      id: item.product._id,
+      name: item.product.name,
+      price: item.product.price,
+      image: item.product.image,
+      quantity: item.quantity,
+    }));
+  };
+
+  // Refresh cart from database
+  const refreshCart = async () => {
+    if (!user) {
+      setCartItems([]);
+      localStorage.removeItem("cart");
+      return;
     }
-  }, []);
 
-  // Save cart to localStorage on every change
+    try {
+      const response = await axios.get(`${API_URL}/api/users/cart`, {
+        withCredentials: true,
+      });
+      if (response.data.success) {
+        const transformedCart = transformDbCartToCartItems(response.data.cart);
+        setCartItems(transformedCart);
+        localStorage.setItem("cart", JSON.stringify(transformedCart));
+      }
+    } catch (error) {
+      console.error("Error fetching cart:", error);
+      // Fallback to localStorage if user is logged in but API fails
+      const savedCart = localStorage.getItem("cart");
+      if (savedCart) {
+        setCartItems(JSON.parse(savedCart));
+      }
+    }
+  };
+
+  // Load cart on user change
+  useEffect(() => {
+    if (user) {
+      refreshCart();
+    } else {
+      // If not logged in, load from localStorage
+      const savedCart = localStorage.getItem("cart");
+      if (savedCart) {
+        setCartItems(JSON.parse(savedCart));
+      } else {
+        setCartItems([]);
+      }
+    }
+  }, [user]);
+
+  // Save cart to localStorage on every change (for offline fallback)
   useEffect(() => {
     localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  // Add item to cart (merge if exists)
-  const addToCart = (item: CartItem) => {
-    setCartItems((prev) => {
-      const existing = prev.find((i) => i.id === item.id);
-      if (existing) {
-        return prev.map((i) =>
-          i.id === item.id
-            ? { ...i, quantity: i.quantity + item.quantity }
-            : i
+  // Add item to cart
+  const addToCart = async (item: CartItem) => {
+    if (user) {
+      try {
+        const response = await axios.post(
+          `${API_URL}/api/users/cart`,
+          {
+            productId: item.id,
+            quantity: item.quantity,
+          },
+          { withCredentials: true }
         );
-      } else {
-        return [...prev, item];
+        if (response.data.success) {
+          const transformedCart = transformDbCartToCartItems(response.data.cart);
+          setCartItems(transformedCart);
+        }
+      } catch (error) {
+        console.error("Error adding to cart:", error);
+        // Fallback to local state update
+        setCartItems((prev) => {
+          const existing = prev.find((i) => i.id === item.id);
+          if (existing) {
+            return prev.map((i) =>
+              i.id === item.id
+                ? { ...i, quantity: i.quantity + item.quantity }
+                : i
+            );
+          } else {
+            return [...prev, item];
+          }
+        });
       }
-    });
+    } else {
+      // Not logged in, update localStorage only
+      setCartItems((prev) => {
+        const existing = prev.find((i) => i.id === item.id);
+        if (existing) {
+          return prev.map((i) =>
+            i.id === item.id
+              ? { ...i, quantity: i.quantity + item.quantity }
+              : i
+          );
+        } else {
+          return [...prev, item];
+        }
+      });
+    }
   };
 
   // Remove item by ID
-  const removeFromCart = (id: string) => {
-    setCartItems((prev) => prev.filter((item) => item.id !== id));
+  const removeFromCart = async (id: string) => {
+    if (user) {
+      try {
+        const response = await axios.delete(`${API_URL}/api/users/cart/${id}`, {
+          withCredentials: true,
+        });
+        if (response.data.success) {
+          const transformedCart = transformDbCartToCartItems(response.data.cart);
+          setCartItems(transformedCart);
+        }
+      } catch (error) {
+        console.error("Error removing from cart:", error);
+        // Fallback to local state update
+        setCartItems((prev) => prev.filter((item) => item.id !== id));
+      }
+    } else {
+      // Not logged in, update localStorage only
+      setCartItems((prev) => prev.filter((item) => item.id !== id));
+    }
   };
 
   // Update quantity (or remove if zero)
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = async (id: string, quantity: number) => {
     if (quantity <= 0) {
-      removeFromCart(id);
+      await removeFromCart(id);
+      return;
+    }
+
+    if (user) {
+      try {
+        const response = await axios.put(
+          `${API_URL}/api/users/cart`,
+          {
+            productId: id,
+            quantity: quantity,
+          },
+          { withCredentials: true }
+        );
+        if (response.data.success) {
+          const transformedCart = transformDbCartToCartItems(response.data.cart);
+          setCartItems(transformedCart);
+        }
+      } catch (error) {
+        console.error("Error updating cart quantity:", error);
+        // Fallback to local state update
+        setCartItems((prev) =>
+          prev.map((item) =>
+            item.id === id ? { ...item, quantity } : item
+          )
+        );
+      }
     } else {
+      // Not logged in, update localStorage only
       setCartItems((prev) =>
         prev.map((item) =>
           item.id === id ? { ...item, quantity } : item
@@ -84,7 +212,23 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
     cartItems.reduce((total, item) => total + item.price * item.quantity, 0);
 
   // Clear entire cart
-  const clearCart = () => setCartItems([]);
+  const clearCart = async () => {
+    if (user) {
+      try {
+        await axios.delete(`${API_URL}/api/users/cart`, {
+          withCredentials: true,
+        });
+        setCartItems([]);
+      } catch (error) {
+        console.error("Error clearing cart:", error);
+        // Fallback to local state update
+        setCartItems([]);
+      }
+    } else {
+      // Not logged in, clear localStorage only
+      setCartItems([]);
+    }
+  };
 
   // Return context provider
   return (
@@ -96,6 +240,7 @@ export const CartProvider = ({ children }: { children: ReactNode }) => {
         updateQuantity,
         getTotalPrice,
         clearCart,
+        refreshCart,
       }}
     >
       {children}

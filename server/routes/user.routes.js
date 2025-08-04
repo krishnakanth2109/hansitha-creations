@@ -74,25 +74,29 @@ router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .populate("wishlist")
-      .populate("cart.product");
+      .populate("cart.product")
+      .select('name email role cart wishlist orders');
     res.json({ user });
   } catch (err) {
     res.status(500).json({ message: "Error fetching user", error: err });
   }
 });
 
-// GET /api/users/me
-router.get('/me', auth, async (req, res) => {
+
+// ✅ Get user's cart
+router.get("/cart", auth, async (req, res) => {
   try {
-    const user = await User.findById(req.user.id).select('name email role');
-    res.json(user);
+    const user = await User.findById(req.user.id).populate("cart.product");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    
+    res.json({ success: true, cart: user.cart });
   } catch (err) {
-    res.status(500).json({ message: 'Failed to fetch user info' });
+    console.error("Get cart error:", err);
+    res.status(500).json({ success: false, message: "Server error fetching cart" });
   }
 });
 
-
-// ✅ Cart
+// ✅ Add to cart
 router.post("/cart", auth, async (req, res) => {
   try {
     const { productId, quantity } = req.body;
@@ -104,10 +108,69 @@ router.post("/cart", auth, async (req, res) => {
     else user.cart.push({ product: productId, quantity });
 
     await user.save();
-    res.json({ cart: user.cart });
+    const updatedUser = await User.findById(req.user.id).populate("cart.product");
+    res.json({ success: true, cart: updatedUser.cart });
   } catch (err) {
     console.error("Cart error:", err);
     res.status(500).json({ message: "Failed to update cart" });
+  }
+});
+
+// ✅ Update cart item quantity
+router.put("/cart", auth, async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const index = user.cart.findIndex((item) => item.product.toString() === productId);
+    if (index !== -1) {
+      if (quantity <= 0) {
+        user.cart.splice(index, 1); // Remove item if quantity is 0 or less
+      } else {
+        user.cart[index].quantity = quantity; // Update quantity
+      }
+      await user.save();
+      const updatedUser = await User.findById(req.user.id).populate("cart.product");
+      res.json({ success: true, cart: updatedUser.cart });
+    } else {
+      res.status(404).json({ message: "Item not found in cart" });
+    }
+  } catch (err) {
+    console.error("Update cart error:", err);
+    res.status(500).json({ message: "Failed to update cart" });
+  }
+});
+
+// ✅ Remove from cart
+router.delete("/cart/:productId", auth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.cart = user.cart.filter((item) => item.product.toString() !== productId);
+    await user.save();
+    const updatedUser = await User.findById(req.user.id).populate("cart.product");
+    res.json({ success: true, cart: updatedUser.cart });
+  } catch (err) {
+    console.error("Remove from cart error:", err);
+    res.status(500).json({ message: "Failed to remove from cart" });
+  }
+});
+
+// ✅ Clear cart
+router.delete("/cart", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.cart = [];
+    await user.save();
+    res.json({ success: true, cart: [] });
+  } catch (err) {
+    console.error("Clear cart error:", err);
+    res.status(500).json({ message: "Failed to clear cart" });
   }
 });
 
@@ -157,6 +220,21 @@ router.get("/wishlist", auth, async (req, res) => {
   } catch (err) {
     console.error("Get wishlist error", err);
     res.status(500).json({ success: false, message: "Server error fetching wishlist" });
+  }
+});
+
+// ✅ Clear wishlist
+router.delete("/wishlist", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    user.wishlist = [];
+    await user.save();
+    res.json({ success: true, wishlist: [] });
+  } catch (err) {
+    console.error("Clear wishlist error:", err);
+    res.status(500).json({ message: "Failed to clear wishlist" });
   }
 });
 
