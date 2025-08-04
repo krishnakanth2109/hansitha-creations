@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import axios from "axios";
 import { useAuth } from "./AuthContext";
+import { cookieStorage } from "../utils/cookieStorage";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -35,10 +36,10 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
   // Refresh wishlist from database and merge with any guest items
   const refreshWishlist = async () => {
     if (!user) {
-      // If not logged in, load from localStorage
-      const stored = localStorage.getItem("wishlist");
+      // If not logged in, load from cookies
+      const stored = cookieStorage.getJSON<string[]>("wishlist");
       if (stored) {
-        setWishlist(JSON.parse(stored));
+        setWishlist(stored);
       } else {
         setWishlist([]);
       }
@@ -46,9 +47,8 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     }
 
     try {
-      // Get current guest wishlist from localStorage
-      const guestWishlist = localStorage.getItem("wishlist");
-      const guestItems = guestWishlist ? JSON.parse(guestWishlist) : [];
+      // Get current guest wishlist from cookies
+      const guestItems = cookieStorage.getJSON<string[]>("wishlist") || [];
 
       // Fetch user's wishlist from database
       const response = await axios.get(`${API_URL}/api/users/wishlist`, {
@@ -79,14 +79,14 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         }
         
         setWishlist(mergedWishlist);
-        localStorage.setItem("wishlist", JSON.stringify(mergedWishlist));
+        cookieStorage.setJSON("wishlist", mergedWishlist);
       }
     } catch (error) {
       console.error("Error fetching wishlist:", error);
-      // Fallback to localStorage if user is logged in but API fails
-      const stored = localStorage.getItem("wishlist");
+      // Fallback to cookies if user is logged in but API fails
+      const stored = cookieStorage.getJSON<string[]>("wishlist");
       if (stored) {
-        setWishlist(JSON.parse(stored));
+        setWishlist(stored);
       }
     }
   };
@@ -96,9 +96,9 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     refreshWishlist();
   }, [user]);
 
-  // Save wishlist to localStorage when it changes (for offline fallback)
+  // Save wishlist to cookies when it changes (for offline fallback)
   useEffect(() => {
-    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    cookieStorage.setJSON("wishlist", wishlist);
   }, [wishlist]);
 
   // Toggle item in wishlist
@@ -128,7 +128,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     } else {
-      // Not logged in, update localStorage only
+      // Not logged in, update cookies only
       const exists = wishlist.includes(productId);
       if (exists) {
         setWishlist((prev) => prev.filter((id) => id !== productId));
@@ -154,17 +154,17 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
           withCredentials: true,
         });
         setWishlist([]);
-        localStorage.setItem("wishlist", JSON.stringify([]));
+        cookieStorage.setJSON("wishlist", []);
       } catch (error) {
         console.error("Error clearing wishlist:", error);
         // Fallback to local state update
         setWishlist([]);
-        localStorage.setItem("wishlist", JSON.stringify([]));
+        cookieStorage.setJSON("wishlist", []);
       }
     } else {
-      // Not logged in, clear localStorage and state
+      // Not logged in, clear cookies and state
       setWishlist([]);
-      localStorage.setItem("wishlist", JSON.stringify([]));
+      cookieStorage.setJSON("wishlist", []);
     }
   };
 
