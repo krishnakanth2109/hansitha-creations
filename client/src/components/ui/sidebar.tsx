@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip"
+import { cookieStorage } from "@/utils/cookieStorage"
 
 const SIDEBAR_COOKIE_NAME = "sidebar:state"
 const SIDEBAR_COOKIE_MAX_AGE = 60 * 60 * 24 * 7
@@ -82,7 +83,9 @@ const SidebarProvider = React.forwardRef<
         }
 
         // This sets the cookie to keep the sidebar state.
-        document.cookie = `${SIDEBAR_COOKIE_NAME}=${openState}; path=/; max-age=${SIDEBAR_COOKIE_MAX_AGE}`
+        cookieStorage.setItem(SIDEBAR_COOKIE_NAME, String(openState), { 
+          expires: SIDEBAR_COOKIE_MAX_AGE / (60 * 60 * 24) // Convert seconds to days
+        })
       },
       [setOpenProp, open]
     )
