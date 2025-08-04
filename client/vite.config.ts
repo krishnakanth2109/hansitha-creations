@@ -9,9 +9,9 @@ export default defineConfig(({ mode }) => ({
 
   server: {
     host: "::",
-    port: 8080,
+    port: 5173,
     proxy: {
-      '/api': 'https://hansitha-web-storefront.onrender.com',
+      '/api': 'http://localhost:8080',
     }
   },
 

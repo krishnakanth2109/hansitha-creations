@@ -32,22 +32,54 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
     return dbWishlist.map((item) => (typeof item === 'object' ? item._id : item));
   };
 
-  // Refresh wishlist from database
+  // Refresh wishlist from database and merge with any guest items
   const refreshWishlist = async () => {
     if (!user) {
-      setWishlist([]);
-      localStorage.removeItem("wishlist");
+      // If not logged in, load from localStorage
+      const stored = localStorage.getItem("wishlist");
+      if (stored) {
+        setWishlist(JSON.parse(stored));
+      } else {
+        setWishlist([]);
+      }
       return;
     }
 
     try {
+      // Get current guest wishlist from localStorage
+      const guestWishlist = localStorage.getItem("wishlist");
+      const guestItems = guestWishlist ? JSON.parse(guestWishlist) : [];
+
+      // Fetch user's wishlist from database
       const response = await axios.get(`${API_URL}/api/users/wishlist`, {
         withCredentials: true,
       });
+      
       if (response.data.success) {
-        const transformedWishlist = transformDbWishlistToStringArray(response.data.wishlist);
-        setWishlist(transformedWishlist);
-        localStorage.setItem("wishlist", JSON.stringify(transformedWishlist));
+        const dbWishlist = transformDbWishlistToStringArray(response.data.wishlist);
+        
+        // Merge guest wishlist with database wishlist (remove duplicates)
+        const mergedWishlist = [...new Set([...dbWishlist, ...guestItems])];
+        
+        // If there are new items from guest session, sync them to database
+        const newItems = guestItems.filter(item => !dbWishlist.includes(item));
+        if (newItems.length > 0) {
+          console.log('Syncing guest wishlist items to database:', newItems);
+          // Sync each new item to database
+          for (const productId of newItems) {
+            try {
+              await axios.post(`${API_URL}/api/users/wishlist`, 
+                { productId }, 
+                { withCredentials: true }
+              );
+            } catch (syncError) {
+              console.error('Error syncing wishlist item:', productId, syncError);
+            }
+          }
+        }
+        
+        setWishlist(mergedWishlist);
+        localStorage.setItem("wishlist", JSON.stringify(mergedWishlist));
       }
     } catch (error) {
       console.error("Error fetching wishlist:", error);
@@ -61,17 +93,7 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
 
   // Load wishlist on user change
   useEffect(() => {
-    if (user) {
-      refreshWishlist();
-    } else {
-      // If not logged in, load from localStorage
-      const stored = localStorage.getItem("wishlist");
-      if (stored) {
-        setWishlist(JSON.parse(stored));
-      } else {
-        setWishlist([]);
-      }
-    }
+    refreshWishlist();
   }, [user]);
 
   // Save wishlist to localStorage when it changes (for offline fallback)
@@ -132,14 +154,17 @@ export const WishlistProvider = ({ children }: { children: ReactNode }) => {
           withCredentials: true,
         });
         setWishlist([]);
+        localStorage.setItem("wishlist", JSON.stringify([]));
       } catch (error) {
         console.error("Error clearing wishlist:", error);
         // Fallback to local state update
         setWishlist([]);
+        localStorage.setItem("wishlist", JSON.stringify([]));
       }
     } else {
-      // Not logged in, clear localStorage only
+      // Not logged in, clear localStorage and state
       setWishlist([]);
+      localStorage.setItem("wishlist", JSON.stringify([]));
     }
   };
 
