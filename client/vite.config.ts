@@ -9,9 +9,9 @@ export default defineConfig(({ mode }) => ({
 
   server: {
     host: "::",
-    port: 5173,
+    port: 8080,
     proxy: {
-      '/api': 'http://localhost:8080',
+      '/api': 'http://localhost:3000',
     }
   },
 
