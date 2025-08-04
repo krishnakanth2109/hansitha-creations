@@ -110,14 +110,15 @@ const SearchResults: React.FC = () => {
                   ₹{product.price.toLocaleString('en-IN')}
                 </p>
                 <button
-                  onClick={(e) => {
+                  onClick={async (e) => {
                     e.stopPropagation();
                     if (isOutOfStock) return;
-                    addToCart({
+                    await addToCart({
                       id: product._id,
                       name: product.name,
                       price: product.price,
                       image: product.image,
+                      quantity: 1,
                     });
                     toast.success(`${product.name} added to cart!`);
                   }}

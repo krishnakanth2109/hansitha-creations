@@ -175,9 +175,9 @@ const CategoryPage: React.FC = () => {
                             }`}
                           />
                           <button
-                            onClick={(e) => {
+                            onClick={async (e) => {
                               e.stopPropagation();
-                              toggleWishlist(product._id);
+                              await toggleWishlist(product._id);
                             }}
                             className="absolute top-2 right-2 z-10 bg-white p-1 rounded-full shadow-md transition-transform duration-150 active:scale-110"
                           >
@@ -191,10 +191,10 @@ const CategoryPage: React.FC = () => {
                         <h3 className="text-base font-medium mt-2 truncate">{product.name}</h3>
                         <p className="text-blue-600 font-bold text-base text-center">{formatPrice(product.price)}</p>
                         <button
-                          onClick={(e) => {
+                          onClick={async (e) => {
                             e.stopPropagation();
                             if (isOutOfStock) return;
-                            addToCart({
+                            await addToCart({
                               id: product._id,
                               name: product.name,
                               price: product.price,

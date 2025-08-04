@@ -81,6 +81,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
     setUser(null);
     localStorage.removeItem('user');
+    // Clear cart and wishlist from localStorage on logout
+    localStorage.removeItem('cart');
+    localStorage.removeItem('wishlist');
   };
 
   return (
