@@ -11,19 +11,46 @@ interface ProfileHeaderProps {
     avatar?: string;
   };
   onLogout: () => void;
+  onAvatarChange?: (newUrl: string) => void; // Optional callback to update avatar in backend
 }
 
-export function ProfileHeader({ user, onLogout }: ProfileHeaderProps) {
-  const [isEditingImage, setIsEditingImage] = useState(false);
+const CLOUD_NAME = "your_cloud_name";
+const UPLOAD_PRESET = "your_unsigned_preset";
+
+export function ProfileHeader({ user, onLogout, onAvatarChange }: ProfileHeaderProps) {
+  const [isUploading, setIsUploading] = useState(false);
 
   const handleImageEdit = () => {
     const input = document.createElement('input');
     input.type = 'file';
     input.accept = 'image/*';
-    input.onchange = (e) => {
+    input.onchange = async (e) => {
       const file = (e.target as HTMLInputElement).files?.[0];
       if (file) {
-        console.log('Selected file:', file);
+        try {
+          setIsUploading(true);
+
+          const formData = new FormData();
+          formData.append("file", file);
+          formData.append("upload_preset", UPLOAD_PRESET);
+
+          const res = await fetch(`https://api.cloudinary.com/v1_1/${CLOUD_NAME}/upload`, {
+            method: "POST",
+            body: formData,
+          });
+
+          const data = await res.json();
+          if (data.secure_url) {
+            console.log("Uploaded image URL:", data.secure_url);
+            if (onAvatarChange) onAvatarChange(data.secure_url);
+          } else {
+            console.error("Upload failed:", data);
+          }
+        } catch (err) {
+          console.error("Error uploading to Cloudinary:", err);
+        } finally {
+          setIsUploading(false);
+        }
       }
     };
     input.click();
@@ -31,10 +58,8 @@ export function ProfileHeader({ user, onLogout }: ProfileHeaderProps) {
 
   return (
     <Card className="relative overflow-hidden bg-gradient-primary text-primary-foreground shadow-elegant">
-      {/* Gradient Overlay */}
       <div className="absolute inset-0 bg-gradient-to-br from-primary/90 to-primary-glow/80" />
 
-      {/* ✅ Floating Logout Button */}
       <Button
         onClick={onLogout}
         size="sm"
@@ -44,14 +69,19 @@ export function ProfileHeader({ user, onLogout }: ProfileHeaderProps) {
         Logout
       </Button>
 
-      {/* Profile Details */}
       <div className="relative p-6">
         <div className="flex items-start gap-6">
           <div className="relative">
             <Avatar className="h-20 w-20 border-4 border-primary-foreground/20">
-              <AvatarImage src={user.avatar} alt={user.name} />
+              <AvatarImage
+                src={
+                  user.avatar ||
+                  `https://api.dicebear.com/7.x/fun-emoji/svg?seed=${encodeURIComponent(user.name)}`
+                }
+                alt={user.name}
+              />
               <AvatarFallback className="bg-primary-foreground/10 text-2xl font-bold">
-                {user.name.split(' ').map(n => n[0]).join('')}
+                {user.name.split(" ").map((n) => n[0]).join("")}
               </AvatarFallback>
             </Avatar>
             <Button
@@ -59,8 +89,13 @@ export function ProfileHeader({ user, onLogout }: ProfileHeaderProps) {
               variant="secondary"
               className="absolute -bottom-2 -right-2 h-8 w-8 rounded-full shadow-soft"
               onClick={handleImageEdit}
+              disabled={isUploading}
             >
-              <Camera className="h-4 w-4" />
+              {isUploading ? (
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+              ) : (
+                <Camera className="h-4 w-4" />
+              )}
             </Button>
           </div>
 
