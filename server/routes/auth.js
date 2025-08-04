@@ -37,23 +37,26 @@ router.post("/register", async (req, res) => {
   try {
     const { email, password, name } = req.body;
     if (!email || !password || !name)
-      return res
-        .status(400)
-        .json({ success: false, message: "All fields are required" });
+      return res.status(400).json({ success: false, message: "All fields are required" });
 
     const existing = await User.findOne({ email });
     if (existing)
-      return res
-        .status(400)
-        .json({ success: false, message: "Email already exists" });
+      return res.status(400).json({ success: false, message: "Email already exists" });
 
     const user = await User.create({ email, password, name });
     const token = generateToken(user);
 
+    // ✅ Set token in cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
     res.json({
       success: true,
       user: { _id: user._id, name: user.name, email: user.email },
-      token,
     });
   } catch (err) {
     console.error("🔴 Register error:", err.message);
@@ -71,17 +74,21 @@ router.post("/login", async (req, res) => {
   try {
     const { email, password } = req.body;
     if (!email || !password)
-      return res
-        .status(400)
-        .json({ success: false, message: "Email and password are required" });
+      return res.status(400).json({ success: false, message: "Email and password are required" });
 
     const user = await User.findOne({ email });
     if (!user || !(await user.comparePassword(password)))
-      return res
-        .status(401)
-        .json({ success: false, message: "Invalid credentials" });
+      return res.status(401).json({ success: false, message: "Invalid credentials" });
 
     const token = generateToken(user);
+
+    // ✅ Set token in cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
 
     res.json({
       success: true,
@@ -92,7 +99,6 @@ router.post("/login", async (req, res) => {
         email: user.email,
         role: user.role,
       },
-      token,
     });
   } catch (err) {
     console.error("🔴 Login error:", err.message);
@@ -107,9 +113,7 @@ router.post("/login", async (req, res) => {
 // ✅ POST /api/auth/logout
 // -----------------------------
 router.post("/logout", (req, res) => {
-  // If using cookies:
-  // res.clearCookie("token");
-
+  res.clearCookie("token"); // ✅ Clear the auth cookie
   res.json({ success: true, message: "Logged out successfully" });
 });
 
@@ -120,15 +124,11 @@ router.post("/forgot-password", async (req, res) => {
   try {
     const { email } = req.body;
     if (!email)
-      return res
-        .status(400)
-        .json({ success: false, message: "Email is required" });
+      return res.status(400).json({ success: false, message: "Email is required" });
 
     const user = await User.findOne({ email });
     if (!user)
-      return res
-        .status(404)
-        .json({ success: false, message: "User not found" });
+      return res.status(404).json({ success: false, message: "User not found" });
 
     const token = crypto.randomBytes(32).toString("hex");
     user.resetToken = token;
@@ -149,9 +149,7 @@ router.post("/forgot-password", async (req, res) => {
     res.json({ success: true, message: "Reset link sent to your email" });
   } catch (err) {
     console.error("🔴 Forgot Password error:", err.message);
-    res
-      .status(500)
-      .json({ success: false, message: "Failed to send reset link" });
+    res.status(500).json({ success: false, message: "Failed to send reset link" });
   }
 });
 
@@ -169,9 +167,7 @@ router.post("/reset-password/:token", async (req, res) => {
     });
 
     if (!user)
-      return res
-        .status(400)
-        .json({ success: false, message: "Invalid or expired token" });
+      return res.status(400).json({ success: false, message: "Invalid or expired token" });
 
     user.password = password;
     user.resetToken = undefined;
