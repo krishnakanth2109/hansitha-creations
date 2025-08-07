@@ -8,6 +8,7 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import axios from "axios";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -51,51 +52,30 @@ const Checkout: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
     if (!validateForm()) return;
-
-    if (cartItems.length === 0) {
-      toast({
-        title: "Error",
-        description: "Your cart is empty.",
-        variant: "destructive",
-      });
-      return;
-    }
-
     setIsProcessing(true);
 
-    const subtotal = getTotalPrice();
-    const shipping = subtotal > 50 ? 0 : 99;
-    const tax = subtotal * 0.08;
-    const total = Math.round(subtotal + shipping + tax);
-
     try {
-      const res = await fetch(`${API_URL}/api/checkout/payment-link`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          amount: total,
-          cartItems,
-          customer: {
-            name: `${formData.firstName} ${formData.lastName}`,
-            email: formData.email,
-            phone: formData.phone,
-          },
-        }),
+      const { email, firstName, lastName, phone } = formData;
+      const totalAmount = total;
+
+      const res = await axios.post(`${API_URL}/api/checkout/payment-link`, {
+        userName: `${firstName} ${lastName}`,
+        userEmail: email,
+        userPhone: phone,
+        cartItems,
+        totalAmount,
       });
 
-      const data = await res.json();
-      console.log("🧾 Backend Response:", data);
-      if (!data.url) {
-        console.error("Missing URL in response", data);
-        throw new Error("Failed to get payment link");
-      }
-      window.location.href = data.url;
+      const paymentLink = res.data.paymentLink.short_url;
+      clearCart();
+      window.location.href = paymentLink;
     } catch (err) {
-      console.error(err);
+      console.error("Error:", err);
       toast({
         title: "Error",
-        description: "Could not start payment. Try again.",
+        description: "Failed to get payment link",
         variant: "destructive",
       });
     } finally {

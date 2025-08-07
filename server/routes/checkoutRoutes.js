@@ -1,62 +1,58 @@
 const express = require("express");
-const router = express.Router();
 const Razorpay = require("razorpay");
+const router = express.Router();
 const Order = require("../models/Order");
-require("dotenv").config();
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
+// 🚀 Create payment link + save order
 router.post("/payment-link", async (req, res) => {
   try {
-    const { amount, customer, cartItems } = req.body;
+    const { userName, userEmail, userPhone, cartItems, totalAmount } = req.body;
 
-    console.log("👉 Incoming Checkout Payload:", req.body);
-
-    if (!amount || !customer?.name || !customer?.email || !customer?.phone || !Array.isArray(cartItems)) {
+    if (!userName || !userEmail || !totalAmount) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
-    const newOrder = new Order({
-      name: customer.name,
-      email: customer.email,
-      phone: customer.phone,
-      amount,
-      products: cartItems,
-      status: "pending",
-      createdAt: new Date(),
-    });
-
-    const savedOrder = await newOrder.save();
-    console.log("✅ Order saved:", savedOrder._id);
-
     const paymentLink = await razorpay.paymentLink.create({
-      amount: amount * 100,
+      amount: totalAmount * 100, // in paise
       currency: "INR",
-      accept_partial: false,
+      description: "Order Payment",
       customer: {
-        name: customer.name,
-        email: customer.email,
-        contact: customer.phone,
+        name: userName,
+        email: userEmail,
+        contact: userPhone || undefined,
       },
       notify: {
         sms: true,
         email: true,
       },
-      reminder_enable: true,
       notes: {
-        orderId: savedOrder._id.toString(),
+        email: userEmail,
       },
       callback_url: `${process.env.FRONTEND_URL}/order-confirmation`,
       callback_method: "get",
     });
 
-    res.json({ url: paymentLink.short_url });
-  } catch (error) {
-    console.error("❌ Payment link error:", error);
-    res.status(500).json({ error: "Failed to create payment link" });
+    // Save order with status = pending
+    const newOrder = new Order({
+      name: userName,
+      email: userEmail,
+      phone: userPhone,
+      amount: totalAmount,
+      status: "pending",
+      razorpay_payment_link_id: paymentLink.id,
+    });
+
+    await newOrder.save();
+
+    return res.json({ paymentLink });
+  } catch (err) {
+    console.error("Payment link error:", err);
+    res.status(500).json({ error: "Failed to get payment link" });
   }
 });
 
