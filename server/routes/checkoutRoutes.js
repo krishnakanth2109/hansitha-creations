@@ -46,6 +46,7 @@ router.post("/", async (req, res) => {
 
 // Add this to your Express route file (e.g., routes/checkout.js)
 const Razorpay = require("razorpay");
+const API_URL = import.meta.env.VITE_API_URL;
 
 router.post("/checkout/payment-link", async (req, res) => {
   const { amount, customer } = req.body;
@@ -68,7 +69,7 @@ router.post("/checkout/payment-link", async (req, res) => {
       },
       notify: { sms: true, email: true },
       reminder_enable: true,
-      callback_url: "http://localhost:8080/order-confirmation",
+      callback_url: `${API_URL}/order-confirmation`,
       callback_method: "get",
     });
 
