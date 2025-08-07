@@ -8,7 +8,7 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// 🚀 Create payment link + save order
+// 🚀 Create payment link + Save order
 router.post("/payment-link", async (req, res) => {
   try {
     const { userName, userEmail, userPhone, cartItems, totalAmount } = req.body;
@@ -18,13 +18,13 @@ router.post("/payment-link", async (req, res) => {
     }
 
     const paymentLink = await razorpay.paymentLink.create({
-      amount: totalAmount * 100, // in paise
+      amount: totalAmount * 100,
       currency: "INR",
       description: "Order Payment",
       customer: {
         name: userName,
         email: userEmail,
-        contact: userPhone || undefined,
+        contact: userPhone,
       },
       notify: {
         sms: true,
@@ -37,11 +37,11 @@ router.post("/payment-link", async (req, res) => {
       callback_method: "get",
     });
 
-    // Save order with status = pending
     const newOrder = new Order({
       name: userName,
       email: userEmail,
       phone: userPhone,
+      cartItems,
       amount: totalAmount,
       status: "pending",
       razorpay_payment_link_id: paymentLink.id,
