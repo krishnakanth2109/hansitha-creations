@@ -4,30 +4,21 @@ const Razorpay = require("razorpay");
 const Order = require("../models/Order");
 require("dotenv").config();
 
-// Razorpay instance
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// ✅ Health check / test route
-router.get("/test", (req, res) => {
-  res.send("✅ /api/checkout route is working");
-});
-
-// ✅ Payment link route
 router.post("/payment-link", async (req, res) => {
-  const { amount, customer, cartItems } = req.body;
-
-  console.log("👉 Incoming Checkout Payload:", req.body);
-
-  // Basic validation
-  if (!amount || !customer?.name || !customer?.email || !customer?.phone || !cartItems?.length) {
-    return res.status(400).json({ error: "Missing required fields" });
-  }
-
   try {
-    // Save order to MongoDB
+    const { amount, customer, cartItems } = req.body;
+
+    console.log("👉 Incoming Checkout Payload:", req.body);
+
+    if (!amount || !customer?.name || !customer?.email || !customer?.phone || !Array.isArray(cartItems)) {
+      return res.status(400).json({ error: "Missing required fields" });
+    }
+
     const newOrder = new Order({
       name: customer.name,
       email: customer.email,
@@ -41,9 +32,8 @@ router.post("/payment-link", async (req, res) => {
     const savedOrder = await newOrder.save();
     console.log("✅ Order saved:", savedOrder._id);
 
-    // Create Razorpay payment link
     const paymentLink = await razorpay.paymentLink.create({
-      amount: amount * 100, // ₹ to paise
+      amount: amount * 100,
       currency: "INR",
       accept_partial: false,
       customer: {
@@ -63,10 +53,10 @@ router.post("/payment-link", async (req, res) => {
       callback_method: "get",
     });
 
-    return res.json({ url: paymentLink.short_url });
-  } catch (err) {
-    console.error("❌ Error generating payment link:", err);
-    return res.status(500).json({ error: "Something went wrong" });
+    res.json({ url: paymentLink.short_url });
+  } catch (error) {
+    console.error("❌ Payment link error:", error);
+    res.status(500).json({ error: "Failed to create payment link" });
   }
 });
 
