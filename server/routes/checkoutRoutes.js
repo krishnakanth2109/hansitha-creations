@@ -70,7 +70,7 @@ router.post("/checkout/payment-link", async (req, res) => {
       reminder_enable: true,
 
       // ⚠️ Use proper domain instead of localhost for callback_url
-      callback_url: `${process.env.VITE_API_URL}/order-confirmation`,
+      callback_url: `${process.env.FRONTEND_URL}/order-confirmation`,
       callback_method: "get",
     });
 
