@@ -24,7 +24,7 @@ router.post("/payment-link", async (req, res) => {
       email: customer.email,
       phone: customer.phone,
       amount,
-      cartItems,
+      products: cartItems,
       status: "pending",
       createdAt: new Date(),
     });
