@@ -6,7 +6,7 @@ const Order = require("../models/Order");
 
 require("dotenv").config(); // Load environment variables
 
-router.post("/payment-link", async (req, res) => {
+router.post("/api/checkout/payment-link", async (req, res) => {
   const { amount, customer, cartItems } = req.body;
 
   try {

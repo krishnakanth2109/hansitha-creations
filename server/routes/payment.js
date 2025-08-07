@@ -11,7 +11,7 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-router.post("/api/checkout/payment-link", async (req, res) => {
+router.post("/payment-link", async (req, res) => {
   const { amount, cartItems, customer } = req.body;
 
   try {
