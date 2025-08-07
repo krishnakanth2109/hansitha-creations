@@ -11,12 +11,8 @@ import SearchSidebar from "../components/SearchSidebar";
 import { Footer } from "../components/Footer";
 import BottomNavBar from "../components/BottomNavBar";
 import { useSwipeable } from "react-swipeable";
-import {
-  Tabs,
-  TabsList,
-  TabsTrigger,
-  TabsContent,
-} from "@/components/ui/tabs";
+import { useCurrency } from "@/context/CurrencyContext";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
@@ -25,6 +21,7 @@ import axios from "axios";
 const API_URL = import.meta.env.VITE_API_URL;
 
 const ProductDetailsPage = () => {
+  const { formatPrice } = useCurrency();
   const { name } = useParams();
   const location = useLocation();
   const { products } = useContext(ProductContext);
@@ -215,7 +212,7 @@ const ProductDetailsPage = () => {
                   key={i}
                   src={img}
                   onClick={() => setSelectedImage(img)}
-                  className={`w-20 h-20 object-cover rounded-lg border-2 cursor-pointer ${
+                  className={`w-40 h-40 object-cover rounded-lg border-2 cursor-pointer ${
                     selectedImage === img
                       ? "border-blue-500"
                       : "border-transparent"
@@ -231,25 +228,27 @@ const ProductDetailsPage = () => {
                 onClick={() => setShowZoom(true)}
                 onMouseEnter={() => setAutoScroll(false)}
                 onMouseLeave={() => setAutoScroll(true)}
-                className="w-160 h-80 mx-auto object-cover rounded-lg shadow-lg cursor-zoom-in"
+                className="w-auto h-[660px] mx-auto object-cover rounded-lg shadow-lg cursor-zoom-in"
                 alt={product.name}
               />
             </div>
           </div>
           {/* Thumbnails for mobile */}
-        <div className="flex md:hidden gap-2 mt-4 justify-center">
-          {allImages.map((img, i) => (
-            <img
-              key={i}
-              src={img}
-              onClick={() => setSelectedImage(img)}
-              className={`w-16 h-16 object-cover rounded-lg border-2 cursor-pointer ${
-                selectedImage === img ? 'border-blue-500' : 'border-transparent'
-              }`}
-              alt="Thumb"
-            />
-          ))}
-        </div>
+          <div className="flex md:hidden gap-2 mt-4 justify-center">
+            {allImages.map((img, i) => (
+              <img
+                key={i}
+                src={img}
+                onClick={() => setSelectedImage(img)}
+                className={`w-28 h-28 object-cover rounded-lg border-2 cursor-pointer ${
+                  selectedImage === img
+                    ? "border-blue-500"
+                    : "border-transparent"
+                }`}
+                alt="Thumb"
+              />
+            ))}
+          </div>
 
           {/* Right Section */}
           <div>
@@ -263,8 +262,9 @@ const ProductDetailsPage = () => {
             <p className="text-black-500 text-sm mb-4">{product.description}</p>
             <div className="flex items-center justify-start mb-2">
               <p className="text-2xl font-bold text-blue-100">
-                ₹{product.price.toLocaleString("en-IN")}
+                {formatPrice(product.price)}
               </p>
+
               <span
                 className={`text-xl ml-10 font-medium ${
                   product.stock > 0 ? "text-white" : "text-red-600"
@@ -407,14 +407,17 @@ const ProductDetailsPage = () => {
         {/* Related Products */}
         {related.length > 0 && (
           <div className="mt-10">
-            <h2 className="text-xl font-bold mb-4">Related Products</h2>
+            <h2 className="text-3xl font-bold mb-4">Related Products</h2>
             <div
               className="flex gap-4 overflow-x-auto scrollbar-hide -mx-1 px-1"
               {...swipeHandlers}
               id="related-scroll"
             >
               {related.map((item) => (
-                <div key={item._id} className="relative min-w-[180px] text-left">
+                <div
+                  key={item._id}
+                  className="relative min-w-[180px] text-left"
+                >
                   <motion.button
                     whileTap={{ scale: 0.9 }}
                     animate={{ scale: isInWishlist(item._id) ? 1.2 : 1 }}
@@ -457,7 +460,7 @@ const ProductDetailsPage = () => {
                     <h3 className="mt-2 font-semibold">{item.name}</h3>
                     <p className="text-sm text-gray-500">{item.category}</p>
                     <p className="text-blue-600 font-bold">
-                      ₹{item.price.toLocaleString("en-IN")}
+                      {formatPrice(item.price)}
                     </p>
                   </button>
                 </div>

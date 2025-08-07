@@ -63,7 +63,7 @@ const Checkout: React.FC = () => {
     const total = subtotal + shipping + tax;
 
     try {
-      const res = await fetch(`http://localhost:5000/api/checkout`, {
+      const res = await fetch(`http://localhost:8080/api/checkout`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'

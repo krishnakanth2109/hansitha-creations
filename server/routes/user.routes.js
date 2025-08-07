@@ -1,5 +1,3 @@
-// routes/user.routes.js
-
 const express = require("express");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
@@ -8,52 +6,49 @@ const User = require("../models/User.model.js");
 
 const router = express.Router();
 
-// ✅ GET /api/users/admins - Get list of admin users
-router.get('/admins', async (req, res) => {
+/* ------------------- Admin Related ------------------- */
+
+// ✅ Get all admin users
+router.get("/admins", async (req, res) => {
   try {
-    const admins = await User.find({ role: 'admin' }).select('name email');
+    const admins = await User.find({ role: "admin" }).select("name email");
     res.json(admins);
   } catch (err) {
-    res.status(500).json({ message: 'Server error' });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
-// PATCH /api/users/update-role
-router.patch('/update-role', async (req, res) => {
+// ✅ Update user role
+router.patch("/update-role", async (req, res) => {
   const { email, role } = req.body;
-
-  if (!email || !role) return res.status(400).json({ message: 'Email and role are required' });
+  if (!email || !role) return res.status(400).json({ message: "Email and role are required" });
 
   try {
     const user = await User.findOneAndUpdate({ email }, { role }, { new: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (!user) return res.status(404).json({ message: 'User not found' });
-
-    res.json({ message: 'Role updated successfully', user });
+    res.json({ message: "Role updated successfully", user });
   } catch (err) {
-    res.status(500).json({ message: 'Server error', error: err.message });
+    res.status(500).json({ message: "Server error", error: err.message });
   }
 });
 
+/* ------------------- Auth ------------------- */
 
-// ✅ Login Route
+// ✅ Login
 router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ message: "Email and password are required" });
+  const { email, password } = req.body;
+  if (!email || !password)
+    return res.status(400).json({ message: "Email and password are required" });
 
+  try {
     const user = await User.findOne({ email });
-    if (!user)
-      return res.status(401).json({ message: "Invalid email or password" });
+    if (!user) return res.status(401).json({ message: "Invalid email or password" });
 
     const isMatch = await bcrypt.compare(password, user.password);
-    if (!isMatch)
-      return res.status(401).json({ message: "Invalid email or password" });
+    if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
 
-    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
 
     res.cookie("token", token, {
       httpOnly: true,
@@ -62,74 +57,85 @@ router.post("/login", async (req, res) => {
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
-    res.json({ message: "Login successful", userId: user._id, email: user.email, name: user.name });
+    res.json({
+      message: "Login successful",
+      userId: user._id,
+      email: user.email,
+      name: user.name,
+    });
   } catch (err) {
     console.error("Login error:", err);
     res.status(500).json({ message: "Server error during login" });
   }
 });
 
-// ✅ Get current user info
+// ✅ Get current user
 router.get("/me", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id)
       .populate("wishlist")
       .populate("cart.product")
-      .select('name email role cart wishlist orders');
+      .select("name email role cart wishlist orders");
+
     res.json({ user });
   } catch (err) {
-    res.status(500).json({ message: "Error fetching user", error: err });
+    res.status(500).json({ message: "Error fetching user", error: err.message });
   }
 });
 
+/* ------------------- Cart Routes ------------------- */
 
-// ✅ Get user's cart
+// ✅ Get Cart
 router.get("/cart", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate("cart.product");
     if (!user) return res.status(404).json({ message: "User not found" });
-    
+
     res.json({ success: true, cart: user.cart });
   } catch (err) {
     console.error("Get cart error:", err);
-    res.status(500).json({ success: false, message: "Server error fetching cart" });
+    res.status(500).json({ message: "Server error fetching cart" });
   }
 });
 
-// ✅ Add to cart
+// ✅ Add to Cart
 router.post("/cart", auth, async (req, res) => {
   try {
-    const { productId, quantity } = req.body;
-    const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ message: "User not found" });
+    const { productId, quantity = 1 } = req.body;
 
-    const index = user.cart.findIndex((item) => item.product.toString() === productId);
-    if (index !== -1) user.cart[index].quantity += quantity;
-    else user.cart.push({ product: productId, quantity });
-
-    await user.save();
-    const updatedUser = await User.findById(req.user.id).populate("cart.product");
-    res.json({ success: true, cart: updatedUser.cart });
-  } catch (err) {
-    console.error("Cart error:", err);
-    res.status(500).json({ message: "Failed to update cart" });
-  }
-});
-
-// ✅ Update cart item quantity
-router.put("/cart", auth, async (req, res) => {
-  try {
-    const { productId, quantity } = req.body;
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     const index = user.cart.findIndex((item) => item.product.toString() === productId);
     if (index !== -1) {
-      if (quantity <= 0) {
-        user.cart.splice(index, 1); // Remove item if quantity is 0 or less
-      } else {
-        user.cart[index].quantity = quantity; // Update quantity
-      }
+      user.cart[index].quantity += quantity;
+    } else {
+      user.cart.push({ product: productId, quantity });
+    }
+
+    await user.save();
+
+    const updatedUser = await User.findById(req.user.id).populate("cart.product");
+    res.json({ success: true, cart: updatedUser.cart });
+  } catch (err) {
+    console.error("Add to cart error:", err);
+    res.status(500).json({ message: "Failed to update cart" });
+  }
+});
+
+// ✅ Update Cart Item Quantity
+router.put("/cart", auth, async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    const index = user.cart.findIndex((item) => item.product.toString() === productId);
+    if (index !== -1) {
+      if (quantity <= 0) user.cart.splice(index, 1);
+      else user.cart[index].quantity = quantity;
+
       await user.save();
       const updatedUser = await User.findById(req.user.id).populate("cart.product");
       res.json({ success: true, cart: updatedUser.cart });
@@ -142,15 +148,17 @@ router.put("/cart", auth, async (req, res) => {
   }
 });
 
-// ✅ Remove from cart
+// ✅ Remove from Cart
 router.delete("/cart/:productId", auth, async (req, res) => {
   try {
     const { productId } = req.params;
+
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
     user.cart = user.cart.filter((item) => item.product.toString() !== productId);
     await user.save();
+
     const updatedUser = await User.findById(req.user.id).populate("cart.product");
     res.json({ success: true, cart: updatedUser.cart });
   } catch (err) {
@@ -159,7 +167,7 @@ router.delete("/cart/:productId", auth, async (req, res) => {
   }
 });
 
-// ✅ Clear cart
+// ✅ Clear Cart
 router.delete("/cart", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -167,6 +175,7 @@ router.delete("/cart", auth, async (req, res) => {
 
     user.cart = [];
     await user.save();
+
     res.json({ success: true, cart: [] });
   } catch (err) {
     console.error("Clear cart error:", err);
@@ -174,56 +183,50 @@ router.delete("/cart", auth, async (req, res) => {
   }
 });
 
-// ✅ Wishlist toggle
+/* ------------------- Wishlist Routes ------------------- */
+
+// ✅ Toggle Wishlist
 router.post("/wishlist", auth, async (req, res) => {
   try {
     const { productId } = req.body;
-    if (!productId) {
-      return res.status(400).json({ message: "Product ID is required" });
-    }
+    if (!productId) return res.status(400).json({ message: "Product ID is required" });
 
     const user = await User.findById(req.user.id);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    // Check if product exists in wishlist
-    const exists = user.wishlist.some(id => id.toString() === productId);
-    
+    const exists = user.wishlist.some((id) => id.toString() === productId);
     if (exists) {
-      // Remove from wishlist
-      user.wishlist = user.wishlist.filter(id => id.toString() !== productId);
+      user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
     } else {
-      // Add to wishlist
       user.wishlist.push(productId);
     }
 
     await user.save();
-    
-    // Return updated wishlist
     res.json({
       success: true,
       wishlist: user.wishlist,
-      action: exists ? 'removed' : 'added'
+      action: exists ? "removed" : "added",
     });
   } catch (err) {
-    console.error("Wishlist error", err);
-    res.status(500).json({ success: false, message: "Server error updating wishlist" });
+    console.error("Wishlist toggle error:", err);
+    res.status(500).json({ message: "Server error updating wishlist" });
   }
 });
 
-// ✅ Get user's wishlist
+// ✅ Get Wishlist
 router.get("/wishlist", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id).populate("wishlist");
     if (!user) return res.status(404).json({ message: "User not found" });
-    
+
     res.json({ success: true, wishlist: user.wishlist });
   } catch (err) {
-    console.error("Get wishlist error", err);
-    res.status(500).json({ success: false, message: "Server error fetching wishlist" });
+    console.error("Get wishlist error:", err);
+    res.status(500).json({ message: "Server error fetching wishlist" });
   }
 });
 
-// ✅ Clear wishlist
+// ✅ Clear Wishlist
 router.delete("/wishlist", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -231,6 +234,7 @@ router.delete("/wishlist", auth, async (req, res) => {
 
     user.wishlist = [];
     await user.save();
+
     res.json({ success: true, wishlist: [] });
   } catch (err) {
     console.error("Clear wishlist error:", err);
@@ -238,7 +242,9 @@ router.delete("/wishlist", auth, async (req, res) => {
   }
 });
 
-// ✅ Place order
+/* ------------------- Orders & Account ------------------- */
+
+// ✅ Place Order
 router.post("/order", auth, async (req, res) => {
   try {
     const { products, total } = req.body;
@@ -248,43 +254,42 @@ router.post("/order", auth, async (req, res) => {
     const user = await User.findById(req.user.id);
     user.orders.push({ products, total });
     await user.save();
+
     res.json(user.orders);
   } catch (err) {
-    res.status(500).json({ message: "Error placing order", error: err });
+    console.error("Place order error:", err);
+    res.status(500).json({ message: "Error placing order", error: err.message });
   }
 });
 
+// ✅ Change Password
 router.patch("/change-password", auth, async (req, res) => {
   try {
     const { currentPassword, newPassword } = req.body;
-
     const user = await User.findById(req.user.id);
-    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    if (!user) return res.status(404).json({ message: "User not found" });
 
     const isMatch = await bcrypt.compare(currentPassword, user.password);
-    if (!isMatch) {
-      return res.status(400).json({ success: false, message: "Incorrect current password" });
-    }
+    if (!isMatch) return res.status(400).json({ message: "Incorrect current password" });
 
-    user.password = newPassword; // ✅ Let pre-save hook hash it
-    await user.save();           // ✅ Triggers pre-save hook
+    user.password = newPassword; // Will trigger pre-save hash
+    await user.save();
 
-    res.status(200).json({ success: true, message: "Password changed successfully" });
+    res.json({ success: true, message: "Password changed successfully" });
   } catch (err) {
-    console.error("Change Password error:", err);
-    res.status(500).json({ success: false, message: "Server error" });
+    console.error("Change password error:", err);
+    res.status(500).json({ message: "Server error" });
   }
 });
 
-
-// ✅ Delete account
+// ✅ Delete Account
 router.delete("/delete-account", auth, async (req, res) => {
   try {
     await User.findByIdAndDelete(req.user.id);
     res.clearCookie("token");
     res.json({ message: "Account deleted successfully" });
   } catch (err) {
-    res.status(500).json({ message: "Error deleting account", error: err });
+    res.status(500).json({ message: "Error deleting account", error: err.message });
   }
 });
 

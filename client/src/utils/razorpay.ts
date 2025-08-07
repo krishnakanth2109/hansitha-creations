@@ -29,7 +29,7 @@ export const initiateRazorpayPayment = async ({
   }
 
   try {
-    const orderRes = await axios.post(`http://localhost:5000/api/payment/orders`, {
+    const orderRes = await axios.post(`http://localhost:8080/api/payment/orders`, {
       amount: amount * 100,
     });
 
