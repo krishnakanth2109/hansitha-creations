@@ -8,6 +8,7 @@ import { useToast } from '@/hooks/use-toast';
 import { User, Lock } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { loadRazorpayScript } from '@/utils/razorpay';
 
 const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
@@ -32,9 +33,8 @@ const Checkout: React.FC = () => {
 
   const validateForm = () => {
     const requiredFields = ['email', 'firstName', 'lastName', 'phone'];
-
     for (const field of requiredFields) {
-      if (!formData[field]) {
+      if (!formData[field as keyof typeof formData]) {
         toast({
           title: 'Error',
           description: `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field.`,
@@ -60,14 +60,18 @@ const Checkout: React.FC = () => {
     const subtotal = getTotalPrice();
     const shipping = subtotal > 50 ? 0 : 99;
     const tax = subtotal * 0.08;
-    const total = Math.round(subtotal + shipping + tax); // total in INR
+    const total = Math.round(subtotal + shipping + tax);
 
     try {
+      const loaded = await loadRazorpayScript();
+      if (!loaded) {
+        toast({ title: 'Error', description: 'Razorpay SDK failed to load.', variant: 'destructive' });
+        return;
+      }
+
       const res = await fetch(`http://localhost:8080/api/checkout`, {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json'
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
           cartItems,
@@ -80,7 +84,7 @@ const Checkout: React.FC = () => {
       const data = await res.json(); // { orderId, amount }
 
       const options = {
-        key: 'YOUR_RAZORPAY_KEY_ID', // Replace with your Razorpay key
+        key: import.meta.env.VITE_RAZORPAY_KEY_ID as string,
         amount: data.amount,
         currency: 'INR',
         name: 'Hansitha Creations',
@@ -134,7 +138,6 @@ const Checkout: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Contact Info */}
             <div className="space-y-6">
               <CheckoutSection
                 icon={<User className="w-5 h-5" />}
@@ -150,7 +153,6 @@ const Checkout: React.FC = () => {
               />
             </div>
 
-            {/* Summary */}
             <div className="lg:sticky lg:top-8 lg:self-start">
               <Card>
                 <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
@@ -212,7 +214,7 @@ const Checkout: React.FC = () => {
 
 export default Checkout;
 
-// Reusable
+// Reusable Components
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>
