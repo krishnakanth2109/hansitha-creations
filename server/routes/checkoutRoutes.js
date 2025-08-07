@@ -10,28 +10,24 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-const FRONTEND_URL = process.env.FRONTEND_URL;
+// ✅ Health check / test route
+router.get("/test", (req, res) => {
+  res.send("✅ /api/checkout route is working");
+});
 
-// POST /api/checkout/payment-link
+// ✅ Payment link route
 router.post("/payment-link", async (req, res) => {
   const { amount, customer, cartItems } = req.body;
 
   console.log("👉 Incoming Checkout Payload:", req.body);
 
-  // Validate required fields
-  if (
-    !amount ||
-    !customer?.name ||
-    !customer?.email ||
-    !customer?.phone ||
-    !Array.isArray(cartItems) ||
-    cartItems.length === 0
-  ) {
+  // Basic validation
+  if (!amount || !customer?.name || !customer?.email || !customer?.phone || !cartItems?.length) {
     return res.status(400).json({ error: "Missing required fields" });
   }
 
   try {
-    // ✅ Save order to MongoDB
+    // Save order to MongoDB
     const newOrder = new Order({
       name: customer.name,
       email: customer.email,
@@ -45,9 +41,9 @@ router.post("/payment-link", async (req, res) => {
     const savedOrder = await newOrder.save();
     console.log("✅ Order saved:", savedOrder._id);
 
-    // ✅ Create Razorpay Payment Link
+    // Create Razorpay payment link
     const paymentLink = await razorpay.paymentLink.create({
-      amount: amount * 100, // Amount in paise
+      amount: amount * 100, // ₹ to paise
       currency: "INR",
       accept_partial: false,
       customer: {
@@ -63,13 +59,13 @@ router.post("/payment-link", async (req, res) => {
       notes: {
         orderId: savedOrder._id.toString(),
       },
-      callback_url: `${FRONTEND_URL}/order-confirmation`,
+      callback_url: `${process.env.FRONTEND_URL}/order-confirmation`,
       callback_method: "get",
     });
 
     return res.json({ url: paymentLink.short_url });
   } catch (err) {
-    console.error("❌ Error in /payment-link route:", err);
+    console.error("❌ Error generating payment link:", err);
     return res.status(500).json({ error: "Something went wrong" });
   }
 });

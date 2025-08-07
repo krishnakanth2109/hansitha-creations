@@ -126,13 +126,12 @@ app.get("/", (req, res) => res.status(200).send("Backend is live"));
 app.use("/api/payment", paymentRoutes);
 app.use("/api", require("./routes/webhook"));
 app.use("/api/categories", categoryRoutes);
-app.use("/api", checkoutRoutes);
+app.use("/api/checkout", checkoutRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/auth", otpRoutes);
 app.use("/api/orders", orderRoutes);
-app.use("/api/checkout/payment-link", checkoutRoutes);
 app.use("/api/announcements", announcementRoutes);
 
 // Carousel Schema & Uploads
