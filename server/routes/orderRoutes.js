@@ -3,13 +3,20 @@ const router = express.Router();
 const Order = require('../models/Order');
 const Product = require('../models/Product');
 
-// ✅ POST /api/orders - create a new order & update stock with transaction
+// ✅ POST /api/orders - create a new order & update stock
 router.post('/', async (req, res) => {
   const session = await Product.startSession();
-  session.startTransaction();
 
   try {
     const { email, address, cartItems, totalAmount } = req.body;
+
+    // ✅ Input Validation
+    if (!email || !address || !cartItems?.length || !totalAmount) {
+      return res.status(400).json({ message: 'Missing required order fields' });
+    }
+
+    session.startTransaction();
+
     const updatedStocks = [];
 
     // ✅ Step 1: Reduce stock in a transaction
@@ -21,16 +28,19 @@ router.post('/', async (req, res) => {
       }
 
       if (product.stock < item.quantity) {
-        throw new Error(`Insufficient stock for ${product.name}`);
+        throw new Error(`Insufficient stock for "${product.name}". Available: ${product.stock}, Requested: ${item.quantity}`);
       }
 
       product.stock -= item.quantity;
       await product.save({ session });
 
-      updatedStocks.push({ productId: product._id, stock: product.stock });
+      updatedStocks.push({
+        productId: product._id,
+        stock: product.stock,
+      });
     }
 
-    // ✅ Step 2: Create order in the same transaction
+    // ✅ Step 2: Save order in the same transaction
     const newOrder = new Order({
       email,
       address,
@@ -40,30 +50,32 @@ router.post('/', async (req, res) => {
 
     const savedOrder = await newOrder.save({ session });
 
-    // ✅ Step 3: Commit the transaction
+    // ✅ Step 3: Commit transaction
     await session.commitTransaction();
-    session.endSession();
 
-    // ✅ Step 4: Emit socket event
+    // ✅ Step 4: Emit socket event if socket is configured
     const io = req.app.get('io');
-    io.emit('newOrder', {
-      _id: savedOrder._id,
-      email: savedOrder.email,
-      totalAmount: savedOrder.totalAmount,
-      createdAt: savedOrder.createdAt,
-    });
+    if (io) {
+      io.emit('newOrder', {
+        _id: savedOrder._id,
+        email: savedOrder.email,
+        totalAmount: savedOrder.totalAmount,
+        createdAt: savedOrder.createdAt,
+      });
+    }
 
-    // ✅ Step 5: Respond with order + updated stock
+    // ✅ Step 5: Return response
     res.status(201).json({
       order: savedOrder,
-      updatedStock: updatedStocks, // for syncing with frontend
+      updatedStock: updatedStocks,
     });
 
   } catch (error) {
     await session.abortTransaction();
-    session.endSession();
-    console.error('Order transaction failed:', error.message);
     res.status(500).json({ message: error.message || 'Failed to place order' });
+    console.error('❌ Order transaction failed:', error.message);
+  } finally {
+    session.endSession(); // Ensures cleanup
   }
 });
 
