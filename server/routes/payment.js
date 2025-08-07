@@ -4,7 +4,7 @@ const router = express.Router();
 const crypto = require("crypto");
 require("dotenv").config();
 
-const Order = require("../models/Order.model");
+const Order = require("../models/Order");
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
@@ -58,3 +58,5 @@ router.post("/create-payment-link", async (req, res) => {
     res.status(500).json({ error: "Failed to create payment link" });
   }
 });
+
+module.exports = router;

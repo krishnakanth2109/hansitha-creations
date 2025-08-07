@@ -87,6 +87,7 @@ const checkoutRoutes = require("./routes/checkoutRoutes");
 const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
 const orderRoutes = require("./routes/orderRoutes");
+const paymentRoutes = require("./routes/payment");
 
 // ✅ Announcement route with auto-refresh
 const Announcement = require("./models/Announcement");
@@ -122,7 +123,7 @@ announcementRoutes.post("/", async (req, res) => {
 app.get("/", (req, res) => res.status(200).send("Backend is live"));
 
 // Route Setup
-app.use("/api/payment", require("./routes/payment"));
+app.use("/api/payment", paymentRoutes);
 app.use("/api", require("./routes/webhook"));
 app.use("/api/categories", categoryRoutes);
 app.use("/api", checkoutRoutes);

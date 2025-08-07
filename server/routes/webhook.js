@@ -1,7 +1,7 @@
 const express = require("express");
 const crypto = require("crypto");
 const router = express.Router();
-const Order = require("../models/Order.model"); // Adjust this path as per your structure
+const Order = require("../models/Order"); // Adjust this path as per your structure
 
 // ✅ Webhook Endpoint
 router.post(
