@@ -1,62 +1,46 @@
 const express = require("express");
-const Razorpay = require("razorpay");
-const Order = require("../models/Order");
-
 const router = express.Router();
+const User = require("../models/User.model");
 
-// Razorpay instance
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID,
-  key_secret: process.env.RAZORPAY_KEY_SECRET,
-});
-
-// ✅ Step 1: Create Razorpay Order
-router.post("/razorpay", async (req, res) => {
-  try {
-    const { totalAmount } = req.body;
-
-    if (!totalAmount || typeof totalAmount !== "number") {
-      return res.status(400).json({ message: "Invalid or missing totalAmount" });
-    }
-
-    const options = {
-      amount: totalAmount * 100, // Convert to paisa
-      currency: "INR",
-      receipt: `receipt_${Date.now()}`,
-    };
-
-    const order = await razorpay.orders.create(options);
-    res.status(200).json({ orderId: order.id, amount: order.amount });
-  } catch (err) {
-    console.error("Razorpay order creation failed:", err);
-    res.status(500).json({ message: "Failed to create Razorpay order" });
-  }
-});
-
-// ✅ Step 2: Save Order in DB after payment success
 router.post("/", async (req, res) => {
   try {
-    const { userId, cartItems, totalAmount, address, paymentId, razorpayOrderId } = req.body;
+    const {
+      userId,          // email
+      cartItems,       // [{ id, name, quantity, price }]
+      totalAmount,     // number
+      address,         // { name, email, phone }
+      paymentId,       // from Razorpay
+      razorpayOrderId, // from Razorpay
+    } = req.body;
 
-    if (!userId || !cartItems || !totalAmount || !address) {
-      return res.status(400).json({ message: "Missing required fields" });
+    // 1. Find user by email
+    const user = await User.findOne({ email: userId });
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
     }
 
-    const newOrder = new Order({
-      user: userId,
-      products: cartItems,
-      totalAmount,
-      shippingAddress: address,
+    // 2. Format order according to your schema
+    const orderProducts = cartItems.map((item) => ({
+      product: item.id,
+      quantity: item.quantity,
+    }));
+
+    const newOrder = {
+      products: orderProducts,
+      total: totalAmount,
+      createdAt: new Date(),
       paymentId,
       razorpayOrderId,
-    });
+    };
 
-    await newOrder.save();
+    // 3. Save order in user.orders
+    user.orders.push(newOrder);
+    await user.save();
 
-    res.status(201).json({ message: "Order created", orderId: newOrder._id });
-  } catch (error) {
-    console.error("Order save failed:", error);
-    res.status(500).json({ message: "Server error" });
+    res.status(201).json({ message: "Order saved successfully" });
+  } catch (err) {
+    console.error("Error saving order:", err);
+    res.status(500).json({ message: "Failed to save order" });
   }
 });
 

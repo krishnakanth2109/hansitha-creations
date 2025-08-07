@@ -31,6 +31,8 @@ const userSchema = new mongoose.Schema({
       ],
       total: { type: Number, required: true },
       createdAt: { type: Date, default: Date.now },
+      paymentId: { type: String },
+      razorpayOrderId: { type: String },
     },
   ],
 });
