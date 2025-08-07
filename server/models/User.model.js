@@ -29,10 +29,10 @@ const userSchema = new mongoose.Schema({
           quantity: { type: Number, required: true },
         },
       ],
-      total: { type: Number, required: true },
+      total: Number,
+      paymentId: String,
+      razorpayOrderId: String,
       createdAt: { type: Date, default: Date.now },
-      paymentId: { type: String },
-      razorpayOrderId: { type: String },
     },
   ],
 });
