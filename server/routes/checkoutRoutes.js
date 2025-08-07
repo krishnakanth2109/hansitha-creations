@@ -4,41 +4,50 @@ const User = require("../models/User.model");
 const Razorpay = require("razorpay");
 require("dotenv").config(); // Load environment variables
 
-// ✅ Save Order Endpoint (After Razorpay redirects to frontend)
-router.post("/orders", async (req, res) => {
+router.post("/payment-link", async (req, res) => {
+  const { amount, customer, cartItems } = req.body;
+
   try {
-    const {
-      userId,          // email
-      cartItems,       // [{ id, name, quantity, price }]
-      totalAmount,     // number
-      address,         // { name, email, phone }
-      paymentId,       // from Razorpay
-      razorpayOrderId, // from Razorpay
-    } = req.body;
-
-    const user = await User.findOne({ email: userId });
-    if (!user) return res.status(404).json({ message: "User not found" });
-
-    const orderProducts = cartItems.map((item) => ({
-      product: item.id,
-      quantity: item.quantity,
-    }));
-
-    const newOrder = {
-      products: orderProducts,
-      total: totalAmount,
+    // ✅ Save order to MongoDB
+    const newOrder = new OrderModel({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      amount,
+      cartItems, // Save cart data
+      status: "pending",
       createdAt: new Date(),
-      paymentId,
-      razorpayOrderId,
-    };
+    });
 
-    user.orders.push(newOrder);
-    await user.save();
+    const savedOrder = await newOrder.save();
+    console.log("Order saved:", savedOrder._id);
 
-    res.status(201).json({ message: "Order saved successfully" });
+    // ✅ Create Razorpay Payment Link
+    const paymentLink = await razorpay.paymentLink.create({
+      amount: amount * 100, // Razorpay expects paise
+      currency: "INR",
+      accept_partial: false,
+      customer: {
+        name: customer.name,
+        email: customer.email,
+        contact: customer.phone,
+      },
+      notify: {
+        sms: true,
+        email: true,
+      },
+      reminder_enable: true,
+      notes: {
+        orderId: savedOrder._id.toString(),
+      },
+      callback_url: `${process.env.FRONTEND_URL}/order-success`,
+      callback_method: "get",
+    });
+
+    return res.json({ url: paymentLink.short_url });
   } catch (err) {
-    console.error("❌ Error saving order:", err);
-    res.status(500).json({ message: "Failed to save order" });
+    console.error("Error in payment-link route:", err);
+    return res.status(500).json({ error: "Something went wrong" });
   }
 });
 

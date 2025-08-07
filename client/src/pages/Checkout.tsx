@@ -76,6 +76,7 @@ const Checkout: React.FC = () => {
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({
             amount: total,
+            cartItems,
             customer: {
               name: `${formData.firstName} ${formData.lastName}`,
               email: formData.email,
