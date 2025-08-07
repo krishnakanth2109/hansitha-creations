@@ -1,12 +1,11 @@
-// routes/checkout.js
 const express = require("express");
 const router = express.Router();
 const User = require("../models/User.model");
 const Razorpay = require("razorpay");
-require("dotenv").config(); // Ensure environment variables are loaded
+require("dotenv").config(); // Load environment variables
 
-// ✅ Save Order Endpoint
-router.post("/", async (req, res) => {
+// ✅ Save Order Endpoint (After Razorpay redirects to frontend)
+router.post("/orders", async (req, res) => {
   try {
     const {
       userId,          // email
@@ -43,7 +42,7 @@ router.post("/", async (req, res) => {
   }
 });
 
-// ✅ Razorpay Payment Link Endpoint
+// ✅ Razorpay Payment Link Generator
 router.post("/checkout/payment-link", async (req, res) => {
   const { amount, customer } = req.body;
 
@@ -54,7 +53,7 @@ router.post("/checkout/payment-link", async (req, res) => {
     });
 
     const paymentLink = await razorpay.paymentLink.create({
-      amount: amount * 100, // convert to paise
+      amount: amount * 100, // convert rupees to paise
       currency: "INR",
       accept_partial: false,
       description: "Hansitha Creations Order Payment",
@@ -69,7 +68,7 @@ router.post("/checkout/payment-link", async (req, res) => {
       },
       reminder_enable: true,
 
-      // ⚠️ Use proper domain instead of localhost for callback_url
+      // ✅ Make sure FRONTEND_URL is set correctly in your .env file
       callback_url: `${process.env.FRONTEND_URL}/order-confirmation`,
       callback_method: "get",
     });
