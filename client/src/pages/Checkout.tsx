@@ -60,7 +60,7 @@ const Checkout: React.FC = () => {
     const subtotal = getTotalPrice();
     const shipping = subtotal > 50 ? 0 : 99;
     const tax = subtotal * 0.08;
-    const total = subtotal + shipping + tax;
+    const total = Math.round(subtotal + shipping + tax); // total in INR
 
     try {
       const res = await fetch(`http://localhost:8080/api/checkout`, {
@@ -75,13 +75,36 @@ const Checkout: React.FC = () => {
         }),
       });
 
-      if (!res.ok) throw new Error('Failed to save order');
+      if (!res.ok) throw new Error('Failed to create order');
 
-      clearCart();
-      toast({ title: 'Order Placed', description: 'Thank you for your order!' });
-      navigate('/order-confirmation');
+      const data = await res.json(); // { orderId, amount }
+
+      const options = {
+        key: 'YOUR_RAZORPAY_KEY_ID', // Replace with your Razorpay key
+        amount: data.amount,
+        currency: 'INR',
+        name: 'Hansitha Creations',
+        description: 'Order Payment',
+        image: '/logo.png',
+        order_id: data.orderId,
+        handler: function (response: any) {
+          clearCart();
+          toast({ title: 'Payment Successful', description: 'Thank you for your order!' });
+          navigate('/order-confirmation');
+        },
+        prefill: {
+          name: `${formData.firstName} ${formData.lastName}`,
+          email: formData.email,
+          contact: formData.phone,
+        },
+        theme: { color: '#1E3A8A' },
+      };
+
+      const rzp = new (window as any).Razorpay(options);
+      rzp.open();
     } catch (err) {
-      toast({ title: 'Error', description: 'Order could not be saved.', variant: 'destructive' });
+      console.error(err);
+      toast({ title: 'Error', description: 'Order could not be placed.', variant: 'destructive' });
     } finally {
       setIsProcessing(false);
     }
@@ -111,7 +134,7 @@ const Checkout: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Left - Contact Info Only */}
+            {/* Contact Info */}
             <div className="space-y-6">
               <CheckoutSection
                 icon={<User className="w-5 h-5" />}
@@ -127,7 +150,7 @@ const Checkout: React.FC = () => {
               />
             </div>
 
-            {/* Right - Summary */}
+            {/* Summary */}
             <div className="lg:sticky lg:top-8 lg:self-start">
               <Card>
                 <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
@@ -189,7 +212,7 @@ const Checkout: React.FC = () => {
 
 export default Checkout;
 
-// Reusable Components
+// Reusable
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>

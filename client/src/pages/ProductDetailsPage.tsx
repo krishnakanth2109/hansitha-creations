@@ -25,7 +25,7 @@ const ProductDetailsPage = () => {
   const { name } = useParams();
   const location = useLocation();
   const { products } = useContext(ProductContext);
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { wishlist, toggleWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -35,6 +35,11 @@ const ProductDetailsPage = () => {
   const [isSearchOpen, setSearchOpen] = useState(false);
   const [autoScroll, setAutoScroll] = useState(true);
   const [quantity, setQuantity] = useState(1);
+  const cartQuantity =
+    cartItems.find((item) => item.id === product?._id)?.quantity || 0;
+  const remainingStock = product ? product.stock - cartQuantity : 0;
+  const isMaxQuantityReached = quantity + cartQuantity > (product?.stock || 0);
+
   const [showZoom, setShowZoom] = useState(false);
 
   const swipeHandlers = useSwipeable({
@@ -103,6 +108,28 @@ const ProductDetailsPage = () => {
 
   const handleAddToCart = () => {
     if (!product || product.stock === 0) return;
+
+    if (isMaxQuantityReached) {
+  const availableToAdd = product.stock - cartQuantity;
+
+  if (availableToAdd > 0) {
+    addToCart({
+      id: product._id,
+      name: product.name,
+      price: product.price,
+      image: product.image,
+      quantity: availableToAdd,
+    });
+
+    toastWithVoice.success(`Added remaining ${availableToAdd} to cart.`);
+  } else {
+    toastWithVoice.error("You’ve already added maximum stock.");
+  }
+
+  return;
+}
+
+
     addToCart({
       id: product._id,
       name: product.name,
@@ -110,6 +137,7 @@ const ProductDetailsPage = () => {
       image: product.image,
       quantity,
     });
+
     toastWithVoice.success("Added to cart!");
   };
 
@@ -264,49 +292,64 @@ const ProductDetailsPage = () => {
               <p className="text-2xl font-bold text-blue-100">
                 {formatPrice(product.price)}
               </p>
-
-              <span
-                className={`text-xl ml-10 font-medium ${
-                  product.stock > 0 ? "text-white" : "text-red-600"
-                }`}
-              >
-                {product.stock > 0
-                  ? `Stock : ${product.stock}`
-                  : "Out of Stock"}
-              </span>
             </div>
             {lowStock && (
               <p className="text-red-500 text-sm mb-2">
                 Hurry! Only {product.stock} left in stock.
               </p>
             )}
-            <div className="flex items-center gap-4 mb-6">
-              <button
-                onClick={() => setQuantity(Math.max(1, quantity - 1))}
-                className="px-3 py-1 border bg-white rounded-lg"
-                disabled={quantity <= 1}
+            <div className="flex flex-col items-start gap-2 mb-6">
+              {/* Quantity Buttons */}
+              <div className="flex items-center gap-4">
+                <button
+                  onClick={() => setQuantity(Math.max(1, quantity - 1))}
+                  className="px-3 py-1 border bg-white rounded-lg"
+                  disabled={product.stock - cartQuantity <= 0 || quantity <= 1}
+                >
+                  -
+                </button>
+                <span>{product.stock - cartQuantity <= 0 ? 0 : quantity}</span>
+                <button
+                  onClick={() =>
+                    setQuantity(
+                      Math.min(product.stock - cartQuantity, quantity + 1)
+                    )
+                  }
+                  className="px-3 py-1 border bg-white rounded-lg"
+                  disabled={
+                    product.stock - cartQuantity <= 0 ||
+                    quantity >= product.stock - cartQuantity
+                  }
+                >
+                  +
+                </button>
+              </div>
+
+              {/* Stock Left Below */}
+              <span
+                className={`text-sm font-medium ${
+                  product.stock - cartQuantity > 0
+                    ? "text-black"
+                    : "text-red-600"
+                }`}
               >
-                -
-              </button>
-              <span>{quantity}</span>
-              <button
-                onClick={() =>
-                  setQuantity(Math.min(product.stock, quantity + 1))
-                }
-                className="px-3 py-1 border bg-white rounded-lg"
-                disabled={quantity >= product.stock}
-              >
-                +
-              </button>
+                {product.stock - cartQuantity > 0
+                  ? `In Stock: ${product.stock - cartQuantity}`
+                  : "Out of Stock"}
+              </span>
             </div>
 
             <div className="flex gap-3">
               <button
                 onClick={handleAddToCart}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                disabled={product.stock === 0}
+                disabled={product.stock === 0 || isMaxQuantityReached}
               >
-                {product.stock === 0 ? "Out of Stock" : "Add to Cart"}
+                {product.stock === 0
+                  ? "Out of Stock"
+                  : isMaxQuantityReached
+                  ? "Max Quantity Added"
+                  : "Add to Cart"}
               </button>
 
               <button
