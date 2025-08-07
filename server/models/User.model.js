@@ -21,9 +21,8 @@ const userSchema = new mongoose.Schema({
 
   wishlist: [{ type: mongoose.Schema.Types.ObjectId, ref: "Product" }],
 
-  orders: [
-    {
-      products: [
+
+  products: [
         {
           product: { type: mongoose.Schema.Types.ObjectId, ref: "Product" },
           quantity: { type: Number, required: true },
@@ -33,8 +32,6 @@ const userSchema = new mongoose.Schema({
       paymentId: String,
       razorpayOrderId: String,
       createdAt: { type: Date, default: Date.now },
-    },
-  ],
 });
 
 // ✅ Hash password before saving (only if modified)
