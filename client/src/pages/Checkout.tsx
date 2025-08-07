@@ -1,14 +1,14 @@
-import React, { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
-import { useCart } from '../context/CartContext';
-import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Separator } from '@/components/ui/separator';
-import { useToast } from '@/hooks/use-toast';
-import { User, Lock } from 'lucide-react';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { loadRazorpayScript } from '@/utils/razorpay';
+import React, { useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { useCart } from "../context/CartContext";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
+import { useToast } from "@/hooks/use-toast";
+import { User, Lock } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { loadRazorpayScript } from "@/utils/razorpay";
 
 const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
@@ -17,28 +17,30 @@ const Checkout: React.FC = () => {
   const [isProcessing, setIsProcessing] = useState(false);
 
   const [formData, setFormData] = useState({
-    email: '',
-    firstName: '',
-    lastName: '',
-    phone: ''
+    email: "",
+    firstName: "",
+    lastName: "",
+    phone: "",
   });
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: value,
     }));
   };
 
   const validateForm = () => {
-    const requiredFields = ['email', 'firstName', 'lastName', 'phone'];
+    const requiredFields = ["email", "firstName", "lastName", "phone"];
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData]) {
         toast({
-          title: 'Error',
-          description: `Please fill in the ${field.replace(/([A-Z])/g, ' $1').toLowerCase()} field.`,
-          variant: 'destructive',
+          title: "Error",
+          description: `Please fill in the ${field
+            .replace(/([A-Z])/g, " $1")
+            .toLowerCase()} field.`,
+          variant: "destructive",
         });
         return false;
       }
@@ -51,7 +53,11 @@ const Checkout: React.FC = () => {
     if (!validateForm()) return;
 
     if (cartItems.length === 0) {
-      toast({ title: 'Error', description: 'Your cart is empty.', variant: 'destructive' });
+      toast({
+        title: "Error",
+        description: "Your cart is empty.",
+        variant: "destructive",
+      });
       return;
     }
 
@@ -61,55 +67,93 @@ const Checkout: React.FC = () => {
     const shipping = subtotal > 50 ? 0 : 99;
     const tax = subtotal * 0.08;
     const total = Math.round(subtotal + shipping + tax);
-    console.log('Sending checkout request with totalAmount:', total);
 
     try {
       const loaded = await loadRazorpayScript();
       if (!loaded) {
-        toast({ title: 'Error', description: 'Razorpay SDK failed to load.', variant: 'destructive' });
+        toast({
+          title: "Error",
+          description: "Razorpay SDK failed to load.",
+          variant: "destructive",
+        });
         return;
       }
 
-      const res = await fetch(`http://localhost:8080/api/checkout`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          cartItems,
-          totalAmount: total,
-        }),
-      });
+      // 👉 1. Create Razorpay order
+      const razorRes = await fetch(
+        `http://localhost:8080/api/checkout/razorpay`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ totalAmount: total }),
+        }
+      );
 
-      if (!res.ok) throw new Error('Failed to create order');
-
-      const data = await res.json(); // { orderId, amount }
+      if (!razorRes.ok) throw new Error("Failed to create Razorpay order");
+      const razorData = await razorRes.json(); // { orderId, amount }
 
       const options = {
         key: import.meta.env.VITE_RAZORPAY_KEY_ID as string,
-        amount: data.amount,
-        currency: 'INR',
-        name: 'Hansitha Creations',
-        description: 'Order Payment',
-        image: '/logo.png',
-        order_id: data.orderId,
-        handler: function (response: any) {
-          clearCart();
-          toast({ title: 'Payment Successful', description: 'Thank you for your order!' });
-          navigate('/order-confirmation');
+        amount: razorData.amount,
+        currency: "INR",
+        name: "Hansitha Creations",
+        description: "Order Payment",
+        image: "/logo.png",
+        order_id: razorData.orderId,
+        handler: async function (response: any) {
+          // 👉 2. Save order to DB after successful payment
+          try {
+            const saveRes = await fetch(`http://localhost:8080/api/checkout`, {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                userId: formData.email, // Or use real user ID if available
+                cartItems,
+                totalAmount: total,
+                address: {
+                  name: `${formData.firstName} ${formData.lastName}`,
+                  email: formData.email,
+                  phone: formData.phone,
+                },
+                paymentId: response.razorpay_payment_id,
+                razorpayOrderId: response.razorpay_order_id,
+              }),
+            });
+
+            if (!saveRes.ok) throw new Error("Order saving failed");
+
+            clearCart();
+            toast({
+              title: "Payment Successful",
+              description: "Thank you for your order!",
+            });
+            navigate("/order-confirmation");
+          } catch (err) {
+            console.error("Error saving order:", err);
+            toast({
+              title: "Error",
+              description: "Payment succeeded but order was not saved.",
+              variant: "destructive",
+            });
+          }
         },
         prefill: {
           name: `${formData.firstName} ${formData.lastName}`,
           email: formData.email,
           contact: formData.phone,
         },
-        theme: { color: '#1E3A8A' },
+        theme: { color: "#1E3A8A" },
       };
 
       const rzp = new (window as any).Razorpay(options);
       rzp.open();
     } catch (err) {
       console.error(err);
-      toast({ title: 'Error', description: 'Order could not be placed.', variant: 'destructive' });
+      toast({
+        title: "Error",
+        description: "Checkout failed. Try again.",
+        variant: "destructive",
+      });
     } finally {
       setIsProcessing(false);
     }
@@ -126,7 +170,7 @@ const Checkout: React.FC = () => {
         <Card className="w-full max-w-md">
           <CardContent className="text-center py-8">
             <h2 className="text-2xl font-semibold mb-4">Your cart is empty</h2>
-            <Button onClick={() => navigate('/shop')}>Continue Shopping</Button>
+            <Button onClick={() => navigate("/shop")}>Continue Shopping</Button>
           </CardContent>
         </Card>
       </div>
@@ -138,16 +182,19 @@ const Checkout: React.FC = () => {
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          <form
+            onSubmit={handleSubmit}
+            className="grid grid-cols-1 lg:grid-cols-2 gap-8"
+          >
             <div className="space-y-6">
               <CheckoutSection
                 icon={<User className="w-5 h-5" />}
                 title="Contact Information"
                 fields={[
-                  { id: 'email', label: 'Email Address' },
-                  { id: 'firstName', label: 'First Name' },
-                  { id: 'lastName', label: 'Last Name' },
-                  { id: 'phone', label: 'Phone Number' },
+                  { id: "email", label: "Email Address" },
+                  { id: "firstName", label: "First Name" },
+                  { id: "lastName", label: "Last Name" },
+                  { id: "phone", label: "Phone Number" },
                 ]}
                 formData={formData}
                 handleChange={handleInputChange}
@@ -156,18 +203,33 @@ const Checkout: React.FC = () => {
 
             <div className="lg:sticky lg:top-8 lg:self-start">
               <Card>
-                <CardHeader><CardTitle>Order Summary</CardTitle></CardHeader>
+                <CardHeader>
+                  <CardTitle>Order Summary</CardTitle>
+                </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {cartItems.map(item => (
-                      <div key={item.id} className="flex items-center space-x-4">
-                        <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg" />
+                    {cartItems.map((item) => (
+                      <div
+                        key={item.id}
+                        className="flex items-center space-x-4"
+                      >
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
                         <div className="flex-1">
                           <h3 className="text-sm font-medium">{item.name}</h3>
-                          <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
+                          <p className="text-gray-600 text-sm">
+                            Qty: {item.quantity}
+                          </p>
                         </div>
                         <p className="font-medium">
-                          ₹{(item.price * item.quantity).toLocaleString('en-IN', { minimumFractionDigits: 2 })}
+                          ₹
+                          {(item.price * item.quantity).toLocaleString(
+                            "en-IN",
+                            { minimumFractionDigits: 2 }
+                          )}
                         </p>
                       </div>
                     ))}
@@ -181,11 +243,20 @@ const Checkout: React.FC = () => {
                       <Separator />
                       <div className="flex justify-between text-lg font-semibold">
                         <span>Total</span>
-                        <span>₹{total.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+                        <span>
+                          ₹
+                          {total.toLocaleString("en-IN", {
+                            minimumFractionDigits: 2,
+                          })}
+                        </span>
                       </div>
                     </div>
 
-                    <Button type="submit" className="w-full bg-black text-white hover:bg-gray-900" disabled={isProcessing}>
+                    <Button
+                      type="submit"
+                      className="w-full bg-black text-white hover:bg-gray-900"
+                      disabled={isProcessing}
+                    >
                       {isProcessing ? (
                         <div className="flex items-center gap-2">
                           <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
@@ -200,7 +271,8 @@ const Checkout: React.FC = () => {
                     </Button>
 
                     <p className="text-sm text-center text-gray-600 flex items-center justify-center gap-1 mt-2">
-                      <Lock className="w-3 h-3" /> Your order details are safe and secure.
+                      <Lock className="w-3 h-3" /> Your order details are safe
+                      and secure.
                     </p>
                   </div>
                 </CardContent>
@@ -219,14 +291,20 @@ export default Checkout;
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>
-    <Input id={id} name={id} value={value} onChange={onChange} maxLength={maxLength} />
+    <Input
+      id={id}
+      name={id}
+      value={value}
+      onChange={onChange}
+      maxLength={maxLength}
+    />
   </div>
 );
 
 const SummaryRow = ({ label, value }: { label: string; value: number }) => (
   <div className="flex justify-between">
     <span>{label}</span>
-    <span>₹{value.toLocaleString('en-IN', { minimumFractionDigits: 2 })}</span>
+    <span>₹{value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}</span>
   </div>
 );
 
@@ -245,10 +323,12 @@ const CheckoutSection = ({
 }) => (
   <Card>
     <CardHeader>
-      <CardTitle className="flex items-center gap-2">{icon} {title}</CardTitle>
+      <CardTitle className="flex items-center gap-2">
+        {icon} {title}
+      </CardTitle>
     </CardHeader>
     <CardContent className="space-y-4">
-      {fields.map(field => (
+      {fields.map((field) => (
         <InputGroup
           key={field.id}
           id={field.id}

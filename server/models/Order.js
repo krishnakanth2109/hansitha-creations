@@ -1,33 +1,39 @@
 const mongoose = require('mongoose');
 
-const cartItemSchema = new mongoose.Schema({
-  id: {
-    type: String,
+const orderSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'User',
     required: true,
   },
-  name: String,
-  price: Number,
-  image: String,
-  quantity: Number,
-});
-
-const orderSchema = new mongoose.Schema(
-  {
-    email: {
-      type: String,
-      required: true,
+  products: [
+    {
+      id: String,
+      name: String,
+      price: Number,
+      quantity: Number,
+      image: String,
     },
-    address: {
-      type: String,
-      required: true,
-    },
-    cartItems: [cartItemSchema],
-    totalAmount: {
-      type: Number,
-      required: true,
-    },
+  ],
+  totalAmount: {
+    type: Number,
+    required: true,
   },
-  { timestamps: true }
-);
+  shippingAddress: {
+    name: String,
+    phone: String,
+    addressLine1: String,
+    addressLine2: String,
+    city: String,
+    state: String,
+    postalCode: String,
+  },
+  isPaid: {
+    type: Boolean,
+    default: false,
+  },
+  paymentId: String,
+  razorpayOrderId: String,
+}, { timestamps: true });
 
 module.exports = mongoose.model('Order', orderSchema);
