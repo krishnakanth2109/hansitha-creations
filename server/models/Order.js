@@ -10,7 +10,15 @@ const orderSchema = new mongoose.Schema({
     enum: ["pending", "paid", "failed"],
     default: "pending",
   },
-  products: cartItems,
+  products: [
+    {
+      id: String,
+      name: String,
+      image: String,
+      price: Number,
+      quantity: Number,
+    },
+  ],
   createdAt: {
     type: Date,
     default: Date.now,
