@@ -70,25 +70,26 @@ const Checkout: React.FC = () => {
     const total = Math.round(subtotal + shipping + tax);
 
     try {
-      const res = await fetch(`${API_URL}/api/checkout/payment-link`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            amount: total,
-            cartItems,
-            customer: {
-              name: `${formData.firstName} ${formData.lastName}`,
-              email: formData.email,
-              phone: formData.phone,
-            },
-          }),
-        }
-      );
+      const res = await fetch(`${API_URL}/api/checkout/payment-link`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          amount: total,
+          cartItems,
+          customer: {
+            name: `${formData.firstName} ${formData.lastName}`,
+            email: formData.email,
+            phone: formData.phone,
+          },
+        }),
+      });
 
       const data = await res.json();
-      if (!data.url) throw new Error("Failed to get payment link");
-
+      console.log("🧾 Backend Response:", data);
+      if (!data.url) {
+        console.error("Missing URL in response", data);
+        throw new Error("Failed to get payment link");
+      }
       window.location.href = data.url;
     } catch (err) {
       console.error(err);
