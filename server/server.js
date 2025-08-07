@@ -132,8 +132,6 @@ app.use("/auth", otpRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/announcements", announcementRoutes);
 
-// Payment endpoints removed - Razorpay integration deleted
-
 // Carousel Schema & Uploads
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },

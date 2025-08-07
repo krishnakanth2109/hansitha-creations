@@ -9,6 +9,8 @@ import { User, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 
+const API_URL = import.meta.env.VITE_API_URL;
+
 const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const navigate = useNavigate();
@@ -68,8 +70,7 @@ const Checkout: React.FC = () => {
     const total = Math.round(subtotal + shipping + tax);
 
     try {
-      const res = await fetch(
-        "http://localhost:8080/api/checkout/payment-link",
+      const res = await fetch(`${API_URL}/api/checkout/payment-link`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
