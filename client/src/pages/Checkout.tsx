@@ -8,7 +8,6 @@ import { useToast } from "@/hooks/use-toast";
 import { User, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { loadRazorpayScript } from "@/utils/razorpay";
 
 const Checkout: React.FC = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
@@ -69,89 +68,31 @@ const Checkout: React.FC = () => {
     const total = Math.round(subtotal + shipping + tax);
 
     try {
-      const loaded = await loadRazorpayScript();
-      if (!loaded) {
-        toast({
-          title: "Error",
-          description: "Razorpay SDK failed to load.",
-          variant: "destructive",
-        });
-        return;
-      }
-
-      // 👉 1. Create Razorpay order
-      const razorRes = await fetch(
-        `http://localhost:8080/api/checkout/razorpay`,
+      const res = await fetch(
+        "http://localhost:8080/api/checkout/payment-link",
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ totalAmount: total }),
+          body: JSON.stringify({
+            amount: total,
+            customer: {
+              name: `${formData.firstName} ${formData.lastName}`,
+              email: formData.email,
+              phone: formData.phone,
+            },
+          }),
         }
       );
 
-      if (!razorRes.ok) throw new Error("Failed to create Razorpay order");
-      const razorData = await razorRes.json(); // { orderId, amount }
+      const data = await res.json();
+      if (!data.url) throw new Error("Failed to get payment link");
 
-      const options = {
-        key: import.meta.env.VITE_RAZORPAY_KEY_ID as string,
-        amount: razorData.amount,
-        currency: "INR",
-        name: "Hansitha Creations",
-        description: "Order Payment",
-        image: "/logo.png",
-        order_id: razorData.orderId,
-        handler: async function (response: any) {
-          // 👉 2. Save order to DB after successful payment
-          try {
-            const saveRes = await fetch(`http://localhost:8080/api/checkout`, {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify({
-                userId: formData.email, // Or use real user ID if available
-                cartItems,
-                totalAmount: total,
-                address: {
-                  name: `${formData.firstName} ${formData.lastName}`,
-                  email: formData.email,
-                  phone: formData.phone,
-                },
-                paymentId: response.razorpay_payment_id,
-                razorpayOrderId: response.razorpay_order_id,
-              }),
-            });
-
-            if (!saveRes.ok) throw new Error("Order saving failed");
-
-            clearCart();
-            toast({
-              title: "Payment Successful",
-              description: "Thank you for your order!",
-            });
-            navigate("/order-confirmation");
-          } catch (err) {
-            console.error("Error saving order:", err);
-            toast({
-              title: "Error",
-              description: "Payment succeeded but order was not saved.",
-              variant: "destructive",
-            });
-          }
-        },
-        prefill: {
-          name: `${formData.firstName} ${formData.lastName}`,
-          email: formData.email,
-          contact: formData.phone,
-        },
-        theme: { color: "#1E3A8A" },
-      };
-
-      const rzp = new (window as any).Razorpay(options);
-      rzp.open();
+      window.location.href = data.url;
     } catch (err) {
       console.error(err);
       toast({
         title: "Error",
-        description: "Checkout failed. Try again.",
+        description: "Could not start payment. Try again.",
         variant: "destructive",
       });
     } finally {
@@ -194,7 +135,7 @@ const Checkout: React.FC = () => {
                   { id: "email", label: "Email Address" },
                   { id: "firstName", label: "First Name" },
                   { id: "lastName", label: "Last Name" },
-                  { id: "phone", label: "Phone Number" },
+                  { id: "phone", label: "Phone Number", maxLength: 10 },
                 ]}
                 formData={formData}
                 handleChange={handleInputChange}
@@ -228,7 +169,9 @@ const Checkout: React.FC = () => {
                           ₹
                           {(item.price * item.quantity).toLocaleString(
                             "en-IN",
-                            { minimumFractionDigits: 2 }
+                            {
+                              minimumFractionDigits: 2,
+                            }
                           )}
                         </p>
                       </div>
@@ -288,6 +231,7 @@ const Checkout: React.FC = () => {
 export default Checkout;
 
 // Reusable Components
+
 const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
   <div>
     <Label htmlFor={id}>{label}</Label>

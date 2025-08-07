@@ -80,7 +80,8 @@ const Cart = () => {
                       key={item.id}
                       className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg relative"
                     >
-                      {/* Product Image */}
+                      <div className="flex items-center gap-4 sm:gap-6 w-full sm:w-auto">
+                        {/* Product Image */}
                       <img
                         src={item.image}
                         alt={item.name}
@@ -93,7 +94,7 @@ const Cart = () => {
                           {item.name}
                         </h3>
                       </div>
-
+                      </div>
                       {/* Quantity + Price + Trash */}
                       <div className="flex w-full justify-between sm:justify-end sm:items-center gap-2 mt-2 sm:mt-0">
                         {/* Quantity Controls */}
