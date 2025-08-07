@@ -12,7 +12,7 @@ router.post("/payment-link", async (req, res) => {
   try {
     const { userName, userEmail, userPhone, cartItems, totalAmount } = req.body;
 
-    if (!userName || !userEmail || !totalAmount) {
+    if (!userName || !userEmail || !totalAmount || !cartItems?.length) {
       return res.status(400).json({ error: "Missing required fields" });
     }
 
@@ -36,13 +36,20 @@ router.post("/payment-link", async (req, res) => {
       callback_method: "get",
     });
 
+    // Save order with cart items
     const newOrder = new Order({
       name: userName,
       email: userEmail,
       phone: userPhone,
       amount: totalAmount,
       status: "pending",
-      razorpay_payment_link_id: paymentLink.id,
+      products: cartItems.map((item) => ({
+        id: item.id,
+        name: item.name,
+        image: item.image,
+        price: item.price,
+        quantity: item.quantity,
+      })),
     });
 
     await newOrder.save();
