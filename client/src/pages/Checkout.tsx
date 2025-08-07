@@ -61,6 +61,7 @@ const Checkout: React.FC = () => {
     const shipping = subtotal > 50 ? 0 : 99;
     const tax = subtotal * 0.08;
     const total = Math.round(subtotal + shipping + tax);
+    console.log('Sending checkout request with totalAmount:', total);
 
     try {
       const loaded = await loadRazorpayScript();
