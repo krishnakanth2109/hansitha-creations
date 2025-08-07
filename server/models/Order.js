@@ -5,10 +5,24 @@ const orderSchema = new mongoose.Schema({
   email: String,
   phone: String,
   amount: Number,
-  status: { type: String, default: "pending" },
-  razorpay_payment_link_id: String,
-  razorpay_payment_id: String,
-  createdAt: { type: Date, default: Date.now }
+  status: {
+    type: String,
+    enum: ["pending", "paid", "failed"],
+    default: "pending",
+  },
+  products: [
+    {
+      id: String,
+      name: String,
+      image: String,
+      price: Number,
+      quantity: Number,
+    },
+  ],
+  createdAt: {
+    type: Date,
+    default: Date.now,
+  },
 });
 
 module.exports = mongoose.model("Order", orderSchema);
