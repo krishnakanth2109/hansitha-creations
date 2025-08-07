@@ -2,14 +2,18 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { Minus, Plus, Trash2 } from "lucide-react";
 import { useCart } from "../context/CartContext";
+import { toastWithVoice } from "@/utils/toast";
+import { useContext } from "react";
+import { ProductContext } from "../context/ProductContext"; // adjust path if needed
 
-// Price formatter
+// Format INR price
 const formatPrice = (value?: number) =>
   typeof value === "number"
     ? `₹${value.toLocaleString("en-IN", { minimumFractionDigits: 2 })}`
     : "₹0.00";
 
 const Cart = () => {
+  const { products } = useContext(ProductContext);
   const {
     cartItems,
     updateQuantity,
@@ -66,66 +70,85 @@ const Cart = () => {
               </div>
 
               <div className="space-y-4">
-                {cartItems.map((item) => (
-                  <div
-                    key={item.id}
-                    className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg relative"
-                  >
-                    {/* Product Image */}
-                    <img
-                      src={item.image}
-                      alt={item.name}
-                      className="w-[80px] h-[120px] object-cover rounded-lg self-center"
-                    />
+                {cartItems.map((item) => {
+                  const product = products.find((p) => p._id === item.id);
+                  const stock = product?.stock ?? 0;
+                  const isMax = item.quantity >= stock;
 
-                    {/* Product Name */}
-                    <div className="flex w-full text-center sm:text-center">
-                      <h3 className="text-base font-medium text-gray-800">
-                        {item.name}
-                      </h3>
-                    </div>
+                  return (
+                    <div
+                      key={item.id}
+                      className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 p-4 border border-gray-200 rounded-lg relative"
+                    >
+                      {/* Product Image */}
+                      <img
+                        src={item.image}
+                        alt={item.name}
+                        className="w-[80px] h-[120px] object-cover rounded-lg self-center"
+                      />
 
-                    {/* Quantity + Price + Trash */}
-                    <div className="flex w-full justify-between sm:justify-end sm:items-center gap-2 mt-2 sm:mt-0">
-                      {/* Quantity Controls */}
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity - 1)
-                          }
-                          disabled={item.quantity <= 1}
-                          className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 transition"
-                        >
-                          <Minus className="w-4 h-4 text-gray-600" />
-                        </button>
-                        <span className="w-8 text-center font-medium">
-                          {item.quantity}
-                        </span>
-                        <button
-                          onClick={() =>
-                            updateQuantity(item.id, item.quantity + 1)
-                          }
-                          className="p-1 rounded-full hover:bg-gray-100 transition"
-                        >
-                          <Plus className="w-4 h-4 text-gray-600" />
-                        </button>
+                      {/* Product Name */}
+                      <div className="flex w-full text-center sm:text-center">
+                        <h3 className="text-base font-medium text-gray-800">
+                          {item.name}
+                        </h3>
                       </div>
 
-                      {/* Price */}
-                      <p className="text-sm font-semibold text-gray-800 whitespace-nowrap">
-                        {formatPrice(item.price * item.quantity)}
-                      </p>
+                      {/* Quantity + Price + Trash */}
+                      <div className="flex w-full justify-between sm:justify-end sm:items-center gap-2 mt-2 sm:mt-0">
+                        {/* Quantity Controls */}
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() =>
+                              updateQuantity(item.id, item.quantity - 1)
+                            }
+                            disabled={item.quantity <= 1}
+                            className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 transition"
+                          >
+                            <Minus className="w-4 h-4 text-gray-600" />
+                          </button>
 
-                      {/* Delete */}
-                      <button
-                        onClick={() => removeFromCart(item.id)}
-                        className="text-red-600 hover:text-red-700"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
+                          <span className="w-8 text-center font-medium">
+                            {item.quantity}
+                          </span>
+
+                          <button
+                            onClick={() => {
+                              if (isMax) {
+                                toastWithVoice.error("Cannot exceed stock!");
+                                return;
+                              }
+                              updateQuantity(item.id, item.quantity + 1);
+                            }}
+                            disabled={isMax}
+                            className="p-1 rounded-full hover:bg-gray-100 disabled:opacity-50 transition"
+                          >
+                            <Plus className="w-4 h-4 text-gray-600" />
+                          </button>
+                        </div>
+
+                        {/* Price */}
+                        <p className="text-sm font-semibold text-gray-800 whitespace-nowrap">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
+
+                        {/* Delete */}
+                        <button
+                          onClick={() => removeFromCart(item.id)}
+                          className="text-red-600 hover:text-red-700"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                      {/* Out of Stock Notice */}
+                        {isMax && (
+                          <p className="text-xs text-red-500 font-medium">
+                            Out of Stock
+                          </p>
+                        )}
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
             </div>
           </div>

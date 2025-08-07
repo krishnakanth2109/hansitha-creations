@@ -14,12 +14,12 @@ import { motion } from "framer-motion";
 
 const Shop: React.FC = () => {
   const { products, loading } = useContext(ProductContext);
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart();
   const { formatPrice } = useCurrency();
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const { wishlist, toggleWishlist, isInWishlist } = useWishlist(); // ✅ Use wishlist context
+  const { wishlist, toggleWishlist, isInWishlist } = useWishlist();
 
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number>(0);
@@ -186,7 +186,9 @@ const Shop: React.FC = () => {
             ) : (
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-3 xl:grid-cols-5 gap-6">
                 {filtered.map((product) => {
-                  const isOutOfStock = product.stock === 0;
+                  const cartQuantity =
+                    cartItems.find((item) => item.id === product._id)?.quantity || 0;
+                  const isOutOfStock = product.stock <= cartQuantity;
                   const isWishlisted = isInWishlist(product._id);
 
                   return (
@@ -215,16 +217,12 @@ const Shop: React.FC = () => {
                           onClick={async (e) => {
                             e.stopPropagation();
                             if (!user) {
-                              toastWithVoice.error(
-                                "Please log in to add to wishlist"
-                              );
+                              toastWithVoice.error("Please log in to add to wishlist");
                               return;
                             }
                             const added = await toggleWishlist(product._id);
                             toastWithVoice.success(
-                              added
-                                ? "Added to wishlist"
-                                : "Removed from wishlist"
+                              added ? "Added to wishlist" : "Removed from wishlist"
                             );
                           }}
                           className="absolute top-2 right-2 z-0 rounded-full p-1 text-white bg-black/50 hover:bg-black/70 transition"
@@ -248,7 +246,11 @@ const Shop: React.FC = () => {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          if (isOutOfStock) return;
+                          if (isOutOfStock) {
+                            toastWithVoice.error("You've reached the stock limit");
+                            return;
+                          }
+
                           addToCart({
                             id: product._id,
                             name: product.name,
@@ -256,6 +258,7 @@ const Shop: React.FC = () => {
                             image: product.image,
                             quantity: 1,
                           });
+
                           toastWithVoice.success("Added to cart");
                         }}
                         disabled={isOutOfStock}

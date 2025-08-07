@@ -14,7 +14,7 @@ const FeaturedProducts: React.FC = () => {
   const { formatPrice } = useCurrency();
   const { toggleWishlist, isInWishlist } = useWishlist();
   const { user } = useAuth();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart(); // Make sure cartItems is available
 
   const navigate = useNavigate();
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -63,6 +63,9 @@ const FeaturedProducts: React.FC = () => {
           >
             {featured.map((product) => {
               const isWishlisted = isInWishlist(product._id);
+              const cartQuantity =
+                cartItems.find((item) => item.id === product._id)?.quantity || 0;
+              const isOutOfStock = product.stock <= cartQuantity;
 
               return (
                 <div
@@ -75,6 +78,7 @@ const FeaturedProducts: React.FC = () => {
                       src={product.image}
                       alt={product.name}
                       className="object-cover w-full h-[364px]"
+                      loading="lazy"
                     />
 
                     {/* Wishlist Button */}
@@ -117,6 +121,34 @@ const FeaturedProducts: React.FC = () => {
                       {formatPrice(product.price)}
                     </span>
                   </div>
+
+                  {/* Add to Cart Button */}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      if (isOutOfStock) {
+                        toastWithVoice.error("You’ve reached the stock limit!");
+                        return;
+                      }
+
+                      addToCart({
+                        id: product._id,
+                        name: product.name,
+                        price: product.price,
+                        image: product.image,
+                        quantity: 1,
+                      });
+                      toastWithVoice.success("Added to cart");
+                    }}
+                    disabled={isOutOfStock}
+                    className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${
+                      isOutOfStock
+                        ? "bg-gray-300 text-gray-600 cursor-not-allowed"
+                        : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
+                    }`}
+                  >
+                    {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                  </button>
                 </div>
               );
             })}

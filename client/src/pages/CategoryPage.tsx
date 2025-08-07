@@ -13,7 +13,7 @@ import { toastWithVoice } from '@/utils/toast';
 const CategoryPage: React.FC = () => {
   const { category } = useParams<{ category: string }>();
   const { products, loading } = useProductContext();
-  const { addToCart } = useCart();
+  const { addToCart, cartItems } = useCart(); // make sure cartItems is available
   const { formatPrice } = useCurrency();
   const { wishlist, toggleWishlist } = useWishlist();
   const navigate = useNavigate();
@@ -27,7 +27,6 @@ const CategoryPage: React.FC = () => {
   const [isMobile, setIsMobile] = useState(() => typeof window !== 'undefined' && window.innerWidth < 1024);
   const [showFilterMobile, setShowFilterMobile] = useState(false);
 
-  // Handle screen resize
   useEffect(() => {
     const handleResize = () => setIsMobile(window.innerWidth < 1024);
     handleResize();
@@ -35,21 +34,19 @@ const CategoryPage: React.FC = () => {
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Scroll to top when page changes
   useEffect(() => {
     window.scrollTo(0, 0);
   }, [currentPage]);
 
-  // Reset page when filters change
   useEffect(() => {
     setCurrentPage(1);
   }, [sortBy, minPrice, maxPrice, category]);
 
-  // Optional arrow key pagination
-  const totalFiltered = products.filter((p) =>
-    p.category?.toLowerCase().trim() === category?.toLowerCase().trim() &&
-    p.price >= minPrice &&
-    p.price <= maxPrice
+  const totalFiltered = products.filter(
+    (p) =>
+      p.category?.toLowerCase().trim() === category?.toLowerCase().trim() &&
+      p.price >= minPrice &&
+      p.price <= maxPrice
   );
 
   const sorted = [...totalFiltered].sort((a, b) => {
@@ -68,7 +65,6 @@ const CategoryPage: React.FC = () => {
   return (
     <div className="flex flex-col min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
       <main className="p-4 flex-grow">
-        {/* Mobile Heading and Filter Toggle */}
         <div className="flex items-center justify-between mb-4 lg:hidden">
           <h2 className="text-2xl font-bold capitalize">{category} Fabrics</h2>
           <button
@@ -80,7 +76,6 @@ const CategoryPage: React.FC = () => {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-[20%_80%] gap-6 relative">
-          {/* Sidebar Filter */}
           <aside
             className={clsx(
               'bg-white w-full lg:w-auto p-6 overflow-y-auto transition-transform duration-300 ease-in-out shadow-lg',
@@ -135,7 +130,6 @@ const CategoryPage: React.FC = () => {
             </div>
           </aside>
 
-          {/* Background blur for mobile */}
           {isMobile && showFilterMobile && (
             <div
               className="fixed inset-0 bg-black bg-opacity-40 z-30 lg:hidden"
@@ -143,7 +137,6 @@ const CategoryPage: React.FC = () => {
             />
           )}
 
-          {/* Product Display */}
           <section className="lg:pl-0">
             <h2 className="text-2xl font-bold mb-4 hidden lg:block capitalize">
               {category} Fabrics
@@ -157,7 +150,10 @@ const CategoryPage: React.FC = () => {
               <>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-6">
                   {paginated.map((product) => {
-                    const isOutOfStock = product.stock === 0;
+                    const cartQuantity =
+                      cartItems.find((item) => item.id === product._id)?.quantity || 0;
+
+                    const isOutOfStock = product.stock <= cartQuantity;
                     const isWishlisted = wishlist.includes(product._id);
 
                     return (
@@ -193,7 +189,11 @@ const CategoryPage: React.FC = () => {
                         <button
                           onClick={async (e) => {
                             e.stopPropagation();
-                            if (isOutOfStock) return;
+                            if (isOutOfStock) {
+                              toastWithVoice.error("You've reached the stock limit!");
+                              return;
+                            }
+
                             await addToCart({
                               id: product._id,
                               name: product.name,
@@ -201,6 +201,7 @@ const CategoryPage: React.FC = () => {
                               image: product.image,
                               quantity: 1,
                             });
+
                             toastWithVoice.success(`Added to cart!`);
                           }}
                           disabled={isOutOfStock}
@@ -217,7 +218,6 @@ const CategoryPage: React.FC = () => {
                   })}
                 </div>
 
-                {/* Pagination */}
                 <div className="flex flex-wrap justify-center items-center gap-2 mt-8">
                   {Array.from({ length: totalPages }, (_, i) => i + 1).map((pageNum) => (
                     <button
