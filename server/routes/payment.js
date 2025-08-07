@@ -1,61 +1,53 @@
+// routes/checkout.js or routes/payment.js
 const express = require("express");
-const Razorpay = require("razorpay");
 const router = express.Router();
-const crypto = require("crypto");
-require("dotenv").config();
+const Razorpay = require("razorpay");
+const Order = require("../models/Order"); // ✅ Ensure correct path
 
-const Order = require("../models/Order");
+require("dotenv").config();
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// ✅ Create Payment Link and Save Order
-router.post("/create-payment-link", async (req, res) => {
-  try {
-    const { totalAmount, userName, userEmail, userPhone, cartItems } = req.body;
+router.post("/payment-link", async (req, res) => {
+  const { amount, cartItems, customer } = req.body;
 
-    // Save pending order
-    const newOrder = new Order({
-      name: userName,
-      email: userEmail,
-      phone: userPhone,
-      amount: totalAmount,
+  try {
+    // ✅ Save order to MongoDB
+    const order = new Order({
+      name: customer.name,
+      email: customer.email,
+      phone: customer.phone,
+      amount,
       cartItems,
       status: "pending",
     });
 
-    const savedOrder = await newOrder.save();
-    console.log("✅ Order saved:", savedOrder._id);
+    await order.save(); // 🔥 This is what actually stores it
 
-    // Create Razorpay payment link
+    // ✅ Create Razorpay Payment Link
     const paymentLink = await razorpay.paymentLink.create({
-      amount: totalAmount * 100,
+      amount: amount * 100, // Razorpay accepts in paise
       currency: "INR",
-      accept_partial: false,
-      description: "Hansitha Creations Order Payment",
       customer: {
-        name: userName,
-        email: userEmail,
-        contact: userPhone,
+        name: customer.name,
+        email: customer.email,
+        contact: customer.phone,
       },
       notify: {
-        email: true,
         sms: true,
+        email: true,
       },
-      reminder_enable: true,
-      notes: {
-        orderId: savedOrder._id.toString(), // track which order
-      },
-      callback_url: `${process.env.FRONTEND_URL}/order-success`,
+      callback_url: `${process.env.BASE_URL}/api/payment/verify`,
       callback_method: "get",
     });
 
-    return res.json({ url: paymentLink.short_url });
+    res.json({ url: paymentLink.short_url });
   } catch (err) {
-    console.error("❌ Error creating payment link:", err);
-    res.status(500).json({ error: "Failed to create payment link" });
+    console.error("Payment link error:", err);
+    res.status(500).json({ message: "Something went wrong" });
   }
 });
 
