@@ -1,45 +1,82 @@
-const express = require("express");
-const crypto = require("crypto");
-const Order = require("../models/Order");
+const express = require('express');
+const crypto = require('crypto');
 const router = express.Router();
+const Order = require('../models/Order');
+const Product = require('../models/Product');
 
-router.post("/webhook", express.json({ verify: verifySignature }), async (req, res) => {
-  const event = req.body;
+const RAZORPAY_WEBHOOK_SECRET = process.env.RAZORPAY_WEBHOOK_SECRET;
 
-  if (event.event === "payment_link.paid") {
-    const payment = event.payload.payment.entity;
-    const paymentLinkId = payment.payment_link_id;
+// ✅ Razorpay webhook endpoint
+router.post('/webhook', express.json({ type: '*/*' }), async (req, res) => {
+  const signature = req.headers['x-razorpay-signature'];
 
-    // ✅ Update order status to paid
+  // Verify webhook signature
+  const expectedSignature = crypto
+    .createHmac('sha256', RAZORPAY_WEBHOOK_SECRET)
+    .update(JSON.stringify(req.body))
+    .digest('hex');
+
+  if (signature !== expectedSignature) {
+    return res.status(400).json({ message: 'Invalid signature' });
+  }
+
+  const event = req.body.event;
+
+  if (event === 'payment.captured') {
     try {
-      const order = await Order.findOne({ razorpay_payment_link_id: paymentLinkId });
+      const { email, address, cartItems, totalAmount } = req.body.payload.payment.entity.notes;
 
-      if (order) {
-        order.status = "paid";
-        order.razorpay_payment_id = payment.id;
-        await order.save();
-        console.log("Order marked as paid:", order._id);
-      } else {
-        console.warn("Order not found for payment link:", paymentLinkId);
+      // Step 1: Update stock
+      const updatedStocks = [];
+      for (const item of JSON.parse(cartItems)) {
+        const product = await Product.findById(item.id);
+
+        if (!product) {
+          console.error(`Product ${item.id} not found`);
+          continue;
+        }
+
+        if (product.stock < item.quantity) {
+          console.error(`Insufficient stock for ${product.name}`);
+          continue;
+        }
+
+        product.stock -= item.quantity;
+        await product.save();
+
+        updatedStocks.push({ productId: product._id, stock: product.stock });
       }
-    } catch (err) {
-      console.error("Webhook DB update error:", err);
+
+      // Step 2: Save order
+      const newOrder = new Order({
+        email,
+        address,
+        cartItems: JSON.parse(cartItems),
+        totalAmount,
+      });
+
+      const savedOrder = await newOrder.save();
+
+      // Step 3: Emit socket event
+      const io = req.app.get('io');
+      if (io) {
+        io.emit('newOrder', {
+          _id: savedOrder._id,
+          email: savedOrder.email,
+          totalAmount: savedOrder.totalAmount,
+          createdAt: savedOrder.createdAt,
+        });
+      }
+
+      console.log('✅ Order created after payment:', savedOrder._id);
+      return res.status(200).json({ success: true });
+    } catch (error) {
+      console.error('Error creating order from webhook:', error);
+      return res.status(500).json({ message: 'Server error' });
     }
   }
 
-  res.status(200).json({ status: "received" });
+  res.status(200).json({ message: 'Webhook received but no action taken' });
 });
-
-function verifySignature(req, res, buf) {
-  const signature = req.headers["x-razorpay-signature"];
-  const expected = crypto
-    .createHmac("sha256", process.env.RAZORPAY_WEBHOOK_SECRET)
-    .update(buf)
-    .digest("hex");
-
-  if (signature !== expected) {
-    throw new Error("Invalid webhook signature");
-  }
-}
 
 module.exports = router;
