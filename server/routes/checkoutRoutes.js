@@ -8,7 +8,6 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-// 🚀 Create payment link + Save order
 router.post("/payment-link", async (req, res) => {
   try {
     const { userName, userEmail, userPhone, cartItems, totalAmount } = req.body;
@@ -41,7 +40,6 @@ router.post("/payment-link", async (req, res) => {
       name: userName,
       email: userEmail,
       phone: userPhone,
-      cartItems,
       amount: totalAmount,
       status: "pending",
       razorpay_payment_link_id: paymentLink.id,
@@ -51,7 +49,7 @@ router.post("/payment-link", async (req, res) => {
 
     return res.json({ paymentLink });
   } catch (err) {
-    console.error("Payment link error:", err);
+    console.error("Payment link error:", err.response?.data || err.message || err);
     res.status(500).json({ error: "Failed to get payment link" });
   }
 });
