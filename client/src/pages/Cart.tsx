@@ -143,7 +143,7 @@ const Cart = () => {
                       {/* Out of Stock Notice */}
                         {isMax && (
                           <p className="text-xs text-red-500 font-medium">
-                            Out of Stock
+                            Max Stock Added
                           </p>
                         )}
                     </div>

@@ -38,7 +38,7 @@ const ProductDetailsPage = () => {
   const cartQuantity =
     cartItems.find((item) => item.id === product?._id)?.quantity || 0;
   const remainingStock = product ? product.stock - cartQuantity : 0;
-  const isMaxQuantityReached = quantity + cartQuantity > (product?.stock || 0);
+  const isMaxQuantityReached = cartQuantity >= (product?.stock || 0);
 
   const [showZoom, setShowZoom] = useState(false);
 
@@ -110,25 +110,24 @@ const ProductDetailsPage = () => {
     if (!product || product.stock === 0) return;
 
     if (isMaxQuantityReached) {
-  const availableToAdd = product.stock - cartQuantity;
+      const availableToAdd = product.stock - cartQuantity;
 
-  if (availableToAdd > 0) {
-    addToCart({
-      id: product._id,
-      name: product.name,
-      price: product.price,
-      image: product.image,
-      quantity: availableToAdd,
-    });
+      if (availableToAdd > 0) {
+        addToCart({
+          id: product._id,
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          quantity: availableToAdd,
+        });
 
-    toastWithVoice.success(`Added remaining ${availableToAdd} to cart.`);
-  } else {
-    toastWithVoice.error("You’ve already added maximum stock.");
-  }
+        toastWithVoice.success(`Added remaining ${availableToAdd} to cart.`);
+      } else {
+        toastWithVoice.error("You’ve already added maximum stock.");
+      }
 
-  return;
-}
-
+      return;
+    }
 
     addToCart({
       id: product._id,
@@ -317,8 +316,7 @@ const ProductDetailsPage = () => {
                   }
                   className="px-3 py-1 border bg-white rounded-lg"
                   disabled={
-                    product.stock - cartQuantity <= 0 ||
-                    quantity >= product.stock - cartQuantity
+                    product.stock === 0 || cartQuantity >= product.stock
                   }
                 >
                   +
@@ -328,14 +326,16 @@ const ProductDetailsPage = () => {
               {/* Stock Left Below */}
               <span
                 className={`text-sm font-medium ${
-                  product.stock - cartQuantity > 0
-                    ? "text-black"
-                    : "text-red-600"
+                  product.stock === 0 || cartQuantity >= product.stock
+                    ? "text-red-600"
+                    : "text-black"
                 }`}
               >
-                {product.stock - cartQuantity > 0
-                  ? `In Stock: ${product.stock - cartQuantity}`
-                  : "Out of Stock"}
+                {product.stock === 0
+                  ? "Out of Stock"
+                  : cartQuantity >= product.stock
+                  ? "Max Stock Added"
+                  : `In Stock: ${product.stock - cartQuantity}`}
               </span>
             </div>
 
@@ -343,12 +343,12 @@ const ProductDetailsPage = () => {
               <button
                 onClick={handleAddToCart}
                 className="bg-blue-600 text-white px-6 py-2 rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                disabled={product.stock === 0 || isMaxQuantityReached}
+                disabled={product.stock === 0 || cartQuantity >= product.stock}
               >
                 {product.stock === 0
                   ? "Out of Stock"
-                  : isMaxQuantityReached
-                  ? "Max Quantity Added"
+                  : cartQuantity >= product.stock
+                  ? "Max Stock Added"
                   : "Add to Cart"}
               </button>
 

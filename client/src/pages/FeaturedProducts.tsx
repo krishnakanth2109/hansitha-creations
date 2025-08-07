@@ -64,8 +64,11 @@ const FeaturedProducts: React.FC = () => {
             {featured.map((product) => {
               const isWishlisted = isInWishlist(product._id);
               const cartQuantity =
-                cartItems.find((item) => item.id === product._id)?.quantity || 0;
-              const isOutOfStock = product.stock <= cartQuantity;
+                cartItems.find((item) => item.id === product._id)?.quantity ||
+                0;
+              const isOutOfStock = product.stock === 0;
+              const isMaxReached =
+                product.stock > 0 && cartQuantity >= product.stock;
 
               return (
                 <div
@@ -126,8 +129,16 @@ const FeaturedProducts: React.FC = () => {
                   <button
                     onClick={(e) => {
                       e.stopPropagation();
+
                       if (isOutOfStock) {
-                        toastWithVoice.error("You’ve reached the stock limit!");
+                        toastWithVoice.error("Out of Stock!");
+                        return;
+                      }
+
+                      if (isMaxReached) {
+                        toastWithVoice.error(
+                          "You’ve reached the max stock limit!"
+                        );
                         return;
                       }
 
@@ -140,14 +151,18 @@ const FeaturedProducts: React.FC = () => {
                       });
                       toastWithVoice.success("Added to cart");
                     }}
-                    disabled={isOutOfStock}
+                    disabled={isOutOfStock || isMaxReached}
                     className={`mt-2 px-4 py-2 rounded-full font-semibold transition duration-200 ease-in-out w-full ${
-                      isOutOfStock
+                      isOutOfStock || isMaxReached
                         ? "bg-gray-300 text-gray-600 cursor-not-allowed"
                         : "bg-blue-600 text-white hover:bg-blue-700 active:scale-95"
                     }`}
                   >
-                    {isOutOfStock ? "Out of Stock" : "Add to Cart"}
+                    {isOutOfStock
+                      ? "Out of Stock"
+                      : isMaxReached
+                      ? "Max Stock Added"
+                      : "Add to Cart"}
                   </button>
                 </div>
               );
