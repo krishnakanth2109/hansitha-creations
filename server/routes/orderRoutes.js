@@ -5,20 +5,16 @@ const orderSchema = new mongoose.Schema({
   email: String,
   phone: String,
   amount: Number,
-  status: String,
+  cartItems: Array,
+  status: {
+    type: String,
+    enum: ["pending", "paid", "failed"],
+    default: "pending",
+  },
   createdAt: {
     type: Date,
     default: Date.now,
   },
-  cartItems: [
-    {
-      id: String,
-      name: String,
-      image: String,
-      price: Number,
-      quantity: Number,
-    },
-  ],
 });
 
 module.exports = mongoose.model("Order", orderSchema);

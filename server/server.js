@@ -122,6 +122,7 @@ announcementRoutes.post("/", async (req, res) => {
 app.get("/", (req, res) => res.status(200).send("Backend is live"));
 
 // Route Setup
+app.use("/api/payment", require("./routes/payment"));
 app.use("/api", require("./routes/webhook"));
 app.use("/api/categories", categoryRoutes);
 app.use("/api", checkoutRoutes);
