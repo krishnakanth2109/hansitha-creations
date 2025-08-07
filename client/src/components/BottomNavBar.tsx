@@ -84,7 +84,7 @@ const BottomNavBar = ({ onAccountClick, onSearchClick }: BottomNavBarProps) => {
 
   return (
     <nav className="bg-white border-t border-gray-200 shadow-md w-full fixed bottom-0 z-50 md:rounded-none md:static md:shadow-none">
-      <div className="flex items-center justify-around h-16 max-w-md mx-auto sm:rounded-2xl sm:mb-4 sm:mx-4 sm:shadow-xl sm:bg-white sm:border sm:border-gray-200 sm:overflow-hidden">
+      <div className="flex items-center justify-around h-16 w-full sm:max-w-md sm:mx-auto sm:rounded-2xl sm:mb-4 sm:shadow-xl sm:bg-white sm:border sm:border-gray-200 sm:overflow-hidden">
         {navItems.map((item, index) => {
           const isActive = location.pathname === item.href;
           const Icon = isActive ? item.activeIcon : item.icon;

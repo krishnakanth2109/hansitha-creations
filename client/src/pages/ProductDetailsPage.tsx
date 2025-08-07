@@ -228,7 +228,7 @@ const ProductDetailsPage = () => {
                 onClick={() => setShowZoom(true)}
                 onMouseEnter={() => setAutoScroll(false)}
                 onMouseLeave={() => setAutoScroll(true)}
-                className="w-auto h-[660px] mx-auto object-cover rounded-lg shadow-lg cursor-zoom-in"
+                className="w-auto h-[475px] md:h-[660px] mx-auto object-cover rounded-lg shadow-lg cursor-zoom-in"
                 alt={product.name}
               />
             </div>
