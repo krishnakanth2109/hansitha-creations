@@ -36,7 +36,7 @@ export const Footer = () => {
       setEmail("");
     } catch (err) {
       toast.error(
-        err.response?.data?.message || "Subscription failed. Try again."
+        (err as any).response?.data?.message || "Subscription failed. Try again."
       );
     } finally {
       setLoading(false);
@@ -56,7 +56,7 @@ export const Footer = () => {
             <div className="mb-4">
               <img
                 src="https://res.cloudinary.com/djyredhur/image/upload/v1751127717/logo_ktewtc.png"
-                alt="FashionHub Logo"
+                alt="Hansitha Creations Logo"
                 className="h-16 w-auto"
               />
             </div>
@@ -90,7 +90,7 @@ export const Footer = () => {
                 <Youtube className="w-4 h-4" />
               </a>
               <a
-                href="https://wa.me/"
+                href="https://wa.me/919908697335" // Example number, replace if needed
                 target="_blank"
                 rel="noopener noreferrer"
                 className="w-8 h-8 bg-gray-800 rounded-full flex items-center justify-center text-white hover:bg-green-500 transition-all duration-300 transform hover:scale-110 hover:rotate-6"
@@ -160,13 +160,23 @@ export const Footer = () => {
                 "Blog",
                 "Affiliate Program",
                 "Partnership",
-              ].map((item) => (
-                <li key={item}>
-                  <a href="#" className="hover:text-pink-400 transition-colors">
-                    {item}
-                  </a>
-                </li>
-              ))}
+              ].map((item) => {
+                  let link;
+                  if (item === "About Us") {
+                    link = <Link to="/about" className="hover:text-pink-400 transition-colors">{item}</Link>;
+                  } else if (item === "Blog") {
+                    link = <Link to="/blog" className="hover:text-pink-400 transition-colors">{item}</Link>;
+                  } else if (item === "Press") {
+                    link = <Link to="/press" className="hover:text-pink-400 transition-colors">{item}</Link>;
+                  } else if (item === "Affiliate Program") {
+                    link = <Link to="/affiliate-program" className="hover:text-pink-400 transition-colors">{item}</Link>;
+                  } else if (item === "Partnership") {
+                    link = <Link to="/partnership" className="hover:text-pink-400 transition-colors">{item}</Link>;
+                  } else {
+                    link = <a href="#" className="hover:text-pink-400 transition-colors">{item}</a>;
+                  }
+                  return <li key={item}>{link}</li>;
+              })}
             </ul>
           </div>
 
@@ -258,19 +268,19 @@ export const Footer = () => {
         <div
           className="border-t border-gray-800 pt-8 md:pb-0 flex flex-col md:flex-row justify-between items-center"
           style={{
-            paddingBottom: "var(--bottom-nav-height, 5rem)", // fallback if JS doesn't run
+            paddingBottom: "var(--bottom-nav-height, 5rem)",
           }}
         >
           <p className="text-gray-400 text-sm">
             © 2025 Hansitha Creations. All rights reserved.
           </p>
           <div className="flex space-x-6 mt-4 md:mt-0">
-            <a
-              href="/privacy-policy"
+            <Link
+              to="/privacy-policy"
               className="text-gray-400 hover:text-pink-400 text-sm transition-colors"
             >
               Privacy Policy
-            </a>
+            </Link>
             <a
               href="#"
               className="text-gray-400 hover:text-pink-400 text-sm transition-colors"

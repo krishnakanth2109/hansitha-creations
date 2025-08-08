@@ -1,3 +1,5 @@
+// client/src/context/AuthContext.tsx (Complete, Corrected Code)
+
 import {
   createContext,
   useContext,
@@ -6,7 +8,9 @@ import {
   ReactNode,
 } from 'react';
 import axios from 'axios';
-import { cookieStorage } from '../utils/cookieStorage';
+
+// You no longer need cookieStorage for this authentication flow.
+// import { cookieStorage } from '../utils/cookieStorage';
 
 const API_URL = import.meta.env.VITE_API_URL;
 
@@ -15,11 +19,6 @@ interface User {
   name: string;
   email: string;
   role?: string;
-  wishlist?: string[];
-  cart?: {
-    productId: string;
-    quantity: number;
-  }[];
 }
 
 interface AuthContextType {
@@ -27,7 +26,6 @@ interface AuthContextType {
   loading: boolean;
   login: (credentials: { email: string; password: string }) => Promise<void>;
   logout: () => Promise<void>;
-  refreshUser: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
@@ -35,7 +33,6 @@ const AuthContext = createContext<AuthContextType>({
   loading: true,
   login: async () => {},
   logout: async () => {},
-  refreshUser: async () => {},
 });
 
 export const useAuth = () => useContext(AuthContext);
@@ -44,51 +41,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // ✅ Refresh user from API and store in cookies
-  const refreshUser = async () => {
-    try {
-      const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
-      setUser(res.data.user);
-      cookieStorage.setJSON('user', res.data.user);
-    } catch {
-      setUser(null);
-      cookieStorage.removeItem('user');
-    } finally {
-      setLoading(false);
-    }
-  };
-
+  // On initial app load, this function asks the backend "who am I?".
+  // The browser automatically sends the secure httpOnly cookie.
+  // This is the single source of truth for the user's login state.
   useEffect(() => {
-    const storedUser = cookieStorage.getJSON<User>('user');
-    if (storedUser) {
-      setUser(storedUser);
-      setLoading(false);
-    } else {
-      refreshUser();
-    }
+    const verifyUserSession = async () => {
+      try {
+        const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
+        if (res.data.success) {
+          setUser(res.data.user);
+        } else {
+          setUser(null);
+        }
+      } catch (error) {
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    verifyUserSession();
   }, []);
 
-  // ✅ Login and store user
   const login = async (credentials: { email: string; password: string }) => {
+    // Make the login request. The backend will set the httpOnly cookie on success.
     const res = await axios.post(`${API_URL}/api/auth/login`, credentials, {
       withCredentials: true,
     });
-    setUser(res.data.user);
-    cookieStorage.setJSON('user', res.data.user);
+    // Update the user state on the frontend with the response data.
+    if (res.data.success) {
+      setUser(res.data.user);
+    }
   };
 
-  // ✅ Logout and clear cookies
   const logout = async () => {
+    // Tell the backend to clear the httpOnly cookie.
     await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+    // Clear the user state on the frontend.
     setUser(null);
-    cookieStorage.removeItem('user');
-    // Clear cart from cookies on logout (wishlist should persist in database)
-    cookieStorage.removeItem('cart');
-    // Note: We don't clear wishlist from cookies as it should persist and be restored on next login
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, logout }}>
       {children}
     </AuthContext.Provider>
   );

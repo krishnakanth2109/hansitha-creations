@@ -8,6 +8,8 @@ import { CartProvider } from "./context/CartContext";
 import { ProductProvider } from "./context/ProductContext";
 import { CurrencyProvider } from "./context/CurrencyContext";
 import { WishlistProvider } from "./context/WishlistContext";
+import Blog from './pages/Blog'; 
+import Press from './pages/Press'; // Corrected import
 
 // WebSocket
 import { connectSocket, getSocket } from "./sockets/socket";
@@ -52,6 +54,8 @@ import AdminCategoryPanel from "./admin/AdminCategoryPanel";
 import ProductManagementPage from "./admin/ProductManagementPage";
 import EditAnnouncement from "./admin/EditAnnouncement";
 import EditProduct from "./components/EditProduct";
+import AffiliateProgram from './pages/AffiliateProgram';
+import Partnership from './pages/Partnership';
 
 const queryClient = new QueryClient();
 
@@ -71,8 +75,7 @@ const AppRoutes = () => {
       <Route path="/featured" element={<Layout><FeaturedProducts /></Layout>} />
       <Route path="/fabrics/:category" element={<Layout><CategoryPage /></Layout>} />
       <Route path="/checkout" element={<Layout><Checkout /></Layout>} />
-      <Route path="/about" element={<Layout><AboutPage /></Layout>} />
-      <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
+     <Route path="/about" element={<AboutPage />} />      <Route path="/contact" element={<Layout><ContactPage /></Layout>} />
       <Route path="/new-arrivals" element={<Layout><NewArrivalsPage /></Layout>} />
       <Route path="/ceo-collections" element={<Layout><CEOCollectionsPage /></Layout>} />
       <Route path="/product/:name" element={<Layout><ProductDetailsPage key={location.pathname} /></Layout>} />
@@ -84,7 +87,11 @@ const AppRoutes = () => {
       <Route path="/addresses" element={<Addresses />} />
       <Route path="/login/sso-callback" element={<SSORedirectHandler />} />
       <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
-
+      <Route path="/blog" element={<Blog />} /> 
+      <Route path="/press" element={<Press />} /> {/* Corrected Route */}
+       <Route path="/affiliate-program" element={<AffiliateProgram />} />
+      <Route path="/partnership" element={<Partnership />} />
+      
       {/* Admin Layout + Nested Routes */}
       <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<Navigate to="add" replace />} />
@@ -116,19 +123,15 @@ const AppRoutes = () => {
 const App = () => {
   useEffect(() => {
     connectSocket();
-
     const socket = getSocket();
-
     socket.on("refresh", () => {
       console.log("🔄 Received refresh event from server");
-      // Optional: trigger re-fetch or toast notification
     });
-
     return () => {
       socket.disconnect();
     };
   }, []);
-
+console.log("API URL being used:", import.meta.env.VITE_API_URL);
   return (
     <AuthProvider>
       <QueryClientProvider client={queryClient}>
