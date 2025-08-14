@@ -58,8 +58,6 @@ cloudinary.config({
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// No Razorpay configuration needed
-
 // Database Connection
 mongoose
   .connect(process.env.MONGO_URI, {

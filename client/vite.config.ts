@@ -10,8 +10,21 @@ export default defineConfig(({ mode }) => ({
   server: {
     host: "::",
     port: 8080,
+    // START: CORRECTED PROXY
+    // This now correctly points to your backend server running on port 3000
     proxy: {
-      "/api": "http://localhost:8080",
+      '/api': {
+        target: 'http://localhost:3000',
+        changeOrigin: true,
+        // Optional: you can rewrite the path if needed, but likely not necessary
+        // rewrite: (path) => path.replace(/^\/api/, ''), 
+      },
+    },
+    // END: CORRECTED PROXY
+
+    // This header configuration is correct and necessary for Google Login
+    headers: {
+      'Cross-Origin-Opener-Policy': 'same-origin-allow-popups',
     },
   },
 
@@ -21,10 +34,8 @@ export default defineConfig(({ mode }) => ({
 
     // ✅ PWA Plugin
     VitePWA({
-      registerType: "autoUpdate", // Automatically update SW
+      registerType: "autoUpdate",
       includeAssets: ["favicon.svg", "robots.txt"],
-
-      // 👇 Web App Manifest (no `serviceworker` key here!)
       manifest: {
         name: "My App",
         short_name: "App",
@@ -45,13 +56,9 @@ export default defineConfig(({ mode }) => ({
           },
         ],
       },
-
-      // 👇 Workbox settings to control caching
       workbox: {
         globPatterns: ["**/*.{js,css,html,ico,png,svg}"],
       },
-
-      // 👇 Enable service worker in dev mode for testing
       devOptions: {
         enabled: true,
       },

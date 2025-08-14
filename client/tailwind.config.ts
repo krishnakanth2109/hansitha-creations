@@ -21,6 +21,7 @@ const config: Config = {
         xl: "1280px",
       },
     },
+     darkMode: 'class',
     extend: {
       fontFamily: {
         sans: ["Merienda", "sans-serif"],

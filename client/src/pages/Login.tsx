@@ -1,4 +1,4 @@
-// ✅ Updated Login.tsx - now fixes the login flow, handles errors, and integrates correctly with AuthContext
+// ✅ Updated Login.tsx - now integrates Google Login alongside existing flows
 
 import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
@@ -7,11 +7,15 @@ import { useAuth } from "../context/AuthContext";
 import toast from "react-hot-toast";
 import axios from "axios";
 import { motion, AnimatePresence } from "framer-motion";
+// START: MODIFICATIONS FOR GOOGLE LOGIN
+import { GoogleLogin, CredentialResponse } from '@react-oauth/google';
+// END: MODIFICATIONS FOR GOOGLE LOGIN
+
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, googleLogin } = useAuth(); // <-- Destructure googleLogin
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({ email: "", password: "" });
@@ -23,7 +27,7 @@ const Login = () => {
   const [otp, setOtp] = useState("");
   const [newPassword, setNewPassword] = useState("");
 
-  const handleLogin = async (e) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
 
@@ -31,25 +35,49 @@ const Login = () => {
       await login(formData);
       toast.success("Login successful");
       navigate("/account", { replace: true });
-    } catch (err) {
+    } catch (err: any) {
       const message = err?.response?.data?.message || "Login failed";
       setError(message);
       toast.error(message);
     }
   };
 
-  const handleSendOtp = async (e) => {
+  // START: ADDED FUNCTION FOR GOOGLE LOGIN
+  const handleGoogleSuccess = async (credentialResponse: CredentialResponse) => {
+    try {
+      if (credentialResponse.credential) {
+        await googleLogin(credentialResponse.credential);
+        toast.success("Google login successful!");
+        navigate("/account", { replace: true });
+      } else {
+        throw new Error("Google credential not found");
+      }
+    } catch (err: any) {
+      const message = err?.response?.data?.message || "Google login failed. Please try again.";
+      setError(message);
+      toast.error(message);
+    }
+  };
+
+  const handleGoogleError = () => {
+      toast.error("Google login was unsuccessful. Please try again.");
+      console.error("Google Login Failed");
+  };
+  // END: ADDED FUNCTION FOR GOOGLE LOGIN
+
+
+  const handleSendOtp = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const { data } = await axios.post(`${API_URL}/auth/request-otp`, { email });
       toast.success(data.message || "OTP sent");
       setStage("verify");
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err?.response?.data?.message || "Failed to send OTP");
     }
   };
 
-  const handleResetPassword = async (e) => {
+  const handleResetPassword = async (e: React.FormEvent) => {
     e.preventDefault();
 
     if (newPassword === formData.password) {
@@ -66,7 +94,7 @@ const Login = () => {
       toast.success(data.message || "Password reset successful");
       setStage("login");
       setFormData({ email, password: "" });
-    } catch (err) {
+    } catch (err: any) {
       toast.error(err?.response?.data?.message || "Invalid OTP or error");
     }
   };
@@ -153,6 +181,22 @@ const Login = () => {
               Sign In
             </button>
 
+            {/* START: GOOGLE LOGIN BUTTON & DIVIDER */}
+            <div className="relative flex items-center">
+              <div className="flex-grow border-t border-gray-300"></div>
+              <span className="flex-shrink mx-4 text-gray-400 text-sm">OR</span>
+              <div className="flex-grow border-t border-gray-300"></div>
+            </div>
+            
+            <div className="flex justify-center">
+                <GoogleLogin
+                    onSuccess={handleGoogleSuccess}
+                    onError={handleGoogleError}
+                    useOneTap
+                />
+            </div>
+            {/* END: GOOGLE LOGIN BUTTON & DIVIDER */}
+
             <div className="text-center text-sm mt-4 text-purple-600 hover:underline font-medium">
               <button onClick={() => setStage("forgot")} type="button">
                 Forgot Password?
@@ -162,81 +206,83 @@ const Login = () => {
         )}
 
         {stage === "forgot" && (
-          <motion.form
-            key="forgot"
-            onSubmit={handleSendOtp}
-            variants={fadeVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
-          >
-            <input
-              type="email"
-              placeholder="Enter your email"
-              className="w-full border p-3 rounded"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <button
-              type="submit"
-              className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+            // This section remains unchanged
+            <motion.form
+                key="forgot"
+                onSubmit={handleSendOtp}
+                variants={fadeVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
             >
-              Send OTP
-            </button>
-            <button
-              type="button"
-              className="text-sm mt-2 text-purple-600 hover:underline font-medium"
-              onClick={() => setStage("login")}
-            >
-              Back to Login
-            </button>
-          </motion.form>
+                <input
+                type="email"
+                placeholder="Enter your email"
+                className="w-full border p-3 rounded"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                required
+                />
+                <button
+                type="submit"
+                className="bg-blue-600 text-white px-4 py-2 rounded w-full"
+                >
+                Send OTP
+                </button>
+                <button
+                type="button"
+                className="text-sm mt-2 text-purple-600 hover:underline font-medium"
+                onClick={() => setStage("login")}
+                >
+                Back to Login
+                </button>
+            </motion.form>
         )}
 
         {stage === "verify" && (
-          <motion.form
-            key="verify"
-            onSubmit={handleResetPassword}
-            variants={fadeVariants}
-            initial="hidden"
-            animate="visible"
-            exit="exit"
-            transition={{ duration: 0.3 }}
-            className="space-y-4"
-          >
-            <input
-              type="text"
-              placeholder="Enter OTP"
-              className="w-full border p-3 rounded"
-              value={otp}
-              onChange={(e) => setOtp(e.target.value)}
-              required
-            />
-            <input
-              type="password"
-              placeholder="New Password"
-              className="w-full border p-3 rounded"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-            />
-            <button
-              type="submit"
-              className="bg-green-600 text-white px-4 py-2 rounded w-full"
+            // This section remains unchanged
+            <motion.form
+                key="verify"
+                onSubmit={handleResetPassword}
+                variants={fadeVariants}
+                initial="hidden"
+                animate="visible"
+                exit="exit"
+                transition={{ duration: 0.3 }}
+                className="space-y-4"
             >
-              Reset Password
-            </button>
-            <button
-              type="button"
-              className="text-sm text-gray-500 mt-2 hover:underline"
-              onClick={() => setStage("login")}
-            >
-              Back to Login
-            </button>
-          </motion.form>
+                <input
+                type="text"
+                placeholder="Enter OTP"
+                className="w-full border p-3 rounded"
+                value={otp}
+                onChange={(e) => setOtp(e.target.value)}
+                required
+                />
+                <input
+                type="password"
+                placeholder="New Password"
+                className="w-full border p-3 rounded"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                />
+                <button
+                type="submit"
+                className="bg-green-600 text-white px-4 py-2 rounded w-full"
+                >
+                Reset Password
+                </button>
+                <button
+                type="button"
+                className="text-sm text-gray-500 mt-2 hover:underline"
+                onClick={() => setStage("login")}
+                >
+                Back to Login
+                </button>
+            </motion.form>
         )}
       </AnimatePresence>
 

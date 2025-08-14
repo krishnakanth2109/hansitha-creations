@@ -1,3 +1,5 @@
+// src/pages/Account.tsx
+
 import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/context/AuthContext";
@@ -21,8 +23,8 @@ export default function Account() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 flex items-center justify-center">
-        <p className="text-lg font-medium">Authenticating...</p>
+      <div className="min-h-screen flex items-center justify-center">
+        <p>Authenticating...</p>
       </div>
     );
   }
@@ -30,7 +32,12 @@ export default function Account() {
   if (!user) return null;
 
   const handleActionClick = (action: string) => {
-    setActiveSection(action);
+    // This is where the navigation logic lives
+    if (action === "addresses") {
+      navigate("/address"); // Navigate to the address page route
+    } else {
+      setActiveSection(action);
+    }
   };
 
   const handleLogout = () => {
@@ -38,52 +45,23 @@ export default function Account() {
     navigate("/", { replace: true });
   };
 
-  const handleGoToAdminPanel = () => {
-    navigate("/admin/profile");
-  };
-
   const renderMainContent = () => {
     switch (activeSection) {
       case "orders":
-        return (
-          <div className="grid grid-cols-1 gap-6">
-            <RecentOrders />
-          </div>
-        );
+        return <RecentOrders />;
       case "settings":
-        return (
-          <div className="grid grid-cols-1 gap-6">
-            <SecuritySettings />
-          </div>
-        );
+        return <SecuritySettings />;
       default:
-        return (
-          <div className="grid grid-cols-1 gap-6">
-            <QuickActions onActionClick={handleActionClick} userName={user.name} />
-          </div>
-        );
+        return <QuickActions onActionClick={handleActionClick} userName={user.name} />;
     }
   };
 
   return (
     <Layout>
       <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
-        <main className="container mx-auto px-4 py-6 space-y-6 pb-20 md:pb-6">
+        <main className="container mx-auto px-4 py-6 space-y-6">
           <ProfileHeader user={user} onLogout={handleLogout} />
-
-          {/* Show Admin Panel button only if user is an admin */}
-          {(user.role === "admin" || user.role === "superadmin") && (
-            <div className="text-right">
-              <button
-                onClick={handleGoToAdminPanel}
-                className="mb-4 px-4 py-2 bg-purple-600 text-white rounded hover:bg-purple-700 transition"
-              >
-                Go to Admin Panel
-              </button>
-            </div>
-          )}
-
-          {renderMainContent()}
+          <div className="grid grid-cols-1 gap-6">{renderMainContent()}</div>
         </main>
         <Footer />
       </div>

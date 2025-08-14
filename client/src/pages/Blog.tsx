@@ -51,7 +51,7 @@ const Blog = () => {
       {/* --- MAIN CONTENT AREA --- */}
       <main 
         className="flex-grow" // It will fill the space between header and footer
-        style={{ background: 'linear-gradient(to bottom right, #e0e7ff, #f3e8ff, #fce7f3)' }}
+        style={{ background: 'linear-gradient(to bottom right, #818cf8, #fca5a5)' }} // Red-Indigo Gradient
       >
         <div className="max-w-7xl mx-auto py-16 px-4 font-serif">
           

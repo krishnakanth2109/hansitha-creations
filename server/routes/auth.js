@@ -1,14 +1,22 @@
+// Core Dependencies & Models
 const express = require("express");
 const jwt = require("jsonwebtoken");
 const crypto = require("crypto");
-const User = require("../models/User.model.js");
+const User = require("../models/User.model.js"); // Make sure this path is correct
 const sendEmail = require("../utils/sendEmail.js");
 const authMiddleware = require("../middleware/auth");
-
 const router = express.Router();
 
+// ✅ NEW: Import Google Auth Library
+const { OAuth2Client } = require('google-auth-library');
+
+// ✅ NEW: Initialize Google OAuth Client
+// IMPORTANT: Make sure VITE_GOOGLE_CLIENT_ID is in your backend's .env file!
+const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+
+
 // -----------------------------
-// 🔒 Token Generator
+// 🔒 Token Generator (Existing function, no changes)
 // -----------------------------
 const generateToken = (user) =>
   jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
@@ -16,7 +24,7 @@ const generateToken = (user) =>
   });
 
 // -----------------------------
-// ✅ GET /api/auth/me
+// ✅ GET /api/auth/me (Existing route, no changes)
 // -----------------------------
 router.get("/me", authMiddleware, async (req, res) => {
   try {
@@ -34,7 +42,7 @@ router.get("/me", authMiddleware, async (req, res) => {
 });
 
 // -----------------------------
-// ✅ POST /api/auth/register
+// ✅ POST /api/auth/register (Existing route, no changes)
 // -----------------------------
 router.post("/register", async (req, res) => {
   try {
@@ -49,12 +57,11 @@ router.post("/register", async (req, res) => {
     const user = await User.create({ email, password, name });
     const token = generateToken(user);
 
-    // ✅ Set token in cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
       sameSite: "none",
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+      maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 
     res.json({
@@ -71,7 +78,7 @@ router.post("/register", async (req, res) => {
 });
 
 // -----------------------------
-// ✅ POST /api/auth/login
+// ✅ POST /api/auth/login (Existing route, no changes)
 // -----------------------------
 router.post("/login", async (req, res) => {
   try {
@@ -85,7 +92,6 @@ router.post("/login", async (req, res) => {
 
     const token = generateToken(user);
 
-    // ✅ Set token in cookie
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
@@ -112,16 +118,75 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// =================================================================
+// ⭐ NEW: GOOGLE LOGIN ROUTE
+// =================================================================
+router.post('/google-login', async (req, res) => {
+  const { token } = req.body;
+
+  if (!token) {
+    return res.status(400).json({ success: false, message: 'Google token not provided.' });
+  }
+
+  try {
+    // Verify the ID token sent from the frontend
+    const ticket = await client.verifyIdToken({
+      idToken: token,
+      audience: process.env.VITE_GOOGLE_CLIENT_ID, // This MUST match the Client ID used on the frontend
+    });
+
+    const { name, email } = ticket.getPayload();
+    
+    let user = await User.findOne({ email });
+
+    // If the user does not exist, create them in the database
+    if (!user) {
+      console.log(`User with email ${email} not found. Creating new user.`);
+      // Note: This creates a user without a password. Your User model must allow this.
+      user = await User.create({ email, name });
+    }
+
+    // At this point, the user exists. Generate a session token for them.
+    const sessionToken = generateToken(user);
+
+    // Set the session token in the cookie, same as your regular login
+    res.cookie("token", sessionToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "none", // Using 'none' to allow cross-site cookies
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+    });
+
+    // Send a success response with the user data
+    res.json({
+      success: true,
+      message: "Google login successful",
+      user: {
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
+    });
+
+  } catch (error) {
+    // This will catch any errors from Google's token verification
+    console.error('🔴 BACKEND GOOGLE AUTH ERROR:', error);
+    res.status(401).json({ success: false, message: 'Google authentication failed. Invalid token.' });
+  }
+});
+
+
 // -----------------------------
-// ✅ POST /api/auth/logout
+// ✅ POST /api/auth/logout (Existing route, no changes)
 // -----------------------------
 router.post("/logout", (req, res) => {
-  res.clearCookie("token"); // ✅ Clear the auth cookie
+  res.clearCookie("token");
   res.json({ success: true, message: "Logged out successfully" });
 });
 
 // -----------------------------
-// ✅ POST /api/auth/forgot-password
+// ✅ POST /api/auth/forgot-password (Existing route, no changes)
 // -----------------------------
 router.post("/forgot-password", async (req, res) => {
   try {
@@ -157,7 +222,7 @@ router.post("/forgot-password", async (req, res) => {
 });
 
 // -----------------------------
-// ✅ POST /api/auth/reset-password/:token
+// ✅ POST /api/auth/reset-password/:token (Existing route, no changes)
 // -----------------------------
 router.post("/reset-password/:token", async (req, res) => {
   try {

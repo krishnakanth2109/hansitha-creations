@@ -1,5 +1,3 @@
-// client/src/context/AuthContext.tsx (Complete, Corrected Code)
-
 import {
   createContext,
   useContext,
@@ -9,29 +7,34 @@ import {
 } from 'react';
 import axios from 'axios';
 
-// You no longer need cookieStorage for this authentication flow.
-// import { cookieStorage } from '../utils/cookieStorage';
-
 const API_URL = import.meta.env.VITE_API_URL;
 
+// UPDATE THE USER INTERFACE TO HOLD ALL RELEVANT DATA
 interface User {
   _id: string;
   name: string;
   email: string;
   role?: string;
+  wishlist: any[];  // This is crucial for the wishlist page
+  addresses: any[]; // This is crucial for the address page
+  cart: any[];      // Also good to have cart data here
 }
 
 interface AuthContextType {
   user: User | null;
   loading: boolean;
+  register: (userData: { name: string; email: string; password?: string }) => Promise<void>;
   login: (credentials: { email: string; password: string }) => Promise<void>;
+  googleLogin: (token: string) => Promise<void>;
   logout: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType>({
   user: null,
   loading: true,
+  register: async () => {},
   login: async () => {},
+  googleLogin: async () => {},
   logout: async () => {},
 });
 
@@ -41,15 +44,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  // On initial app load, this function asks the backend "who am I?".
-  // The browser automatically sends the secure httpOnly cookie.
-  // This is the single source of truth for the user's login state.
   useEffect(() => {
     const verifyUserSession = async () => {
       try {
         const res = await axios.get(`${API_URL}/api/auth/me`, { withCredentials: true });
         if (res.data.success) {
-          setUser(res.data.user);
+          setUser(res.data.user); // Sets the full user object
         } else {
           setUser(null);
         }
@@ -59,30 +59,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setLoading(false);
       }
     };
-
     verifyUserSession();
   }, []);
 
+  const register = async (userData: { name: string; email: string; password?: string }) => {
+    await axios.post(`${API_URL}/api/auth/register`, userData, { withCredentials: true });
+  };
+
   const login = async (credentials: { email: string; password: string }) => {
-    // Make the login request. The backend will set the httpOnly cookie on success.
     const res = await axios.post(`${API_URL}/api/auth/login`, credentials, {
       withCredentials: true,
     });
-    // Update the user state on the frontend with the response data.
     if (res.data.success) {
-      setUser(res.data.user);
+      setUser(res.data.user); // Sets the full user object
+    }
+  };
+
+  const googleLogin = async (token: string) => {
+    const res = await axios.post(`${API_URL}/api/auth/google-login`, { token }, {
+      withCredentials: true,
+    });
+    if (res.data.success) {
+      setUser(res.data.user); // Sets the full user object
     }
   };
 
   const logout = async () => {
-    // Tell the backend to clear the httpOnly cookie.
     await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
-    // Clear the user state on the frontend.
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, logout }}>
+    <AuthContext.Provider value={{ user, loading, register, login, googleLogin, logout }}>
       {children}
     </AuthContext.Provider>
   );

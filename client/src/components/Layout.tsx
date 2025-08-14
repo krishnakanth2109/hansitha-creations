@@ -5,6 +5,7 @@ import SignInPanel from "./SignInPanel";
 import BottomNavBar from "./BottomNavBar";
 import SearchSidebar from "../components/SearchSidebar";
 import { useAuth } from "@/context/AuthContext";
+import { ThemeToggle } from './ThemeToggle'; // This import is correct
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   const [searchOpen, setSearchOpen] = useState(false);
@@ -26,7 +27,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const whatsappUrl = `https://wa.me/918142504687?text=${encodeURIComponent(whatsappMessage)}`;
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400">
+    // The background here will need to be updated with dark mode styles in your CSS
+    <div className="min-h-screen bg-white text-gray-800 dark:bg-gray-900 dark:text-gray-200 transition-colors duration-300">
       <Header onMenuClick={openSidebar} />
       <Sidebar isOpen={isSidebarOpen} onClose={closeSidebar} />
       <SignInPanel isOpen={isSignInOpen} onClose={closeSignIn} />
@@ -54,6 +56,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           onClose={() => setSearchOpen(false)}
         />
       </div>
+      
+      {/* --- START OF ADDITIONS --- */}
+      {/* ✅ Theme Toggle Floating Button */}
+      <div className="fixed bottom-36 right-4 z-50">
+        <ThemeToggle />
+      </div>
+      {/* --- END OF ADDITIONS --- */}
+
 
       {/* ✅ WhatsApp Floating Help Button */}
       <a

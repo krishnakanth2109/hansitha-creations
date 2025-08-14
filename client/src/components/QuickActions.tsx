@@ -1,3 +1,5 @@
+// src/components/QuickActions.tsx
+
 import { 
   Package, 
   MapPin, 
@@ -7,6 +9,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AccountSection } from "./AccountSection";
+// The problematic import has been removed from here.
 
 const quickActions = [
   { icon: Package, label: "My Orders", count: 3, variant: "card" as const, action: "orders" },
@@ -35,6 +38,7 @@ export function QuickActions({ onActionClick, userName }: QuickActionsProps) {
       onActionClick(action);
     }
   };
+  
   return (
     <AccountSection 
       title="Quick Actions" 

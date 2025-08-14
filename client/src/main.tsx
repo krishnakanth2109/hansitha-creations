@@ -1,20 +1,63 @@
+// client/src/main.tsx (COMPLETE AND CORRECTED)
+
 import React from 'react';
-import "@fontsource/merienda";
 import { createRoot } from 'react-dom/client';
+import { BrowserRouter } from "react-router-dom";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { GoogleOAuthProvider } from '@react-oauth/google';
+import { Toaster as Sonner } from "@/components/ui/sonner";
+import { TooltipProvider } from "@/components/ui/tooltip";
+
 import App from './App.tsx';
 import './index.css';
-import { Toaster } from 'react-hot-toast';
-import { AuthProvider } from './context/AuthContext'; // ✅ ensure this exists
-import axios from 'axios';
 
-// ✅ Set Axios defaults globally
-axios.defaults.withCredentials = true;
-axios.defaults.baseURL = import.meta.env.VITE_API_BASE_URL;
+// Import all your context providers
+import { AuthProvider } from "./context/AuthContext";
+import { CartProvider } from "./context/CartContext";
+import { ProductProvider } from "./context/ProductContext";
+import { CurrencyProvider } from "./context/CurrencyContext";
+import { WishlistProvider } from "./context/WishlistContext";
+import { ThemeProvider } from "./context/ThemeContext";
 
-createRoot(document.getElementById('root')!).render(
+const queryClient = new QueryClient();
+
+// The root of your application
+const rootElement = document.getElementById('root');
+if (!rootElement) throw new Error('Failed to find the root element');
+
+const root = createRoot(rootElement);
+
+root.render(
   <React.StrictMode>
-    <AuthProvider> {/* 🔐 Wraps App for login/register access */}
-      <App />
-    </AuthProvider>
+    <BrowserRouter>
+      <GoogleOAuthProvider clientId={import.meta.env.VITE_GOOGLE_CLIENT_ID!}>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <ProductProvider>
+              <CartProvider>
+                <WishlistProvider>
+                  <CurrencyProvider>
+                    <ThemeProvider>
+                      <TooltipProvider>
+                        {/* Toaster for notifications */}
+                        <Sonner
+                          position="bottom-right"
+                          expand={true}
+                          richColors={true}
+                          closeButton={true}
+                          duration={2000}
+                        />
+                        {/* Your main App component */}
+                        <App />
+                      </TooltipProvider>
+                    </ThemeProvider>
+                  </CurrencyProvider>
+                </WishlistProvider>
+              </CartProvider>
+            </ProductProvider>
+          </AuthProvider>
+        </QueryClientProvider>
+      </GoogleOAuthProvider>
+    </BrowserRouter>
   </React.StrictMode>
 );

@@ -3,7 +3,8 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const auth = require("../middleware/auth.js");
 const User = require("../models/User.model.js");
-
+// Add at the top with other imports
+const Order = require("../models/Order");
 const router = express.Router();
 
 /* ------------------- Admin Related ------------------- */
@@ -292,5 +293,112 @@ router.delete("/delete-account", auth, async (req, res) => {
     res.status(500).json({ message: "Error deleting account", error: err.message });
   }
 });
+router.get("/addresses", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json(user.addresses);
+  } catch (error) {
+    console.error("Get addresses error:", error);
+    res.status(500).json({ message: "Server error fetching addresses" });
+  }
+});
 
+
+// ✅ POST (add) a new address for the current user
+router.post("/addresses", auth, async (req, res) => {
+  try {
+    // We don't need to validate here because the schema does it for us.
+    const newAddress = req.body; 
+
+    const user = await User.findById(req.user.id);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Add the new address to the user's addresses array
+    user.addresses.push(newAddress);
+    
+    // Save the user document
+    await user.save();
+    
+    // Return the updated list of addresses
+    res.status(201).json(user.addresses);
+  } catch (error) {
+    console.error("Add address error:", error);
+    // Handle validation errors specifically
+    if (error.name === 'ValidationError') {
+        return res.status(400).json({ message: "Validation error", details: error.message });
+    }
+    res.status(500).json({ message: "Server error adding address" });
+  }
+});
+
+
+// ✅ DELETE an address by its ID for the current user
+router.delete("/addresses/:addressId", auth, async (req, res) => {
+    try {
+        const { addressId } = req.params;
+
+        const user = await User.findById(req.user.id);
+        if (!user) {
+            return res.status(404).json({ message: "User not found" });
+        }
+
+        // Find the address to be removed
+        const addressToRemove = user.addresses.id(addressId);
+        if (!addressToRemove) {
+            return res.status(404).json({ message: "Address not found" });
+        }
+        
+        // Use the .remove() method on the subdocument
+        addressToRemove.remove();
+
+        // Save the parent document
+        await user.save();
+
+        // Return the updated list of addresses
+        res.status(200).json(user.addresses);
+    } catch (error) {
+        console.error("Delete address error:", error);
+        res.status(500).json({ message: "Server error deleting address" });
+    }
+});
+
+
+// routes/user.routes.js - Add this route
+// ✅ Delete Account (proper implementation)
+// ✅ Delete Account (proper implementation)
+router.delete('/me', auth, async (req, res) => {
+    try {
+        console.log(`Starting account deletion for user: ${req.user.id}`);
+        
+        // Delete all associated orders first
+        if (Order) {
+            const deleteResult = await Order.deleteMany({ user: req.user.id });
+            console.log(`Deleted ${deleteResult.deletedCount} orders`);
+        }
+
+        // Then delete the user
+        const user = await User.findByIdAndDelete(req.user.id);
+        if (!user) {
+            return res.status(404).json({ error: 'User not found' });
+        }
+
+        // Clear the auth cookie
+        res.clearCookie("token", {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "None"
+        });
+        
+        console.log(`Successfully deleted user: ${req.user.id}`);
+        res.status(200).json({ message: 'Account deleted successfully' });
+    } catch (error) {
+        console.error("Delete account error:", error);
+        res.status(500).json({ error: 'Error deleting account' });
+    }
+});
 module.exports = router;
