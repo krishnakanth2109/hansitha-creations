@@ -87,7 +87,7 @@ export const HeroSection = () => {
         <img
           src={isMobile && slide.mobileImageUrl ? slide.mobileImageUrl : slide.imageUrl}
           alt="Banner"
-          loading="lazy"
+          loading="eager" 
           className={`w-full h-auto max-h-[600px] object-cover transition-opacity duration-300 ${
             fade ? 'opacity-0' : 'opacity-100'
           }`}

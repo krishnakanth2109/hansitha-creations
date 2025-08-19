@@ -6,28 +6,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { User, Lock, ArrowRight } from "lucide-react";
+import { User, Lock } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import axios from "axios";
 import { calculatePricing } from "../utils/pricing";
+import { TruckButton } from "../components/TruckButton";
+
+// ADDED: Import the currency hook to make prices dynamic
 import { useCurrency } from "../context/CurrencyContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
 const Checkout: React.FC = () => {
+  // ADDED: Get the dynamic formatPrice function from the context
   const { formatPrice } = useCurrency();
+
   const { cartItems, getTotalPrice } = useCart();
   const { reloadProducts } = useProducts();
+  reloadProducts();
+
   const navigate = useNavigate();
   const { toast } = useToast();
   const [isProcessing, setIsProcessing] = useState(false);
-
-  // ✅ FIX: This useEffect hook runs reloadProducts() *after* the component renders,
-  // which prevents the "Cannot update a component while rendering" warning.
-  useEffect(() => {
-    reloadProducts();
-  }, [reloadProducts]);
+  const [animateTruck, setAnimateTruck] = useState(false);
 
   // Form state
   const [formData, setFormData] = useState({
@@ -54,13 +56,24 @@ const Checkout: React.FC = () => {
   // Validate form fields
   const validateForm = () => {
     const requiredFields = [
-      "email", "firstName", "lastName", "phone", "address1", "city", "state", "postalCode", "country",
+      "email",
+      "firstName",
+      "lastName",
+      "phone",
+      "address1",
+      "city",
+      "state",
+      "postalCode",
+      "country",
     ];
+
     for (const field of requiredFields) {
       if (!formData[field as keyof typeof formData]?.trim()) {
         toast({
           title: "Error",
-          description: `Please fill in the ${field.replace(/([A-Z])/g, " $1").toLowerCase()} field.`,
+          description: `Please fill in the ${field
+            .replace(/([A-Z])/g, " $1")
+            .toLowerCase()} field.`,
           variant: "destructive",
         });
         return false;
@@ -72,7 +85,15 @@ const Checkout: React.FC = () => {
   // Form valid check for button disabling
   const isFormValid = useMemo(() => {
     const requiredFields = [
-      "email", "firstName", "lastName", "phone", "address1", "city", "state", "postalCode", "country",
+      "email",
+      "firstName",
+      "lastName",
+      "phone",
+      "address1",
+      "city",
+      "state",
+      "postalCode",
+      "country",
     ];
     return requiredFields.every(
       (field) => formData[field as keyof typeof formData].trim() !== ""
@@ -96,23 +117,47 @@ const Checkout: React.FC = () => {
     e.preventDefault();
     if (!validateForm()) return;
 
+    setAnimateTruck(true);
     setIsProcessing(true);
 
     try {
-      const { email, firstName, lastName, phone, address1, address2, city, state, postalCode, country } = formData;
+      const {
+        email,
+        firstName,
+        lastName,
+        phone,
+        address1,
+        address2,
+        city,
+        state,
+        postalCode,
+        country,
+      } = formData;
 
+      // Generate Razorpay payment link
       const res = await axios.post(`${API_URL}/api/payment-link`, {
         totalAmount: total,
         cartItems,
         userName: `${firstName} ${lastName}`,
         userEmail: email,
         userPhone: phone,
-        shippingAddress: { address1, address2, city, state, postalCode, country },
+        shippingAddress: {
+          address1,
+          address2,
+          city,
+          state,
+          postalCode,
+          country,
+        },
       });
 
       const link = res.data.paymentLink.short_url;
-      window.location.href = link;
 
+      // Play truck animation briefly
+      await new Promise((resolve) => setTimeout(resolve, 1500));
+
+      // Redirect to payment page
+      window.location.href = link;
     } catch (err) {
       console.error("Error generating payment link:", err);
       toast({
@@ -120,16 +165,17 @@ const Checkout: React.FC = () => {
         description: "Failed to generate payment link. Please try again.",
         variant: "destructive",
       });
+      setAnimateTruck(false);
     } finally {
       setIsProcessing(false);
     }
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 transition-colors duration-300">
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 py-8">
       <div className="container mx-auto px-4">
         <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">Checkout</h1>
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
           <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
             {/* Contact + Shipping Forms */}
             <div className="space-y-6">
@@ -145,6 +191,7 @@ const Checkout: React.FC = () => {
                 formData={formData}
                 handleChange={handleInputChange}
               />
+
               <CheckoutSection
                 icon={<User className="w-5 h-5" />}
                 title="Shipping Address"
@@ -163,49 +210,55 @@ const Checkout: React.FC = () => {
 
             {/* Order Summary */}
             <div className="lg:sticky lg:top-8 lg:self-start">
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+              <Card>
                 <CardHeader>
-                  <CardTitle className="text-gray-800 dark:text-gray-100">Order Summary</CardTitle>
+                  <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
                     {cartItems.map((item) => (
                       <div key={item.id} className="flex items-center space-x-4">
-                        <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg"/>
+                        <img
+                          src={item.image}
+                          alt={item.name}
+                          className="w-16 h-16 object-cover rounded-lg"
+                        />
                         <div className="flex-1">
-                          <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm">Qty: {item.quantity}</p>
+                          <h3 className="text-sm font-medium">{item.name}</h3>
+                          <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
                         </div>
-                        <p className="font-medium text-gray-800 dark:text-gray-200">{formatPrice(item.price * item.quantity)}</p>
+                        {/* CHANGED: This now uses the dynamic formatPrice */}
+                        <p className="font-medium">
+                          {formatPrice(item.price * item.quantity)}
+                        </p>
                       </div>
                     ))}
-                    <Separator className="bg-gray-200 dark:bg-gray-700" />
-                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
+
+                    <Separator />
+
+                    <div className="space-y-2 text-sm">
+                      {/* CHANGED: Using dynamic formatPrice for all summary rows */}
                       <SummaryRow label="Subtotal" value={formatPrice(subtotal)} />
                       <SummaryRow label="Shipping" value={shipping === 0 ? 'Free' : formatPrice(shipping)} />
                       <SummaryRow label="Tax" value={formatPrice(tax)} />
-                      <Separator className="bg-gray-200 dark:bg-gray-700" />
-                      <div className="flex justify-between text-lg font-semibold text-gray-800 dark:text-gray-100">
+                      <Separator />
+                      <div className="flex justify-between text-lg font-semibold">
                         <span>Total</span>
+                        {/* CHANGED: Using dynamic formatPrice for the final total */}
                         <span>{formatPrice(total)}</span>
                       </div>
                     </div>
 
-                    <Button
-                      type="submit"
-                      disabled={!isFormValid || isProcessing}
-                      className="w-full mt-6 bg-gray-800 text-white hover:bg-black dark:bg-gray-200 dark:text-black dark:hover:bg-white transition-all duration-300 transform hover:scale-105"
-                      size="lg"
-                    >
-                      {isProcessing ? ( "Processing..." ) : (
-                        <>
-                          Complete Order
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </>
-                      )}
-                    </Button>
+                    {/* Truck Button */}
+                    <div className="mt-6 flex justify-center">
+                      <TruckButton
+                        type="submit"
+                        disabled={!isFormValid || isProcessing}
+                        animate={animateTruck}
+                      />
+                    </div>
 
-                    <p className="text-sm text-center text-gray-600 dark:text-gray-400 flex items-center justify-center gap-1 mt-2">
+                    <p className="text-sm text-center text-gray-600 flex items-center justify-center gap-1 mt-2">
                       <Lock className="w-3 h-3" /> Your order details are safe and secure.
                     </p>
                   </div>
@@ -225,36 +278,54 @@ export default Checkout;
 // Reusable Components
 // --------------------------
 
-const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
+const InputGroup = ({
+  id,
+  label,
+  value,
+  onChange,
+  maxLength,
+}: {
+  id: string;
+  label: string;
+  value: string;
+  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  maxLength?: number;
+}) => (
   <div>
-    <Label htmlFor={id} className="text-gray-700 dark:text-gray-300">{label}</Label>
-    <Input 
-      id={id} 
-      name={id} 
-      value={value} 
-      onChange={onChange} 
-      maxLength={maxLength}
-      className="bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-pink-500"
-    />
+    <Label htmlFor={id}>{label}</Label>
+    <Input id={id} name={id} value={value} onChange={onChange} maxLength={maxLength} />
   </div>
 );
 
+// CHANGED: This component now accepts a string for the value to handle "Free" shipping and pre-formatted prices.
 const SummaryRow = ({ label, value }: { label: string; value: string | number }) => (
   <div className="flex justify-between">
     <span>{label}</span>
-    <span className="font-medium text-gray-800 dark:text-gray-200">{value}</span>
+    <span>{value}</span>
   </div>
 );
 
-const CheckoutSection = ({ icon, title, fields, formData, handleChange }: any) => (
-  <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
+const CheckoutSection = ({
+  icon,
+  title,
+  fields,
+  formData,
+  handleChange,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  fields: { id: string; label: string; maxLength?: number }[];
+  formData: Record<string, string>;
+  handleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+}) => (
+  <Card>
     <CardHeader>
-      <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-100">
+      <CardTitle className="flex items-center gap-2">
         {icon} {title}
       </CardTitle>
     </CardHeader>
     <CardContent className="space-y-4">
-      {fields.map((field: any) => (
+      {fields.map((field) => (
         <InputGroup
           key={field.id}
           id={field.id}

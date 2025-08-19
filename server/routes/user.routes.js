@@ -293,6 +293,12 @@ router.delete("/delete-account", auth, async (req, res) => {
     res.status(500).json({ message: "Error deleting account", error: err.message });
   }
 });
+
+// ✅ PUT (update) an existing address
+// ✅ PUT (update) an existing address
+/* ------------------- Address Routes ------------------- */
+
+// ✅ GET all addresses for the current user
 router.get("/addresses", auth, async (req, res) => {
   try {
     const user = await User.findById(req.user.id);
@@ -310,7 +316,6 @@ router.get("/addresses", auth, async (req, res) => {
 // ✅ POST (add) a new address for the current user
 router.post("/addresses", auth, async (req, res) => {
   try {
-    // We don't need to validate here because the schema does it for us.
     const newAddress = req.body; 
 
     const user = await User.findById(req.user.id);
@@ -318,17 +323,12 @@ router.post("/addresses", auth, async (req, res) => {
       return res.status(404).json({ message: "User not found" });
     }
 
-    // Add the new address to the user's addresses array
     user.addresses.push(newAddress);
-    
-    // Save the user document
     await user.save();
     
-    // Return the updated list of addresses
     res.status(201).json(user.addresses);
   } catch (error) {
     console.error("Add address error:", error);
-    // Handle validation errors specifically
     if (error.name === 'ValidationError') {
         return res.status(400).json({ message: "Validation error", details: error.message });
     }
@@ -342,25 +342,15 @@ router.delete("/addresses/:addressId", auth, async (req, res) => {
     try {
         const { addressId } = req.params;
 
-        const user = await User.findById(req.user.id);
-        if (!user) {
-            return res.status(404).json({ message: "User not found" });
-        }
+        // The .pull() method is the correct way to remove a subdocument from an array
+        await User.findByIdAndUpdate(req.user.id, {
+            $pull: { addresses: { _id: addressId } }
+        });
 
-        // Find the address to be removed
-        const addressToRemove = user.addresses.id(addressId);
-        if (!addressToRemove) {
-            return res.status(404).json({ message: "Address not found" });
-        }
+        // Fetch the user again to get the updated list of addresses
+        const updatedUser = await User.findById(req.user.id);
         
-        // Use the .remove() method on the subdocument
-        addressToRemove.remove();
-
-        // Save the parent document
-        await user.save();
-
-        // Return the updated list of addresses
-        res.status(200).json(user.addresses);
+        res.status(200).json(updatedUser.addresses);
     } catch (error) {
         console.error("Delete address error:", error);
         res.status(500).json({ message: "Server error deleting address" });
@@ -368,37 +358,30 @@ router.delete("/addresses/:addressId", auth, async (req, res) => {
 });
 
 
-// routes/user.routes.js - Add this route
-// ✅ Delete Account (proper implementation)
-// ✅ Delete Account (proper implementation)
-router.delete('/me', auth, async (req, res) => {
+router.put("/addresses/:addressId", auth, async (req, res) => {
     try {
-        console.log(`Starting account deletion for user: ${req.user.id}`);
-        
-        // Delete all associated orders first
-        if (Order) {
-            const deleteResult = await Order.deleteMany({ user: req.user.id });
-            console.log(`Deleted ${deleteResult.deletedCount} orders`);
-        }
-
-        // Then delete the user
-        const user = await User.findByIdAndDelete(req.user.id);
+        const { addressId } = req.params;
+        const user = await User.findById(req.user.id);
         if (!user) {
-            return res.status(404).json({ error: 'User not found' });
+            return res.status(404).json({ message: "User not found" });
         }
 
-        // Clear the auth cookie
-        res.clearCookie("token", {
-            httpOnly: true,
-            secure: process.env.NODE_ENV === "production",
-            sameSite: "None"
-        });
+        const address = user.addresses.id(addressId);
+        if (!address) {
+            return res.status(404).json({ message: "Address not found" });
+        }
         
-        console.log(`Successfully deleted user: ${req.user.id}`);
-        res.status(200).json({ message: 'Account deleted successfully' });
+        // This line finds the specific address and updates its fields with the new data
+        address.set(req.body);
+        
+        // Save the entire user document with the updated address
+        await user.save();
+        
+        // Return the full, updated list of addresses
+        res.status(200).json(user.addresses);
     } catch (error) {
-        console.error("Delete account error:", error);
-        res.status(500).json({ error: 'Error deleting account' });
+        console.error("Update address error:", error);
+        res.status(500).json({ message: "Server error updating address" });
     }
 });
 module.exports = router;

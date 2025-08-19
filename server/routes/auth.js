@@ -56,14 +56,12 @@ router.post("/register", async (req, res) => {
 
     const user = await User.create({ email, password, name });
     const token = generateToken(user);
-
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      secure: process.env.NODE_ENV === "production", // true in production
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-site, "Lax" for same-site/dev
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
-
     res.json({
       success: true,
       user: { _id: user._id, name: user.name, email: user.email },
@@ -90,12 +88,13 @@ router.post("/login", async (req, res) => {
     if (!user || !(await user.comparePassword(password)))
       return res.status(401).json({ success: false, message: "Invalid credentials" });
 
-    const token = generateToken(user);
+    const token = generateToken(user); // The token is generated here
 
+    // Use the 'token' variable, not 'sessionToken'
     res.cookie("token", token, {
       httpOnly: true,
       secure: process.env.NODE_ENV === "production",
-      sameSite: "none",
+      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
       maxAge: 7 * 24 * 60 * 60 * 1000,
     });
 

@@ -80,10 +80,11 @@ const WishlistPage: React.FC = () => {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-6 pb-24">
+   <div className="bg-background text-foreground min-h-screen">
+  <div className="max-w-6xl mx-auto px-4 py-6 pb-24">
       <h2 className="text-2xl font-bold mb-6 text-center text-brandPink">
         Your Wishlist
-      </h2>
+      </h2></div>
 
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-x-4 gap-y-6">
         {wishlistProducts.map((product) => (
