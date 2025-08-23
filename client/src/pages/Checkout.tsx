@@ -1,213 +1,480 @@
-import React, { useState, useMemo, useEffect } from "react";
+// src/pages/Checkout.tsx
+import React, { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { useCart } from "../context/CartContext";
-import { useProducts } from "../context/ProductContext";
+import { useAuth } from "../context/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { useToast } from "@/hooks/use-toast";
-import { User, Lock, ArrowRight } from "lucide-react";
+import { User, Lock, Save, PlusCircle, Edit, Trash2, Home, Check } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import axios from "axios";
-import { calculatePricing } from "../utils/pricing";
-import { useCurrency } from "../context/CurrencyContext";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
+const initialAddressState = { 
+  name: '', 
+  houseNumber: '', 
+  street: '', 
+  landmark: '', 
+  area: '', 
+  city: '', 
+  pincode: '' 
+};
+
 const Checkout: React.FC = () => {
-  const { formatPrice } = useCurrency();
-  const { cartItems, getTotalPrice } = useCart();
-  const { reloadProducts } = useProducts();
+  const { cartItems, getTotalPrice, clearCart } = useCart();
+  const { user, loading: authLoading, updateUser } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
+  
   const [isProcessing, setIsProcessing] = useState(false);
+  const [shippingAddress, setShippingAddress] = useState<any>(null);
+  const [view, setView] = useState<'list' | 'add' | 'edit'>('list');
 
-  // ✅ FIX: This useEffect hook runs reloadProducts() *after* the component renders,
-  // which prevents the "Cannot update a component while rendering" warning.
+  // State for forms
+  const [newAddress, setNewAddress] = useState(initialAddressState);
+  const [editAddress, setEditAddress] = useState<any>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
   useEffect(() => {
-    reloadProducts();
-  }, [reloadProducts]);
-
-  // Form state
-  const [formData, setFormData] = useState({
-    email: "",
-    firstName: "",
-    lastName: "",
-    phone: "",
-    address1: "",
-    address2: "",
-    city: "",
-    state: "",
-    postalCode: "",
-    country: "",
-  });
-
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormData((prev) => ({
-      ...prev,
-      [name]: value,
-    }));
-  };
-
-  // Validate form fields
-  const validateForm = () => {
-    const requiredFields = [
-      "email", "firstName", "lastName", "phone", "address1", "city", "state", "postalCode", "country",
-    ];
-    for (const field of requiredFields) {
-      if (!formData[field as keyof typeof formData]?.trim()) {
-        toast({
-          title: "Error",
-          description: `Please fill in the ${field.replace(/([A-Z])/g, " $1").toLowerCase()} field.`,
-          variant: "destructive",
-        });
-        return false;
-      }
+    if (!authLoading && !user) {
+      toast({ title: "Please log in to proceed.", variant: "destructive" });
+      navigate("/login");
+      return;
     }
-    return true;
-  };
-
-  // Form valid check for button disabling
-  const isFormValid = useMemo(() => {
-    const requiredFields = [
-      "email", "firstName", "lastName", "phone", "address1", "city", "state", "postalCode", "country",
-    ];
-    return requiredFields.every(
-      (field) => formData[field as keyof typeof formData].trim() !== ""
-    );
-  }, [formData]);
-
-  // Calculate subtotal
-  const subtotal = getTotalPrice();
-
-  // Redirect to cart if empty
-  useEffect(() => {
-    if (subtotal === 0) {
-      navigate("/cart");
+    if (user?.addresses && user.addresses.length > 0) {
+      setShippingAddress(user.addresses[0]);
+      setView('list');
+    } else if (user) {
+      setView('add');
     }
-  }, [subtotal, navigate]);
+  }, [user, authLoading, navigate, toast]);
 
-  const { shipping, tax, total } = calculatePricing(subtotal);
-
-  // Handle checkout
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!validateForm()) return;
-
-    setIsProcessing(true);
-
+  // Address Management Functions
+  const handleSaveNewAddress = async () => {
+    setIsSubmitting(true);
     try {
-      const { email, firstName, lastName, phone, address1, address2, city, state, postalCode, country } = formData;
-
-      const res = await axios.post(`${API_URL}/api/payment-link`, {
-        totalAmount: total,
-        cartItems,
-        userName: `${firstName} ${lastName}`,
-        userEmail: email,
-        userPhone: phone,
-        shippingAddress: { address1, address2, city, state, postalCode, country },
-      });
-
-      const link = res.data.paymentLink.short_url;
-      window.location.href = link;
-
-    } catch (err) {
-      console.error("Error generating payment link:", err);
-      toast({
-        title: "Error",
-        description: "Failed to generate payment link. Please try again.",
-        variant: "destructive",
-      });
+      const response = await axios.post(`${API_URL}/api/users/addresses`, newAddress, { withCredentials: true });
+      const updatedAddresses = response.data;
+      updateUser({ addresses: updatedAddresses });
+      setShippingAddress(updatedAddresses[updatedAddresses.length - 1]);
+      setView('list');
+      setNewAddress(initialAddressState);
+      toast({ title: "Success", description: "New address saved." });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to save address.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleEditClick = (address: any) => {
+    setEditAddress(address);
+    setView('edit');
+  };
+  
+  const handleUpdateAddress = async () => {
+    setIsSubmitting(true);
+    try {
+      const response = await axios.put(`${API_URL}/api/users/addresses/${editAddress._id}`, editAddress, { withCredentials: true });
+      const updatedAddresses = response.data;
+      updateUser({ addresses: updatedAddresses });
+      if(shippingAddress?._id === editAddress._id) {
+        setShippingAddress(editAddress);
+      }
+      setView('list');
+      setEditAddress(null);
+      toast({ title: "Success", description: "Address updated." });
+    } catch (error) {
+      toast({ title: "Error", description: "Failed to update address.", variant: "destructive" });
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+  
+  const handleDeleteAddress = async (addressId: string) => {
+    if (!window.confirm("Are you sure you want to delete this address?")) return;
+    setIsProcessing(true);
+    try {
+      const response = await axios.delete(`${API_URL}/api/users/addresses/${addressId}`, { withCredentials: true });
+      const updatedAddresses = response.data;
+      updateUser({ addresses: updatedAddresses });
+      if(shippingAddress?._id === addressId) {
+        setShippingAddress(updatedAddresses.length > 0 ? updatedAddresses[0] : null);
+      }
+      if (updatedAddresses.length === 0) setView('add');
+      toast({ title: "Success", description: "Address deleted." });
+    } catch(error) {
+      toast({ title: "Error", description: "Failed to delete address.", variant: "destructive" });
     } finally {
       setIsProcessing(false);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 py-8 transition-colors duration-300">
-      <div className="container mx-auto px-4">
-        <div className="max-w-4xl mx-auto">
-          <h1 className="text-3xl font-bold text-gray-800 dark:text-gray-100 mb-8">Checkout</h1>
-          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Contact + Shipping Forms */}
-            <div className="space-y-6">
-              <CheckoutSection
-                icon={<User className="w-5 h-5" />}
-                title="Contact Information"
-                fields={[
-                  { id: "email", label: "Email Address" },
-                  { id: "firstName", label: "First Name" },
-                  { id: "lastName", label: "Last Name" },
-                  { id: "phone", label: "Phone Number", maxLength: 10 },
-                ]}
-                formData={formData}
-                handleChange={handleInputChange}
-              />
-              <CheckoutSection
-                icon={<User className="w-5 h-5" />}
-                title="Shipping Address"
-                fields={[
-                  { id: "address1", label: "Address Line 1" },
-                  { id: "address2", label: "Address Line 2 (Optional)" },
-                  { id: "city", label: "City" },
-                  { id: "state", label: "State / Province" },
-                  { id: "postalCode", label: "Postal Code" },
-                  { id: "country", label: "Country" },
-                ]}
-                formData={formData}
-                handleChange={handleInputChange}
+  // Main Checkout Submit
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!shippingAddress) {
+      toast({ title: "No Shipping Address", description: "Please add and select an address.", variant: "destructive" });
+      return;
+    }
+    setIsProcessing(true);
+    try {
+      const payload = { user: { id: user!._id, email: user!.email }, address: shippingAddress, cartItems, totalAmount: total };
+      const res = await axios.post(`${API_URL}/api/checkout/payment-link`, payload, { withCredentials: true });
+      const paymentLink = res.data.paymentLink.short_url;
+      /* await clearCart(); */
+      window.location.href = paymentLink;
+    } catch (err: any) {
+      toast({ title: "Checkout Error", description: err.response?.data?.error || "Failed to initiate payment.", variant: "destructive" });
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  const subtotal = getTotalPrice();
+  const total = subtotal + (subtotal * 0.10);
+  const uniqueCartItems = [...new Map(cartItems.map(item => [item.id, item])).values()];
+
+  if (authLoading) return <div className="text-center p-10">Loading...</div>;
+
+  // Render Logic
+  const renderShippingContent = () => {
+    if (view === 'add') {
+      return (
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg">Add a New Address</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Full Name</Label>
+              <Input 
+                id="name" 
+                name="name" 
+                value={newAddress.name} 
+                onChange={(e) => setNewAddress({...newAddress, name: e.target.value})} 
+                placeholder="Full Name" 
+                className="focus:ring-2 focus:ring-blue-500"
               />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="houseNumber">H.No / Flat No.</Label>
+              <Input 
+                id="houseNumber" 
+                name="houseNumber" 
+                value={newAddress.houseNumber} 
+                onChange={(e) => setNewAddress({...newAddress, houseNumber: e.target.value})} 
+                placeholder="H.No / Flat No." 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="street">Street / Colony</Label>
+              <Input 
+                id="street" 
+                name="street" 
+                value={newAddress.street} 
+                onChange={(e) => setNewAddress({...newAddress, street: e.target.value})} 
+                placeholder="Street / Colony" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="landmark">Landmark (Optional)</Label>
+              <Input 
+                id="landmark" 
+                name="landmark" 
+                value={newAddress.landmark} 
+                onChange={(e) => setNewAddress({...newAddress, landmark: e.target.value})} 
+                placeholder="Landmark (Optional)" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="area">Area</Label>
+              <Input 
+                id="area" 
+                name="area" 
+                value={newAddress.area} 
+                onChange={(e) => setNewAddress({...newAddress, area: e.target.value})} 
+                placeholder="Area" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="city">City</Label>
+              <Input 
+                id="city" 
+                name="city" 
+                value={newAddress.city} 
+                onChange={(e) => setNewAddress({...newAddress, city: e.target.value})} 
+                placeholder="City" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="pincode">Pincode</Label>
+              <Input 
+                id="pincode" 
+                name="pincode" 
+                value={newAddress.pincode} 
+                onChange={(e) => setNewAddress({...newAddress, pincode: e.target.value})} 
+                placeholder="Pincode" 
+                maxLength={6} 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" onClick={handleSaveNewAddress} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+              <Save className="w-4 h-4 mr-2" /> Save
+            </Button>
+            {user?.addresses && user.addresses.length > 0 && (
+              <Button type="button" variant="outline" onClick={() => setView('list')}>
+                Cancel
+              </Button>
+            )}
+          </div>
+        </div>
+      );
+    }
 
-            {/* Order Summary */}
+    if (view === 'edit' && editAddress) {
+      return (
+        <div className="space-y-4">
+          <h3 className="font-semibold text-lg">Edit Address</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="edit-name">Full Name</Label>
+              <Input 
+                id="edit-name"
+                value={editAddress.name} 
+                onChange={(e) => setEditAddress({...editAddress, name: e.target.value})} 
+                placeholder="Full Name" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-houseNumber">H.No / Flat No.</Label>
+              <Input 
+                id="edit-houseNumber"
+                value={editAddress.houseNumber} 
+                onChange={(e) => setEditAddress({...editAddress, houseNumber: e.target.value})} 
+                placeholder="H.No / Flat No." 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-street">Street / Colony</Label>
+              <Input 
+                id="edit-street"
+                value={editAddress.street} 
+                onChange={(e) => setEditAddress({...editAddress, street: e.target.value})} 
+                placeholder="Street / Colony" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2 md:col-span-2">
+              <Label htmlFor="edit-landmark">Landmark (Optional)</Label>
+              <Input 
+                id="edit-landmark"
+                value={editAddress.landmark} 
+                onChange={(e) => setEditAddress({...editAddress, landmark: e.target.value})} 
+                placeholder="Landmark (Optional)" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-area">Area</Label>
+              <Input 
+                id="edit-area"
+                value={editAddress.area} 
+                onChange={(e) => setEditAddress({...editAddress, area: e.target.value})} 
+                placeholder="Area" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-city">City</Label>
+              <Input 
+                id="edit-city"
+                value={editAddress.city} 
+                onChange={(e) => setEditAddress({...editAddress, city: e.target.value})} 
+                placeholder="City" 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="edit-pincode">Pincode</Label>
+              <Input 
+                id="edit-pincode"
+                value={editAddress.pincode} 
+                onChange={(e) => setEditAddress({...editAddress, pincode: e.target.value})} 
+                placeholder="Pincode" 
+                maxLength={6} 
+                className="focus:ring-2 focus:ring-blue-500"
+              />
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <Button type="button" onClick={handleUpdateAddress} disabled={isSubmitting} className="bg-blue-600 hover:bg-blue-700">
+              <Save className="w-4 h-4 mr-2" /> Update
+            </Button>
+            <Button type="button" variant="outline" onClick={() => setView('list')}>
+              Cancel
+            </Button>
+          </div>
+        </div>
+      );
+    }
+    
+    // Default view: list of addresses - IMPROVED ALIGNMENT
+    return (
+      <div className="space-y-4">
+        <RadioGroup value={shippingAddress?._id} onValueChange={(value) => {
+          const selected = user?.addresses?.find(addr => addr._id === value);
+          if (selected) setShippingAddress(selected);
+        }}>
+          {user?.addresses?.map((address) => (
+            <div 
+              key={address._id} 
+              className={`p-4 border rounded-lg transition-all ${
+                shippingAddress?._id === address._id 
+                  ? 'border-blue-500 ring-2 ring-blue-500/20 bg-blue-50' 
+                  : 'border-gray-200 hover:border-blue-300'
+              }`}
+            >
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex items-start gap-3 flex-1">
+                  <RadioGroupItem 
+                    value={address._id} 
+                    id={address._id} 
+                    className="mt-1 flex-shrink-0" 
+                  />
+                  <label 
+                    htmlFor={address._id} 
+                    className="flex-1 text-sm cursor-pointer"
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <Home className="w-4 h-4 text-gray-500" />
+                      <p className="font-bold text-gray-900">{address.name}</p>
+                      {shippingAddress?._id === address._id && (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                          <Check className="w-3 h-3 mr-1" />
+                          Selected
+                        </span>
+                      )}
+                    </div>
+                    <p className="text-gray-900">{address.houseNumber}, {address.street}</p>
+                    {address.landmark && <p className="text-gray-600 text-sm">Near {address.landmark}</p>}
+                    <p className="text-gray-600">{address.area}, {address.city}, {address.pincode}</p>
+                  </label>
+                </div>
+                
+                <div className="flex flex-col items-end gap-2 flex-shrink-0">
+                  <div className="flex items-center gap-1">
+                    <Button 
+                      type="button" 
+                      variant="ghost" 
+                      size="icon"
+                      onClick={() => handleEditClick(address)} 
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-blue-600"
+                      title="Edit address"
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDeleteAddress(address._id)}
+                      className="h-8 w-8 p-0 text-gray-500 hover:text-red-600"
+                      title="Delete address"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </RadioGroup>
+        
+        <Button 
+          type="button" 
+          variant="outline" 
+          className="w-full border-dashed hover:border-solid hover:bg-gray-50" 
+          onClick={() => setView('add')}
+        >
+          <PlusCircle className="w-4 h-4 mr-2" /> Add a New Address
+        </Button>
+      </div>
+    );
+  };
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-blue-400 to-pink-400 py-8">
+      <div className="container mx-auto px-4">
+        <div className="max-w-4xl mx-auto">
+          <h1 className="text-3xl font-bold text-gray-900 mb-8">Checkout</h1>
+          <form onSubmit={handleSubmit} className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+            <div>
+              <Card className="bg-white">
+                <CardHeader className="pb-3">
+                  <CardTitle className="flex items-center gap-2">
+                    <User className="w-5 h-5" /> Shipping Details
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>{renderShippingContent()}</CardContent>
+              </Card>
+            </div>
             <div className="lg:sticky lg:top-8 lg:self-start">
-              <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-                <CardHeader>
-                  <CardTitle className="text-gray-800 dark:text-gray-100">Order Summary</CardTitle>
+              <Card className="bg-white">
+                <CardHeader className="pb-3">
+                  <CardTitle>Order Summary</CardTitle>
                 </CardHeader>
                 <CardContent>
                   <div className="space-y-4">
-                    {cartItems.map((item) => (
+                    {uniqueCartItems.map((item) => (
                       <div key={item.id} className="flex items-center space-x-4">
                         <img src={item.image} alt={item.name} className="w-16 h-16 object-cover rounded-lg"/>
                         <div className="flex-1">
-                          <h3 className="text-sm font-medium text-gray-800 dark:text-gray-200">{item.name}</h3>
-                          <p className="text-gray-600 dark:text-gray-400 text-sm">Qty: {item.quantity}</p>
+                          <h3 className="text-sm font-medium text-gray-900">{item.name}</h3>
+                          <p className="text-gray-600 text-sm">Qty: {item.quantity}</p>
                         </div>
-                        <p className="font-medium text-gray-800 dark:text-gray-200">{formatPrice(item.price * item.quantity)}</p>
+                        <p className="font-medium text-gray-900">₹{(item.price * item.quantity).toFixed(2)}</p>
                       </div>
                     ))}
-                    <Separator className="bg-gray-200 dark:bg-gray-700" />
-                    <div className="space-y-2 text-sm text-gray-600 dark:text-gray-400">
-                      <SummaryRow label="Subtotal" value={formatPrice(subtotal)} />
-                      <SummaryRow label="Shipping" value={shipping === 0 ? 'Free' : formatPrice(shipping)} />
-                      <SummaryRow label="Tax" value={formatPrice(tax)} />
-                      <Separator className="bg-gray-200 dark:bg-gray-700" />
-                      <div className="flex justify-between text-lg font-semibold text-gray-800 dark:text-gray-100">
-                        <span>Total</span>
-                        <span>{formatPrice(total)}</span>
+                    <Separator />
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Subtotal</span>
+                        <span className="text-gray-900">₹{subtotal.toFixed(2)}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Shipping</span>
+                        <span className="text-green-600">Free</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Tax (10%)</span>
+                        <span className="text-gray-900">₹{(subtotal * 0.10).toFixed(2)}</span>
+                      </div>
+                      <Separator />
+                      <div className="flex justify-between text-lg font-semibold">
+                        <span className="text-gray-900">Total</span>
+                        <span className="text-gray-900">₹{total.toFixed(2)}</span>
                       </div>
                     </div>
-
-                    <Button
-                      type="submit"
-                      disabled={!isFormValid || isProcessing}
-                      className="w-full mt-6 bg-gray-800 text-white hover:bg-black dark:bg-gray-200 dark:text-black dark:hover:bg-white transition-all duration-300 transform hover:scale-105"
-                      size="lg"
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-black text-white hover:bg-gray-900 mt-4" 
+                      disabled={isProcessing || !shippingAddress || view !== 'list'}
                     >
-                      {isProcessing ? ( "Processing..." ) : (
-                        <>
-                          Complete Order
-                          <ArrowRight className="w-4 h-4 ml-2" />
-                        </>
-                      )}
+                      {isProcessing ? "Processing..." : <><Lock className="w-4 h-4 mr-2" /> Place Order</>}
                     </Button>
-
-                    <p className="text-sm text-center text-gray-600 dark:text-gray-400 flex items-center justify-center gap-1 mt-2">
-                      <Lock className="w-3 h-3" /> Your order details are safe and secure.
-                    </p>
                   </div>
                 </CardContent>
               </Card>
@@ -220,50 +487,3 @@ const Checkout: React.FC = () => {
 };
 
 export default Checkout;
-
-// --------------------------
-// Reusable Components
-// --------------------------
-
-const InputGroup = ({ id, label, value, onChange, maxLength }: any) => (
-  <div>
-    <Label htmlFor={id} className="text-gray-700 dark:text-gray-300">{label}</Label>
-    <Input 
-      id={id} 
-      name={id} 
-      value={value} 
-      onChange={onChange} 
-      maxLength={maxLength}
-      className="bg-gray-50 dark:bg-gray-700 border-gray-300 dark:border-gray-600 text-gray-900 dark:text-gray-100 focus:ring-pink-500"
-    />
-  </div>
-);
-
-const SummaryRow = ({ label, value }: { label: string; value: string | number }) => (
-  <div className="flex justify-between">
-    <span>{label}</span>
-    <span className="font-medium text-gray-800 dark:text-gray-200">{value}</span>
-  </div>
-);
-
-const CheckoutSection = ({ icon, title, fields, formData, handleChange }: any) => (
-  <Card className="bg-white dark:bg-gray-800 border-gray-200 dark:border-gray-700">
-    <CardHeader>
-      <CardTitle className="flex items-center gap-2 text-gray-800 dark:text-gray-100">
-        {icon} {title}
-      </CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      {fields.map((field: any) => (
-        <InputGroup
-          key={field.id}
-          id={field.id}
-          label={field.label}
-          value={formData[field.id]}
-          onChange={handleChange}
-          maxLength={field.maxLength}
-        />
-      ))}
-    </CardContent>
-  </Card>
-);

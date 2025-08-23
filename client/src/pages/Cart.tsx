@@ -19,6 +19,7 @@ const Cart = () => {
     getTotalPrice,
     clearCart,
   } = useCart();
+  const uniqueCartItems = [...new Map(cartItems.map(item => [item.id, item])).values()];
 
   if (cartItems.length === 0) {
     return (

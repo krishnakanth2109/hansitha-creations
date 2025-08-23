@@ -37,7 +37,7 @@ import Press from './pages/press';
 import Addresses from "./pages/Address";
 import AffiliateProgram from './pages/AffiliateProgram';
 import Partnership from './pages/Partnership';
-
+import TrackingOrders from "./pages/TrackingOrders"; 
 // Admin Pages
 import AdminRoute from "./routes/AdminRoute";
 import AddProduct from "./admin/AddProduct";
@@ -93,7 +93,8 @@ function App() {
       <Route path="/press" element={<Press />} />
       <Route path="/affiliate-program" element={<AffiliateProgram />} />
       <Route path="/partnership" element={<Partnership />} />
-      
+      <Route path="/tracking-orders" element={<Layout><TrackingOrders /></Layout>} 
+      />
       {/* Admin Layout + Nested Routes */}
       <Route path="/admin" element={<AdminRoute><AdminLayout /></AdminRoute>}>
         <Route index element={<Navigate to="add" replace />} />

@@ -384,4 +384,38 @@ router.put("/addresses/:addressId", auth, async (req, res) => {
         res.status(500).json({ message: "Server error updating address" });
     }
 });
+// NEW ROUTE: Get all orders for the currently logged-in user
+router.get('/my-orders', auth, async (req, res) => {
+  try {
+    const orders = await Order.find({ user: req.user.id }).sort({ createdAt: -1 });
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error('Error fetching user orders:', error);
+    res.status(500).json({ message: 'Failed to fetch user orders' });
+  }
+});
+router.post("/cart/sync", auth, async (req, res) => {
+  try {
+    const { cart } = req.body; // Expect an array of cart items
+
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+
+    // Transform the incoming cart to match the schema structure
+    const formattedCart = cart.map(item => ({
+      product: item.id,
+      quantity: item.quantity,
+    }));
+    
+    user.cart = formattedCart;
+    await user.save();
+    
+    const updatedUser = await User.findById(req.user.id).populate("cart.product");
+    res.json({ success: true, cart: updatedUser.cart });
+
+  } catch (err) {
+    console.error("Sync cart error:", err);
+    res.status(500).json({ message: "Failed to sync cart" });
+  }
+});
 module.exports = router;

@@ -87,7 +87,7 @@ const productRoutes = require("./routes/productRoutes");
 const otpRoutes = require("./routes/otpRoutes");
 const orderRoutes = require("./routes/orderRoutes");
 const paymentRoutes = require("./routes/payment");
-
+const shippingRoutes = require("./routes/shippingRoutes");
 // ✅ Announcement route with auto-refresh
 const Announcement = require("./models/Announcement");
 const announcementRoutes = require("express").Router();
@@ -125,7 +125,7 @@ app.get("/", (req, res) => res.status(200).send("Backend is live"));
 app.use("/api/payment", paymentRoutes);
 app.use("/api", require("./routes/webhook"));
 app.use("/api/categories", categoryRoutes);
-app.use("/api/checkout", checkoutRoutes);
+app.use("/api/checkout", checkoutRoutes); 
 app.use("/api/webhook", webhookRoutes);
 app.use("/api/products", productRoutes);
 app.use("/api/auth", authRoutes);
@@ -133,7 +133,7 @@ app.use("/api/users", userRoutes);
 app.use("/auth", otpRoutes);
 app.use("/api/orders", orderRoutes);
 app.use("/api/announcements", announcementRoutes);
-
+app.use("/api/shipping", shippingRoutes);
 // Carousel Schema & Uploads
 const ImageSchema = new mongoose.Schema({
   carouselId: { type: String, required: true, unique: true },
@@ -141,7 +141,13 @@ const ImageSchema = new mongoose.Schema({
   mobileImageUrl: { type: String, default: "" },
 });
 const ImageModel = mongoose.model("Image", ImageSchema);
+// In server.js
 
+// ... other route imports
+const adminOrderRoutes = require("./routes/adminOrderRoutes"); // <-- ADD THIS IMPORT
+
+// ... other app.use() statements
+app.use("/api/admin/orders", adminOrderRoutes); // <-- ADD THIS LINE
 app.post(
   "/api/upload-carousel",
   upload.fields([

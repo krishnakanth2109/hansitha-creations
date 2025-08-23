@@ -1,251 +1,379 @@
-// Core Dependencies & Models
 const express = require("express");
+const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
-const crypto = require("crypto");
-const User = require("../models/User.model.js"); // Make sure this path is correct
-const sendEmail = require("../utils/sendEmail.js");
-const authMiddleware = require("../middleware/auth");
+const auth = require("../middleware/auth.js");
+const User = require("../models/User.model.js");
+const Order = require("../models/Order");
 const router = express.Router();
-
-// ✅ NEW: Import Google Auth Library
+// Add this line at the top with your other imports
 const { OAuth2Client } = require('google-auth-library');
 
-// ✅ NEW: Initialize Google OAuth Client
-// IMPORTANT: Make sure VITE_GOOGLE_CLIENT_ID is in your backend's .env file!
-const client = new OAuth2Client(process.env.VITE_GOOGLE_CLIENT_ID);
+// ... your existing imports like express, bcrypt, jwt, etc.
 
-
-// -----------------------------
-// 🔒 Token Generator (Existing function, no changes)
-// -----------------------------
-const generateToken = (user) =>
-  jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
-    expiresIn: "7d",
-  });
-
-// -----------------------------
-// ✅ GET /api/auth/me (Existing route, no changes)
-// -----------------------------
-router.get("/me", authMiddleware, async (req, res) => {
+const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID); // Add this line after `router`
+/* ------------------- Admin Related ------------------- */
+router.get("/admins", async (req, res) => {
   try {
+    const admins = await User.find({ role: "admin" }).select("name email");
+    res.json(admins);
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+router.patch("/update-role", async (req, res) => {
+  const { email, role } = req.body;
+  if (!email || !role) return res.status(400).json({ message: "Email and role are required" });
+
+  try {
+    const user = await User.findOneAndUpdate({ email }, { role }, { new: true });
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ message: "Role updated successfully", user });
+  } catch (err) {
+    res.status(500).json({ message: "Server error", error: err.message });
+  }
+});
+
+/* ------------------- Auth ------------------- */
+router.post("/login", async (req, res) => {
+  const { email, password } = req.body;
+  if (!email || !password) return res.status(400).json({ message: "Email and password are required" });
+
+  try {
+    const user = await User.findOne({ email });
+    if (!user) return res.status(401).json({ message: "Invalid email or password" });
+
+    const isMatch = await user.comparePassword(password);
+    if (!isMatch) return res.status(401).json({ message: "Invalid email or password" });
+
+    const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: "7d" });
+
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: "None",
+      maxAge: 7 * 24 * 60 * 60 * 1000,
+    });
+    
+    // Send the full user object back, which will now include the avatar
+    res.json({ success: true, user });
+  } catch (err) {
+    console.error("Login error:", err);
+    res.status(500).json({ message: "Server error during login" });
+  }
+});
+
+router.get("/me", auth, async (req, res) => {
+  try {
+    // This .select("-password") automatically includes the new 'avatar' field. It is correct.
     const user = await User.findById(req.user.id)
       .populate("wishlist")
       .populate("cart.product")
       .select("-password");
-    if (!user)
-      return res.status(404).json({ success: false, message: "User not found" });
 
-    res.status(200).json({ success: true, user });
-  } catch (error) {
-    res.status(500).json({ success: false, message: "Server error" });
+    if (!user) return res.status(404).json({ success: false, message: "User not found" });
+    res.json({ success: true, user });
+  } catch (err) {
+    res.status(500).json({ message: "Error fetching user", error: err.message });
   }
 });
 
-// -----------------------------
-// ✅ POST /api/auth/register (Existing route, no changes)
-// -----------------------------
+/* ------------------- Cart Routes ------------------- */
+router.get("/cart", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("cart.product");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ success: true, cart: user.cart });
+  } catch (err) {
+    console.error("Get cart error:", err);
+    res.status(500).json({ message: "Server error fetching cart" });
+  }
+});
+
+router.post("/cart", auth, async (req, res) => {
+  try {
+    const { productId, quantity = 1 } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const index = user.cart.findIndex((item) => item.product.toString() === productId);
+    if (index !== -1) user.cart[index].quantity += quantity;
+    else user.cart.push({ product: productId, quantity });
+    await user.save();
+    const updatedUser = await User.findById(req.user.id).populate("cart.product");
+    res.json({ success: true, cart: updatedUser.cart });
+  } catch (err) {
+    console.error("Add to cart error:", err);
+    res.status(500).json({ message: "Failed to update cart" });
+  }
+});
+
+router.put("/cart", auth, async (req, res) => {
+  try {
+    const { productId, quantity } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const index = user.cart.findIndex((item) => item.product.toString() === productId);
+    if (index !== -1) {
+      if (quantity <= 0) user.cart.splice(index, 1);
+      else user.cart[index].quantity = quantity;
+      await user.save();
+      const updatedUser = await User.findById(req.user.id).populate("cart.product");
+      res.json({ success: true, cart: updatedUser.cart });
+    } else res.status(404).json({ message: "Item not found in cart" });
+  } catch (err) {
+    console.error("Update cart error:", err);
+    res.status(500).json({ message: "Failed to update cart" });
+  }
+});
+
+router.delete("/cart/:productId", auth, async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.cart = user.cart.filter((item) => item.product.toString() !== productId);
+    await user.save();
+    const updatedUser = await User.findById(req.user.id).populate("cart.product");
+    res.json({ success: true, cart: updatedUser.cart });
+  } catch (err) {
+    console.error("Remove from cart error:", err);
+    res.status(500).json({ message: "Failed to remove from cart" });
+  }
+});
+
+router.delete("/cart", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.cart = [];
+    await user.save();
+    res.json({ success: true, cart: [] });
+  } catch (err) {
+    console.error("Clear cart error:", err);
+    res.status(500).json({ message: "Failed to clear cart" });
+  }
+});
+
+/* ------------------- Wishlist Routes ------------------- */
+router.post("/wishlist", auth, async (req, res) => {
+  try {
+    const { productId } = req.body;
+    if (!productId) return res.status(400).json({ message: "Product ID is required" });
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const exists = user.wishlist.some((id) => id.toString() === productId);
+    if (exists) user.wishlist = user.wishlist.filter((id) => id.toString() !== productId);
+    else user.wishlist.push(productId);
+    await user.save();
+    res.json({ success: true, wishlist: user.wishlist, action: exists ? "removed" : "added" });
+  } catch (err) {
+    console.error("Wishlist toggle error:", err);
+    res.status(500).json({ message: "Server error updating wishlist" });
+  }
+});
+
+router.get("/wishlist", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id).populate("wishlist");
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.json({ success: true, wishlist: user.wishlist });
+  } catch (err) {
+    console.error("Get wishlist error:", err);
+    res.status(500).json({ message: "Server error fetching wishlist" });
+  }
+});
+
+router.delete("/wishlist", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.wishlist = [];
+    await user.save();
+    res.json({ success: true, wishlist: [] });
+  } catch (err) {
+    console.error("Clear wishlist error:", err);
+    res.status(500).json({ message: "Failed to clear wishlist" });
+  }
+});
+
+/* ------------------- Orders & Account ------------------- */
+router.patch("/change-password", auth, async (req, res) => {
+  try {
+    const { currentPassword, newPassword } = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const isMatch = await bcrypt.compare(currentPassword, user.password);
+    if (!isMatch) return res.status(400).json({ message: "Incorrect current password" });
+    user.password = newPassword;
+    await user.save();
+    res.json({ success: true, message: "Password changed successfully" });
+  } catch (err) {
+    console.error("Change password error:", err);
+    res.status(500).json({ message: "Server error" });
+  }
+});
+
+router.delete("/delete-account", auth, async (req, res) => {
+  try {
+    await User.findByIdAndDelete(req.user.id);
+    res.clearCookie("token");
+    res.json({ message: "Account deleted successfully" });
+  } catch (err) {
+    res.status(500).json({ message: "Error deleting account", error: err.message });
+  }
+});
+
+/* ------------------- Address Routes ------------------- */
+router.get("/addresses", auth, async (req, res) => {
+  try {
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    res.status(200).json(user.addresses);
+  } catch (error) {
+    console.error("Get addresses error:", error);
+    res.status(500).json({ message: "Server error fetching addresses" });
+  }
+});
+/* ------------------- Auth ------------------- */
+
+// ✅ START: ADD THIS NEW CODE BLOCK
+
+// --- REGISTRATION ---
 router.post("/register", async (req, res) => {
-  try {
-    const { email, password, name } = req.body;
-    if (!email || !password || !name)
-      return res.status(400).json({ success: false, message: "All fields are required" });
-
-    const existing = await User.findOne({ email });
-    if (existing)
-      return res.status(400).json({ success: false, message: "Email already exists" });
-
-    const user = await User.create({ email, password, name });
-    const token = generateToken(user);
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // true in production
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax", // "None" for cross-site, "Lax" for same-site/dev
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-    res.json({
-      success: true,
-      user: { _id: user._id, name: user.name, email: user.email },
-    });
-  } catch (err) {
-    console.error("🔴 Register error:", err.message);
-    res.status(500).json({
-      success: false,
-      message: "Server error during registration",
-    });
-  }
-});
-
-// -----------------------------
-// ✅ POST /api/auth/login (Existing route, no changes)
-// -----------------------------
-router.post("/login", async (req, res) => {
-  try {
-    const { email, password } = req.body;
-    if (!email || !password)
-      return res.status(400).json({ success: false, message: "Email and password are required" });
-
-    const user = await User.findOne({ email });
-    if (!user || !(await user.comparePassword(password)))
-      return res.status(401).json({ success: false, message: "Invalid credentials" });
-
-    const token = generateToken(user); // The token is generated here
-
-    // Use the 'token' variable, not 'sessionToken'
-    res.cookie("token", token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: process.env.NODE_ENV === "production" ? "None" : "Lax",
-      maxAge: 7 * 24 * 60 * 60 * 1000,
-    });
-
-    res.json({
-      success: true,
-      message: "Login successful",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
-  } catch (err) {
-    console.error("🔴 Login error:", err.message);
-    res.status(500).json({
-      success: false,
-      message: "Login failed due to server error",
-    });
-  }
-});
-
-// =================================================================
-// ⭐ NEW: GOOGLE LOGIN ROUTE
-// =================================================================
-router.post('/google-login', async (req, res) => {
-  const { token } = req.body;
-
-  if (!token) {
-    return res.status(400).json({ success: false, message: 'Google token not provided.' });
-  }
-
-  try {
-    // Verify the ID token sent from the frontend
-    const ticket = await client.verifyIdToken({
-      idToken: token,
-      audience: process.env.VITE_GOOGLE_CLIENT_ID, // This MUST match the Client ID used on the frontend
-    });
-
-    const { name, email } = ticket.getPayload();
-    
-    let user = await User.findOne({ email });
-
-    // If the user does not exist, create them in the database
-    if (!user) {
-      console.log(`User with email ${email} not found. Creating new user.`);
-      // Note: This creates a user without a password. Your User model must allow this.
-      user = await User.create({ email, name });
+    const { name, email, password } = req.body;
+    if (!name || !email || !password) {
+        return res.status(400).json({ message: "Please provide all required fields" });
     }
+    try {
+        let user = await User.findOne({ email });
+        if (user) {
+            return res.status(400).json({ message: "User with this email already exists" });
+        }
+        user = new User({ name, email, password, provider: 'local' });
+        await user.save();
+        res.status(201).json({ success: true, message: "User registered successfully" });
+    } catch (err) {
+        console.error("Registration Error:", err);
+        res.status(500).json({ message: "Server error during registration" });
+    }
+});
 
-    // At this point, the user exists. Generate a session token for them.
-    const sessionToken = generateToken(user);
 
-    // Set the session token in the cookie, same as your regular login
-    res.cookie("token", sessionToken, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "none", // Using 'none' to allow cross-site cookies
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    });
+// --- GOOGLE LOGIN ---
+router.post('/google-login', async (req, res) => {
+    const { token } = req.body;
+    try {
+        const ticket = await client.verifyIdToken({
+            idToken: token,
+            audience: process.env.GOOGLE_CLIENT_ID,
+        });
+        const { name, email, picture } = ticket.getPayload();
 
-    // Send a success response with the user data
-    res.json({
-      success: true,
-      message: "Google login successful",
-      user: {
-        _id: user._id,
-        name: user.name,
-        email: user.email,
-        role: user.role,
-      },
-    });
+        let user = await User.findOne({ email });
+        if (!user) {
+            // If user doesn't exist, create a new one for them
+            user = new User({
+                name: name,
+                email: email,
+                avatar: picture,
+                provider: 'google', // Mark as a Google user (no password)
+            });
+            await user.save();
+        }
 
+        // Create a session token and log them in
+        const jwtToken = jwt.sign({ id: user._id }, process.env.JWT_SECRET, { expiresIn: '7d' });
+        res.cookie('token', jwtToken, { httpOnly: true, secure: process.env.NODE_ENV === 'production', sameSite: 'None', maxAge: 7 * 24 * 60 * 60 * 1000 });
+        res.status(200).json({ success: true, user });
+
+    } catch (error) {
+        console.error("Google Login Error:", error);
+        res.status(400).json({ message: 'Google authentication failed' });
+    }
+});
+
+// ✅ END: ADD THIS NEW CODE BLOCK
+
+// Your existing /login route starts here...
+
+router.post("/addresses", auth, async (req, res) => {
+  try {
+    const newAddress = req.body;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    user.addresses.push(newAddress);
+    await user.save();
+    res.status(201).json(user.addresses);
   } catch (error) {
-    // This will catch any errors from Google's token verification
-    console.error('🔴 BACKEND GOOGLE AUTH ERROR:', error);
-    res.status(401).json({ success: false, message: 'Google authentication failed. Invalid token.' });
+    console.error("Add address error:", error);
+    if (error.name === 'ValidationError') return res.status(400).json({ message: "Validation error", details: error.message });
+    res.status(500).json({ message: "Server error adding address" });
   }
 });
 
-
-// -----------------------------
-// ✅ POST /api/auth/logout (Existing route, no changes)
-// -----------------------------
-router.post("/logout", (req, res) => {
-  res.clearCookie("token");
-  res.json({ success: true, message: "Logged out successfully" });
+router.delete("/addresses/:addressId", auth, async (req, res) => {
+  try {
+    const { addressId } = req.params;
+    await User.findByIdAndUpdate(req.user.id, { $pull: { addresses: { _id: addressId } } });
+    const updatedUser = await User.findById(req.user.id);
+    res.status(200).json(updatedUser.addresses);
+  } catch (error) {
+    console.error("Delete address error:", error);
+    res.status(500).json({ message: "Server error deleting address" });
+  }
 });
 
-// -----------------------------
-// ✅ POST /api/auth/forgot-password (Existing route, no changes)
-// -----------------------------
-router.post("/forgot-password", async (req, res) => {
+router.put("/addresses/:addressId", auth, async (req, res) => {
   try {
-    const { email } = req.body;
-    if (!email)
-      return res.status(400).json({ success: false, message: "Email is required" });
-
-    const user = await User.findOne({ email });
-    if (!user)
-      return res.status(404).json({ success: false, message: "User not found" });
-
-    const token = crypto.randomBytes(32).toString("hex");
-    user.resetToken = token;
-    user.resetTokenExpire = Date.now() + 15 * 60 * 1000;
+    const { addressId } = req.params;
+    const user = await User.findById(req.user.id);
+    if (!user) return res.status(404).json({ message: "User not found" });
+    const address = user.addresses.id(addressId);
+    if (!address) return res.status(404).json({ message: "Address not found" });
+    address.set(req.body);
     await user.save();
-
-    const resetLink = `${process.env.CLIENT_URL}/reset-password/${token}`;
-    const html = `
-      <p>Hello ${user.name || "User"},</p>
-      <p>You requested a password reset.</p>
-      <p>Click the link below to reset your password (valid for 15 minutes):</p>
-      <a href="${resetLink}" style="color:#6B46C1;">${resetLink}</a>
-      <p>If you didn't request this, you can ignore this email.</p>
-    `;
-
-    await sendEmail(user.email, "Reset Your Password", html);
-
-    res.json({ success: true, message: "Reset link sent to your email" });
-  } catch (err) {
-    console.error("🔴 Forgot Password error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to send reset link" });
+    res.status(200).json(user.addresses);
+  } catch (error) {
+    console.error("Update address error:", error);
+    res.status(500).json({ message: "Server error updating address" });
   }
 });
 
-// -----------------------------
-// ✅ POST /api/auth/reset-password/:token (Existing route, no changes)
-// -----------------------------
-router.post("/reset-password/:token", async (req, res) => {
+// ✅ START: NEW AVATAR UPDATE ROUTE
+router.put("/avatar", auth, async (req, res) => {
   try {
-    const { token } = req.params;
-    const { password } = req.body;
+    const { avatarUrl } = req.body;
+    if (!avatarUrl) {
+      return res.status(400).json({ message: "Avatar URL is required" });
+    }
+    const updatedUser = await User.findByIdAndUpdate(
+      req.user.id,
+      { avatar: avatarUrl },
+      { new: true }
+    ).select("-password");
+    if (!updatedUser) {
+      return res.status(404).json({ message: "User not found" });
+    }
+    res.status(200).json({ success: true, message: "Avatar updated successfully", user: updatedUser });
+  } catch (error) {
+    console.error("Avatar update error:", error);
+    res.status(500).json({ message: "Server error updating avatar" });
+  }
+});
+// Add this block to the end of your server/routes/auth.js file, before `module.exports = router;`
 
-    const user = await User.findOne({
-      resetToken: token,
-      resetTokenExpire: { $gt: Date.now() },
+// --- 5. LOGOUT ---
+router.post('/logout', (req, res) => {
+    // This is the most important step. It tells the browser to delete the cookie.
+    // The options (secure, sameSite) MUST match the options used when setting the cookie in /login.
+    res.clearCookie('token', { 
+        httpOnly: true, 
+        secure: process.env.NODE_ENV === "production", 
+        sameSite: "None" 
     });
-
-    if (!user)
-      return res.status(400).json({ success: false, message: "Invalid or expired token" });
-
-    user.password = password;
-    user.resetToken = undefined;
-    user.resetTokenExpire = undefined;
-    await user.save();
-
-    res.json({ success: true, message: "Password has been reset" });
-  } catch (err) {
-    console.error("🔴 Reset Password error:", err.message);
-    res.status(500).json({ success: false, message: "Failed to reset password" });
-  }
+    
+    res.status(200).json({ success: true, message: 'Logged out successfully' });
 });
+// ✅ END: NEW AVATAR UPDATE ROUTE
 
 module.exports = router;

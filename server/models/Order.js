@@ -1,4 +1,14 @@
+// server/models/Order.js (ADD THE HIGHLIGHTED LINE)
+
 const mongoose = require("mongoose");
+
+const shipmentDetailsSchema = new mongoose.Schema({
+    shiprocketOrderId: { type: Number },
+    shipmentId: { type: Number },
+    status: { type: String },
+    awbCode: { type: String },
+    courierName: { type: String },
+});
 
 const orderSchema = new mongoose.Schema({
   user: {
@@ -6,28 +16,41 @@ const orderSchema = new mongoose.Schema({
     ref: "User",
     required: true
   },
-  name: String,
-  email: String,
-  phone: String,
-  amount: Number,
+  email: { 
+    type: String, 
+    required: true 
+  },
+  address: { 
+    type: Object, 
+    required: true 
+  },
+  cartItems: { 
+    type: Array, 
+    required: true 
+  },
+  totalAmount: { 
+    type: Number, 
+    required: true 
+  },
+  razorpayPaymentLinkId: { type: String }, // <-- ADD THIS LINE
+  paymentStatus: {
+    type: String,
+    enum: ["pending", "paid", "failed"], // Added "failed" for robustness
+    default: "pending"
+  },
+  adminStatus: {
+    type: String,
+    enum: ["pending", "approved", "rejected"],
+    default: "pending"
+  },
   status: {
     type: String,
-    enum: ["pending", "paid", "failed"],
-    default: "pending",
+    enum: ["Placed", "Processing", "Shipped", "Delivered", "Cancelled"],
+    default: "Placed"
   },
-  products: [
-    {
-      id: String,
-      name: String,
-      image: String,
-      price: Number,
-      quantity: Number,
-    },
-  ],
-  createdAt: {
-    type: Date,
-    default: Date.now,
-  },
+  shipmentDetails: shipmentDetailsSchema, 
+}, { 
+    timestamps: true 
 });
 
-module.exports = mongoose.model("Order", orderSchema);
+module.exports = mongoose.model('Order', orderSchema);

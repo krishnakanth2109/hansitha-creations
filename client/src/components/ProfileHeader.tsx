@@ -14,8 +14,8 @@ interface ProfileHeaderProps {
   onAvatarChange?: (newUrl: string) => void; // Optional callback to update avatar in backend
 }
 
-const CLOUD_NAME = "your_cloud_name";
-const UPLOAD_PRESET = "your_unsigned_preset";
+const CLOUD_NAME = "dghqyd51b";
+const UPLOAD_PRESET = "Uploaded";
 
 export function ProfileHeader({ user, onLogout, onAvatarChange }: ProfileHeaderProps) {
   const [isUploading, setIsUploading] = useState(false);
@@ -44,7 +44,7 @@ export function ProfileHeader({ user, onLogout, onAvatarChange }: ProfileHeaderP
             console.log("Uploaded image URL:", data.secure_url);
             if (onAvatarChange) onAvatarChange(data.secure_url);
           } else {
-            console.error("Upload failed:", data);
+             console.error("Cloudinary Error:", data.error.message);
           }
         } catch (err) {
           console.error("Error uploading to Cloudinary:", err);
