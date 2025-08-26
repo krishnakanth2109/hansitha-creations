@@ -52,6 +52,7 @@ import EditProduct from "./components/EditProduct";
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
+const API_BASE = process.env.REACT_APP_API_URL;
 
   // Your existing socket connection logic is perfectly fine here.
   useEffect(() => {
