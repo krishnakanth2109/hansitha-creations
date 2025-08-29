@@ -26,6 +26,11 @@ const rootElement = document.getElementById('root');
 if (!rootElement) throw new Error('Failed to find the root element');
 
 const root = createRoot(rootElement);
+const API_URL = import.meta.env.VITE_API_URL;
+
+fetch(`${API_URL}/products`)
+  .then(res => res.json())
+  .then(data => console.log(data));
 
 root.render(
   <React.StrictMode>
