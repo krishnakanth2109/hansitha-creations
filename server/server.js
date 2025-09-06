@@ -23,8 +23,7 @@ const allowedOrigins = [
   "https://hansitha-web-storefront.onrender.com",
   "https://hansithacreations.liveblog365.com",
   "https://hansitha-creations-1.onrender.com",
-  "https://hansitha-creations-rdny.onrender.com",
-  "https://vermillion-marigold-2b4a1f.netlify.app",
+  "https://hansitha-creations.netlify.app",
 ];
 
 // ✅ Socket.IO CORS Config
